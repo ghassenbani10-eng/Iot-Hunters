@@ -1,0 +1,13 @@
+build/
+install/
+log/
+logs/
+
+# Pre-fix leftovers superseded by src/tunibot_delivery/{worlds,maps}
+/worlds/
+/maps/
+
+__pycache__/
+*.pyc
+
+.claude/

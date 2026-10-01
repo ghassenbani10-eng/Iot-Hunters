@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TuniBot Delivery</title>
+<style>
+  :root { --bg:#f5f6f8; --card:#fff; --ink:#1d2330; --muted:#6b7280; --accent:#2563eb; --ok:#16a34a; --warn:#d97706; --bad:#dc2626; }
+  * { box-sizing: border-box; }
+  body { margin:0; font:15px/1.45 system-ui, sans-serif; background:var(--bg); color:var(--ink); }
+  header { padding:16px 20px; background:var(--ink); color:#fff; display:flex; justify-content:space-between; align-items:center; }
+  header h1 { margin:0; font-size:18px; }
+  main { max-width:1000px; margin:0 auto; padding:16px; display:grid; gap:16px; grid-template-columns:1fr 1fr; }
+  @media (max-width:760px) { main { grid-template-columns:1fr; } }
+  section { background:var(--card); border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
+  h2 { margin:0 0 12px; font-size:15px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  .tables { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+  .tables button { padding:14px 0; border:2px solid #d1d5db; background:#fff; border-radius:8px; font-weight:600; cursor:pointer; }
+  .tables button.sel { border-color:var(--accent); background:#eff6ff; }
+  input { width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px; margin-bottom:12px; font:inherit; }
+  .primary { width:100%; padding:12px; border:0; border-radius:8px; background:var(--accent); color:#fff; font-weight:600; cursor:pointer; }
+  .row { display:flex; gap:8px; } .row button { flex:1; padding:10px; border:1px solid #d1d5db; border-radius:8px; background:#fff; cursor:pointer; }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:6px 12px; margin-bottom:12px; }
+  .kv span:nth-child(odd) { color:var(--muted); }
+  .state { font-weight:700; }
+  .bar { height:10px; background:#e5e7eb; border-radius:5px; overflow:hidden; } .bar div { height:100%; background:var(--ok); transition:width .4s; }
+  ul { list-style:none; padding:0; margin:0; } li { padding:6px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; }
+  .delivered { color:var(--ok); } .failed, .cancelled { color:var(--bad); } .queued, .in_progress { color:var(--warn); }
+  #msg { min-height:1.4em; margin-top:8px; color:var(--muted); }
+</style>
+</head>
+<body>
+<header><h1>TuniBot · Restaurant Delivery</h1><span id="conn">connecting…</span></header>
+<main>
+  <section>
+    <h2>New order</h2>
+    <div class="tables" id="tables"></div>
+    <input id="items" placeholder="Items (e.g. 2 coffees, 1 orange juice)">
+    <button class="primary" id="send">Send robot</button>
+    <div id="msg"></div>
+  </section>
+  <section>
+    <h2>Robot (admin)</h2>
+    <div class="kv">
+      <span>State</span><span class="state" id="state">-</span>
+      <span>Battery</span><span><span id="batt">-</span><div class="bar"><div id="battbar" style="width:0"></div></div></span>
+      <span>Current</span><span id="current">-</span>
+    </div>
+    <div class="row">
+      <button data-cmd="dock">Return to dock</button>
+      <button data-cmd="cancel">Cancel current</button>
+      <button data-cmd="clear">Clear queue</button>
+    </div>
+  </section>
+  <section><h2>Queue</h2><ul id="queue"></ul></section>
+  <section><h2>History</h2><ul id="history"></ul></section>
+</main>
+<script>
+let selected = null, known = '';
+const $ = id => document.getElementById(id);
+const label = t => t.replace('table_', 'Table ');
+async function post(path, body) {
+  const r = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
+  return r.json();
+}
+function li(o) { return `<li><span>#${o.id} ${label(o.table)} ${o.items ? '· ' + o.items : ''}</span><span class="${o.status}">${o.status}</span></li>`; }
+async function refresh() {
+  try {
+    const s = await (await fetch('/api/status')).json();
+    $('conn').textContent = s.state === 'UNKNOWN' ? 'waiting for robot…' : 'online';
+    if ((s.tables || []).join() !== known) {
+      known = (s.tables || []).join();
+      $('tables').innerHTML = s.tables.map(t => `<button data-t="${t}">${label(t)}</button>`).join('');
+      $('tables').querySelectorAll('button').forEach(b => b.onclick = () => {
+        selected = b.dataset.t; $('tables').querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b));
+      });
+    }
+    $('state').textContent = (s.state || '-').replaceAll('_', ' ');
+    $('batt').textContent = s.battery != null ? s.battery + ' %' + (s.docked ? ' (charging)' : '') : '-';
+    $('battbar').style.width = (s.battery || 0) + '%';
+    $('battbar').style.background = s.battery < 25 ? 'var(--bad)' : 'var(--ok)';
+    $('current').textContent = s.current_order ? `#${s.current_order.id} → ${label(s.current_order.table)}` : 'none';
+    $('queue').innerHTML = (s.queue || []).map(li).join('') || '<li>empty</li>';
+    $('history').innerHTML = (s.history || []).map(li).join('') || '<li>no deliveries yet</li>';
+  } catch (e) { $('conn').textContent = 'offline'; }
+}
+$('send').onclick = async () => {
+  if (!selected) { $('msg').textContent = 'Pick a table first.'; return; }
+  const r = await post('/api/orders', {table: selected, items: $('items').value});
+  $('msg').textContent = r.accepted ? `Order sent to ${label(selected)}.` : r.error;
+  $('items').value = '';
+};
+document.querySelectorAll('[data-cmd]').forEach(b => b.onclick = () => post('/api/command', {command: b.dataset.cmd}));
+refresh(); setInterval(refresh, 1000);
+</script>
+</body>
+</html>

@@ -1,0 +1,23 @@
+# Named locations in the SLAM map frame.
+# The robot is spawned on the dock at Gazebo world (-9.0, 0.0, yaw 0), and
+# Cartographer starts the map there, so:  map = world + (9.0, 0.0).
+# Each entry: [x, y, yaw]  (metres, metres, radians)
+delivery_manager:
+  ros__parameters:
+    dock:      [0.0, 0.0, 0.0]     # on the charging pad (world -9.0, 0.0)
+    pre_dock:  [1.2, 0.0, 0.0]     # 1.2 m in front of the dock, final approach is a straight reverse
+    pickup:    [3.0, -1.0, 0.0]  # open floor between the dock and the dining area; far from every wall/obstacle for a short, reliable approach
+    table_1:   [2.83, -8.00, 1.5708]  # table group A, standoff south of its south row (world -6.17, -8.00)
+    table_2:   [7.82, -7.98, 1.5708]  # table group B, standoff south of its south row (world -1.18, -7.98)
+    table_3:   [11.82, -8.02, 1.5708] # table group C, standoff south of its south row (world  2.82, -8.02)
+    table_4:   [6.40, -3.82, 1.5708]  # single table   (world -2.60, -2.52), standoff 1.3m south
+    table_5:   [9.40, -3.77, 1.5708]  # single table   (world  0.40, -2.47), standoff 1.3m south
+    table_6:   [13.41, -3.81, 1.5708] # single table   (world  4.41, -2.51), standoff 1.3m south
+    table_7:   [2.44, -3.81, 1.5708]  # single table   (world -6.56, -2.52), standoff 1.3m south -- previously unserved
+    tables: ["table_1", "table_2", "table_3", "table_4", "table_5", "table_6", "table_7"]
+    load_time_sec: 5.0        # waiting at the bar while staff load the tray
+    serve_time_sec: 8.0       # waiting at the table while the customer takes the order
+    idle_dock_timeout_sec: 15.0   # return to dock when idle for this long
+    battery_drain_per_sec: 0.15   # % per second while undocked (simulated)
+    battery_charge_per_sec: 1.0   # % per second while docked
+    battery_low_threshold: 25.0   # go charge before taking a new order below this

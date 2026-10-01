@@ -1,0 +1,177 @@
+<?xml version="1.0" ?>
+<robot name="waiter_robot" xmlns:xacro="http://www.ros.org/wiki/xacro">
+
+  <!-- Base Footprint -->
+  <link name="base_footprint"/>
+
+  <joint name="base_joint" type="fixed">
+    <parent link="base_footprint"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.10" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Base du Robot -->
+  <link name="base_link">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.50 0.40 0.12"/></geometry>
+      <material name="white"><color rgba="0.95 0.95 0.95 1.0"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry><box size="0.50 0.40 0.12"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="10.0"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <inertia ixx="0.15" ixy="0.0" ixz="0.0" iyy="0.23" iyz="0.0" izz="0.30"/>
+    </inertial>
+  </link>
+
+  <!-- Roues -->
+  <link name="wheel_left_link">
+    <visual><geometry><cylinder length="0.03" radius="0.08"/></geometry><material name="black"><color rgba="0.1 0.1 0.1 1.0"/></material></visual>
+    <collision><geometry><cylinder length="0.03" radius="0.08"/></geometry></collision>
+    <inertial><mass value="0.5"/><inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/></inertial>
+  </link>
+  <joint name="wheel_left_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="wheel_left_link"/>
+    <origin xyz="0 0.22 -0.02" rpy="-1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <link name="wheel_right_link">
+    <visual><geometry><cylinder length="0.03" radius="0.08"/></geometry><material name="black"/></visual>
+    <collision><geometry><cylinder length="0.03" radius="0.08"/></geometry></collision>
+    <inertial><mass value="0.5"/><inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/></inertial>
+  </link>
+  <joint name="wheel_right_joint" type="continuous">
+    <parent link="base_link"/>
+    <child link="wheel_right_link"/>
+    <origin xyz="0 -0.22 -0.02" rpy="-1.5708 0 0"/>
+    <axis xyz="0 0 1"/>
+  </joint>
+
+  <!-- Roues folles (casters): sans elles le robot bascule et la base frotte le sol -> glissement + LiDAR incline -->
+  <link name="caster_front_link">
+    <collision><geometry><sphere radius="0.039"/></geometry></collision>
+    <visual><geometry><sphere radius="0.039"/></geometry><material name="black"/></visual>
+    <inertial><mass value="0.1"/><inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/></inertial>
+  </link>
+  <joint name="caster_front_joint" type="fixed">
+    <parent link="base_link"/><child link="caster_front_link"/><origin xyz="0.20 0 -0.06" rpy="0 0 0"/>
+  </joint>
+  <link name="caster_back_link">
+    <collision><geometry><sphere radius="0.039"/></geometry></collision>
+    <visual><geometry><sphere radius="0.039"/></geometry><material name="black"/></visual>
+    <inertial><mass value="0.1"/><inertia ixx="0.0001" ixy="0" ixz="0" iyy="0.0001" iyz="0" izz="0.0001"/></inertial>
+  </link>
+  <joint name="caster_back_joint" type="fixed">
+    <parent link="base_link"/><child link="caster_back_link"/><origin xyz="-0.20 0 -0.06" rpy="0 0 0"/>
+  </joint>
+
+  <gazebo reference="caster_front_link"><mu1>0.0</mu1><mu2>0.0</mu2></gazebo>
+  <gazebo reference="caster_back_link"><mu1>0.0</mu1><mu2>0.0</mu2></gazebo>
+  <gazebo reference="wheel_left_link">
+    <mu1>1.0</mu1><mu2>1.0</mu2><kp>1000000.0</kp><kd>100.0</kd><minDepth>0.001</minDepth><maxVel>0.1</maxVel><fdir1>1 0 0</fdir1>
+  </gazebo>
+  <gazebo reference="wheel_right_link">
+    <mu1>1.0</mu1><mu2>1.0</mu2><kp>1000000.0</kp><kd>100.0</kd><minDepth>0.001</minDepth><maxVel>0.1</maxVel><fdir1>1 0 0</fdir1>
+  </gazebo>
+
+  <!-- Support LiDAR -->
+  <link name="base_scan">
+    <visual>
+      <geometry><cylinder length="0.04" radius="0.05"/></geometry>
+      <material name="red"><color rgba="0.8 0.1 0.1 1.0"/></material>
+    </visual>
+    <collision>
+      <geometry><cylinder length="0.04" radius="0.05"/></geometry>
+    </collision>
+  </link>
+  <joint name="scan_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="base_scan"/>
+    <origin xyz="0.18 0 0.08" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Colonne Arrière + Étagères + Écran -->
+  <link name="back_spine_link">
+    <visual><origin xyz="0 0 0.48" rpy="0 0 0"/><geometry><box size="0.08 0.36 0.96"/></geometry><material name="white"/></visual>
+    <collision><origin xyz="0 0 0.48" rpy="0 0 0"/><geometry><box size="0.08 0.36 0.96"/></geometry></collision>
+  </link>
+  <joint name="back_spine_joint" type="fixed">
+    <parent link="base_link"/><child link="back_spine_link"/><origin xyz="-0.18 0 0.06" rpy="0 0 0"/>
+  </joint>
+
+  <link name="tray_1_link"><visual><geometry><box size="0.36 0.36 0.02"/></geometry><material name="dark"><color rgba="0.2 0.2 0.2 1.0"/></material></visual></link>
+  <joint name="tray_1_joint" type="fixed"><parent link="back_spine_link"/><child link="tray_1_link"/><origin xyz="0.18 0 0.22" rpy="0 0 0"/></joint>
+
+  <link name="tray_2_link"><visual><geometry><box size="0.36 0.36 0.02"/></geometry><material name="dark"/></visual></link>
+  <joint name="tray_2_joint" type="fixed"><parent link="back_spine_link"/><child link="tray_2_link"/><origin xyz="0.18 0 0.44" rpy="0 0 0"/></joint>
+
+  <link name="tray_3_link"><visual><geometry><box size="0.36 0.36 0.02"/></geometry><material name="dark"/></visual></link>
+  <joint name="tray_3_joint" type="fixed"><parent link="back_spine_link"/><child link="tray_3_link"/><origin xyz="0.18 0 0.66" rpy="0 0 0"/></joint>
+
+  <link name="tray_4_link"><visual><geometry><box size="0.36 0.36 0.02"/></geometry><material name="dark"/></visual></link>
+  <joint name="tray_4_joint" type="fixed"><parent link="back_spine_link"/><child link="tray_4_link"/><origin xyz="0.18 0 0.88" rpy="0 0 0"/></joint>
+
+  <link name="screen_link"><visual><geometry><box size="0.03 0.28 0.18"/></geometry><material name="black"><color rgba="0.05 0.05 0.05 1.0"/></material></visual></link>
+  <joint name="screen_joint" type="fixed"><parent link="back_spine_link"/><child link="screen_link"/><origin xyz="0.04 0 1.02" rpy="0 0.20 0"/></joint>
+
+  <!-- Plugin Gazebo Diff Drive -->
+  <gazebo>
+    <plugin name="diff_drive" filename="libgazebo_ros_diff_drive.so">
+      <ros><namespace>/</namespace></ros>
+      <update_rate>30</update_rate>
+      <left_joint>wheel_left_joint</left_joint>
+      <right_joint>wheel_right_joint</right_joint>
+      <wheel_separation>0.44</wheel_separation>
+      <wheel_diameter>0.16</wheel_diameter>
+      <max_wheel_torque>20</max_wheel_torque>
+      <max_wheel_acceleration>1.0</max_wheel_acceleration>
+      <command_topic>cmd_vel</command_topic>
+      <publish_odom>true</publish_odom>
+      <publish_odom_tf>true</publish_odom_tf>
+      <publish_wheel_tf>false</publish_wheel_tf>
+      <odometry_topic>odom</odometry_topic>
+      <odometry_frame>odom</odometry_frame>
+      <robot_base_frame>base_footprint</robot_base_frame>
+    </plugin>
+  </gazebo>
+
+  <!-- Plugin Gazebo LiDAR (Ray Sensor) -->
+  <gazebo reference="base_scan">
+    <sensor type="ray" name="lds_lfcd_sensor">
+      <pose>0 0 0 0 0 0</pose>
+      <visualize>true</visualize>
+      <update_rate>10</update_rate>
+      <ray>
+        <scan>
+          <horizontal>
+            <!-- 290 deg: le secteur arriere (+/-35 deg) voit la colonne du robot -> exclu (auto-occlusion) -->
+            <samples>290</samples>
+            <resolution>1</resolution>
+            <min_angle>-2.5307</min_angle>
+            <max_angle>2.5307</max_angle>
+          </horizontal>
+        </scan>
+        <range>
+          <min>0.120</min>
+          <max>12.0</max>
+          <resolution>0.015</resolution>
+        </range>
+        <noise><type>gaussian</type><mean>0.0</mean><stddev>0.01</stddev></noise>
+      </ray>
+      <plugin name="gazebo_ros_lds_lfcd_controller" filename="libgazebo_ros_ray_sensor.so">
+        <ros>
+          <remapping>~/out:=scan</remapping>
+        </ros>
+        <output_type>sensor_msgs/LaserScan</output_type>
+        <frame_name>base_scan</frame_name>
+      </plugin>
+    </sensor>
+  </gazebo>
+
+</robot>
