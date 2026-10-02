@@ -1,0 +1,120 @@
+digraph TuniBotArchitecture {
+  rankdir=TB;
+  fontname="Helvetica";
+  labelloc="t";
+  label=<<FONT POINT-SIZE="26"><B>TuniBot — Autonomous Restaurant Delivery Robot</B></FONT><BR/><FONT POINT-SIZE="15">CSTAM-TUNIBOT Phase 1 — High-Level Software Architecture</FONT>>;
+  bgcolor="white";
+  nodesep=0.55;
+  ranksep=0.75;
+  node [fontname="Helvetica", fontsize=12, shape=plain];
+  edge [fontname="Helvetica", fontsize=10.5, color="#455a64", penwidth=1.4, arrowsize=0.85];
+
+  // ---------------- USER / ADMIN LAYER ----------------
+  subgraph cluster_ui {
+    label=<<B>User / Admin Layer</B>>;
+    fontsize=15; style="rounded,filled"; color="#90a4ae"; fillcolor="#eceff1"; margin=16;
+    WEB [label=<
+      <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="4" BGCOLOR="#cfd8dc" COLOR="#607d8b" STYLE="ROUNDED">
+        <TR><TD><B>Web Page</B></TD></TR>
+        <TR><TD><FONT POINT-SIZE="10">order form + admin view</FONT></TD></TR>
+        <TR><TD><FONT POINT-SIZE="10">HTML / CSS / JS — polls every 1s</FONT></TD></TR>
+      </TABLE>>];
+  }
+
+  // ---------------- APPLICATION LAYER ----------------
+  subgraph cluster_app {
+    label=<<B>tunibot_delivery — Application Nodes (Python / rclpy)</B>>;
+    fontsize=15; style="rounded,filled"; color="#1565c0"; fillcolor="#e3f2fd"; margin=16;
+    API [label=<
+      <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="4" BGCOLOR="#bbdefb" COLOR="#1565c0" STYLE="ROUNDED">
+        <TR><TD><B>web_api</B></TD></TR>
+        <TR><TD><FONT POINT-SIZE="10">REST :8080</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9">GET /api/status</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9">POST /api/orders</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9">POST /api/command</FONT></TD></TR>
+      </TABLE>>];
+    DM [label=<
+      <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="4" BGCOLOR="#90caf9" COLOR="#1565c0" STYLE="ROUNDED">
+        <TR><TD><B>delivery_manager</B></TD></TR>
+        <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9">• order queue</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9">• delivery state machine</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9">• battery simulation</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9">• auto-docking sequence</FONT></TD></TR>
+      </TABLE>>];
+    API -> DM [dir=both, label="/delivery/order\l/delivery/command\l/delivery/status\l"];
+  }
+
+  // ---------------- NAV2 LAYER ----------------
+  subgraph cluster_nav2 {
+    label=<<B>Nav2 — Autonomous Navigation Stack</B>>;
+    fontsize=15; style="rounded,filled"; color="#2e7d32"; fillcolor="#e8f5e9"; margin=16;
+    BT [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="3" BGCOLOR="#c8e6c9" COLOR="#2e7d32" STYLE="ROUNDED"><TR><TD><B>bt_navigator</B></TD></TR></TABLE>>];
+    PLAN [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="3" BGCOLOR="#c8e6c9" COLOR="#2e7d32" STYLE="ROUNDED"><TR><TD><B>planner_server</B></TD></TR><TR><TD><FONT POINT-SIZE="9">NavFn</FONT></TD></TR></TABLE>>];
+    CTRL [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="3" BGCOLOR="#c8e6c9" COLOR="#2e7d32" STYLE="ROUNDED"><TR><TD><B>controller_server</B></TD></TR><TR><TD><FONT POINT-SIZE="9">RotationShim +</FONT></TD></TR><TR><TD><FONT POINT-SIZE="9">Regulated Pure Pursuit</FONT></TD></TR></TABLE>>];
+    SMOOTH [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="3" BGCOLOR="#c8e6c9" COLOR="#2e7d32" STYLE="ROUNDED"><TR><TD><B>velocity_smoother</B></TD></TR></TABLE>>];
+    AMCL [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="3" BGCOLOR="#a5d6a7" COLOR="#1b5e20" STYLE="ROUNDED"><TR><TD><B>amcl</B></TD></TR><TR><TD><FONT POINT-SIZE="9">localization</FONT></TD></TR></TABLE>>];
+    MAPSRV [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="3" BGCOLOR="#a5d6a7" COLOR="#1b5e20" STYLE="ROUNDED"><TR><TD><B>map_server</B></TD></TR></TABLE>>];
+    KEEP [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="3" BGCOLOR="#a5d6a7" COLOR="#1b5e20" STYLE="ROUNDED"><TR><TD><B>keepout filter</B></TD></TR><TR><TD><FONT POINT-SIZE="9">costmap_filter_info_server +</FONT></TD></TR><TR><TD><FONT POINT-SIZE="9">filter_mask_server</FONT></TD></TR><TR><TD><FONT POINT-SIZE="9">(tabletop exclusion)</FONT></TD></TR></TABLE>>];
+
+    { rank=same; MAPSRV; AMCL; BT; }
+    { rank=same; KEEP; PLAN; CTRL; }
+    MAPSRV -> AMCL [dir=both, style=invis];
+    BT -> PLAN [dir=both];
+    BT -> CTRL [dir=both];
+    MAPSRV -> PLAN;
+    KEEP -> PLAN [label="  /costmap_filter_info"];
+    KEEP -> CTRL [label="  /costmap_filter_info"];
+    CTRL -> SMOOTH [label="/cmd_vel"];
+  }
+
+  // ---------------- SIMULATION LAYER ----------------
+  subgraph cluster_sim {
+    label=<<B>Gazebo Simulation</B>>;
+    fontsize=15; style="rounded,filled"; color="#6a1b9a"; fillcolor="#f3e5f5"; margin=16;
+    WORLD [label=<
+      <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="4" BGCOLOR="#e1bee7" COLOR="#6a1b9a" STYLE="ROUNDED">
+        <TR><TD><B>restaurant.world</B></TD></TR>
+        <TR><TD><FONT POINT-SIZE="9">tables, boxes, docking station</FONT></TD></TR>
+      </TABLE>>];
+    ROBOT [label=<
+      <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="4" BGCOLOR="#ce93d8" COLOR="#6a1b9a" STYLE="ROUNDED">
+        <TR><TD><B>waiter_robot</B></TD></TR>
+        <TR><TD><FONT POINT-SIZE="9">diff-drive base</FONT></TD></TR>
+        <TR><TD><FONT POINT-SIZE="9">2D lidar — 12m, 290° FOV</FONT></TD></TR>
+      </TABLE>>];
+    { rank=same; WORLD; ROBOT; }
+    WORLD -> ROBOT [style=invis];
+  }
+
+  // ---------------- SLAM LAYER (mapping phase, runs before Nav2) ----------------
+  subgraph cluster_slam {
+    label=<<B>SLAM — Mapping Phase</B><BR/><FONT POINT-SIZE="11">(run once, before navigation)</FONT>>;
+    fontsize=14; style="rounded,filled,dashed"; color="#ef6c00"; fillcolor="#fff3e0"; margin=16;
+    CARTO [label=<
+      <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="4" BGCOLOR="#ffe0b2" COLOR="#ef6c00" STYLE="ROUNDED">
+        <TR><TD><B>cartographer_node</B></TD></TR>
+        <TR><TD><FONT POINT-SIZE="9">+ occupancy_grid_node</FONT></TD></TR>
+        <TR><TD><FONT POINT-SIZE="9">2D SLAM, loop closure</FONT></TD></TR>
+      </TABLE>>];
+    SAVER [label=<
+      <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="4" BGCOLOR="#ffe0b2" COLOR="#ef6c00" STYLE="ROUNDED">
+        <TR><TD><B>map_saver_cli</B></TD></TR>
+        <TR><TD><FONT POINT-SIZE="9">restaurant_map.{pgm,yaml}</FONT></TD></TR>
+      </TABLE>>];
+    CARTO -> SAVER [label="  /map", style=dashed, color="#ef6c00"];
+  }
+
+  // ===================== CROSS-LAYER EDGES =====================
+
+  WEB -> API [label="HTTP POST\n(order / command)"];
+  API -> WEB [label="HTTP GET /api/status\n(poll)", style=dashed, constraint=false];
+
+  DM -> BT [label="NavigateToPose\n(action client)"];
+  DM -> ROBOT [label="/cmd_vel  (docking reverse)", color="#6a1b9a", constraint=false];
+
+  SMOOTH -> ROBOT [label="/cmd_vel", color="#2e7d32"];
+  ROBOT -> AMCL [label="/scan /odom /tf", color="#6a1b9a", constraint=false];
+
+  ROBOT -> CARTO [label="/scan /odom /tf", color="#6a1b9a", style=dashed, constraint=false];
+  SAVER -> MAPSRV [label="restaurant_map.yaml\n(loaded by navigation.launch.py)", style=dashed, color="#ef6c00", constraint=false];
+}

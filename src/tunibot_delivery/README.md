@@ -14,6 +14,10 @@ and returns to its charging dock on its own.
 
 ## Architecture
 
+![TuniBot high-level software architecture](docs/architecture.png)
+
+*(source: `docs/architecture.dot`, rendered with Graphviz — `dot -Tpng docs/architecture.dot -o docs/architecture.png`)*
+
 ```mermaid
 flowchart LR
   subgraph UI["User / Admin"]
