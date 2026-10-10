@@ -7,15 +7,15 @@
     * the first recovery is to WAIT: in a restaurant an obstacle is usually a
       person who will move away, so the robot waits politely before doing
       anything else;
-    * then: clear the costmaps (ghost obstacles), back up 30 cm (get out of a
+    * then: clear the costmaps (ghost obstacles), back up 20 cm (get out of a
       dead end / let a person pass in a corridor), spin 90 deg (re-observe and
       re-localize), longer wait;
-    * up to 8 recovery rounds before the action fails; the delivery manager
+    * up to 6 recovery rounds before the action fails; the delivery manager
       then tries the next approach pose and finally reports the failure.
 -->
 <root main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
-    <RecoveryNode number_of_retries="8" name="NavigateRecovery">
+    <RecoveryNode number_of_retries="6" name="NavigateRecovery">
       <PipelineSequence name="NavigateWithReplanning">
         <RateController hz="2.0">
           <RecoveryNode number_of_retries="1" name="ComputePathToPose">
@@ -45,7 +45,7 @@
             <ClearEntireCostmap name="ClearLocalCostmap-Subtree" service_name="local_costmap/clear_entirely_local_costmap"/>
             <ClearEntireCostmap name="ClearGlobalCostmap-Subtree" service_name="global_costmap/clear_entirely_global_costmap"/>
           </Sequence>
-          <BackUp backup_dist="0.30" backup_speed="0.08"/>
+          <BackUp backup_dist="0.20" backup_speed="0.08"/>
           <Spin spin_dist="1.57"/>
           <Wait wait_duration="5"/>
         </RoundRobin>

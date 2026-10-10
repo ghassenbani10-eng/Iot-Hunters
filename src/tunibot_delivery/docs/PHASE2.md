@@ -1,0 +1,206 @@
+# TuniBot — Phase 2: Integration & Testing
+
+Challenge CSTAM-TUNIBOT, Phase 2 (30 pts):
+
+| Criterion | Pts | Where it is implemented |
+|---|---|---|
+| Dynamic obstacle avoidance — react safely to moving obstacles (humans walking) in real time | 10 | walking people in Gazebo (`tunibot_gazebo_plugins`), `people_tracker` (detection, tracking, motion prediction, social speed), Nav2 `collision_monitor`, people cost filter, 2 Hz replanning, wait-first recovery |
+| Complex layout handling — tight corridors, doorways, recovering from navigation failures | 10 | world v2 (3 doorways of 0.9 m, 1.05 m corridor with an L-turn), custom behavior tree, reachability pre-check, alternate approach poses, BLOCKED detection, failure handling in `delivery_manager` |
+| Battery & state simulation — accurate drain, return to dock before the battery dies | 10 | `battery_simulator` (physics-based power model, Li-ion voltage curve, CC-CV charging on dock contact, learned Wh/m), energy-aware `delivery_manager` |
+
+Deliverables: the complete Gazebo package (`tunibot_delivery` + `tunibot_gazebo_plugins`),
+the test-case documentation ([TEST_CASES.md](TEST_CASES.md), generated from automated runs) and the
+screen recording of dynamic obstacle handling (`demo.launch.py scenario:=tc03`, see the README).
+
+![architecture](architecture.png)
+
+---
+
+## 1. Simulation environment (Gazebo)
+
+### 1.1 Venue layout — `worlds/restaurant.world`
+
+The restaurant is **divided in two** by a partition wall:
+
+* **Kitchen** (north-west, staff only). The cooks hand the food to the robot through **two serving
+  windows** in the partition (counter at 0.95 m, opening up to 1.75 m). For the 2D lidar (18 cm high)
+  the partition is a solid wall; the robot parks in front of a window, trays facing the cook.
+  The kitchen is a **staff-only keepout zone** in the navigation mask: the robot never enters it,
+  not even through the staff door. Window 2 is used automatically when window 1 is blocked.
+* **Dining room** (south, the Phase 1 tables). The **charging dock is in its north-west corner**,
+  right next to the serving windows (short dock → window trips).
+* **VIP lounge** (north-east, customer side) — the "complex layout" part of Phase 2, reached through:
+
+| Zone | Challenge for the robot (0.54 × 0.50 m footprint) |
+|---|---|
+| **Service door D2** (0.9 m) | 20 cm clearance on each side |
+| **Service corridor** (1.05 m clear, 6 m long) | 27 cm per side; two recessed storage doors give the lidar something to measure along the corridor |
+| **L-turn** into the **west corridor** (1.36 m) | rectangular robot turning in a corner |
+| **Lounge door D3** (0.9 m) → **VIP lounge** (tables 8 and 9) | third doorway, then a guest walking inside the lounge |
+
+`scripts/build_world.py` generates all this (layout as code, idempotent) and also writes
+`restaurant_mapping.world` (same building without people) used to build the SLAM map.
+The exterior door of the south wall is closed (it let the Phase 1 map leak outside).
+
+Frames: the robot spawns on the dock at world (−9.0, 2.2), Cartographer starts the map there:
+**map = world + (9.0, −2.2)**.
+
+### 1.2 Walking people — `tunibot_gazebo_plugins/HumanActorPlugin`
+
+Gazebo Classic *actors* (animated skins) have no collision geometry, so a ray sensor cannot see
+them — an unexpected but important detail: a naive "walking person" is invisible to the lidar.
+The plugin solves it:
+
+* it walks the actor along waypoints (speed, pauses, ping-pong or loop), with the walking
+  animation synchronised to the distance travelled;
+* it moves an invisible **collision body** (cylinder r = 0.22 m, h = 1.7 m) to the actor's pose in
+  the same physics update, so the lidar and the bumper perceive the person exactly where it is
+  drawn (measured: 7.93 m lidar range vs 7.88 m expected, i.e. the body radius);
+* like a real pedestrian it **stops when the robot is right in front of it** (< 0.9 m, ±50°), and
+  after waiting 6 s it turns back (no robot/person standoff in a corridor).
+
+Four people live in the world: a waiter crossing the whole dining room, a guest walking between the
+table rows, a cook walking along the kitchen pass (behind the serving windows) and a guest in the VIP
+lounge. Test scenarios spawn more (head-on,
+crossing, standing in a doorway).
+
+### 1.3 Robot additions
+
+* **bumper** (contact sensor on the body, spine and lidar housing) → `/bumper`: ground truth for the
+  collision count of the tests;
+* `/clock` raised from 10 Hz (gazebo_ros default) to 100 Hz (`config/gazebo_params.yaml`): with
+  10 Hz the simulation time advances in 100 ms steps, which starved every 10–20 Hz Nav2 loop (the
+  controller was missing its rate hundreds of times per minute and the robot spun in place).
+  This was also the root cause of the "AMCL stops publishing / transform too old" symptoms seen in
+  Phase 1.
+
+### 1.4 Map — autonomous SLAM tour
+
+`auto_mapping.launch.py` runs Cartographer together with Nav2 (no AMCL, unknown space allowed) and
+`auto_mapper` drives a waypoint tour through every customer-side room and corridor, returns to the
+dock and saves the map: mapping is reproducible and needs no teleoperation. Each waypoint is
+oriented towards the next one so the robot never overshoots towards a wall in a corner.
+
+Long corridors are a known degenerate case for lidar SLAM (two parallel walls constrain nothing
+along the corridor axis): with the default settings the estimate slid 2 m along the service
+corridor. Fixes: the online correlative scan matcher (meant for robots without odometry) is
+disabled and the odometry prior of the Ceres matcher is weighted up (`config/cartographer_2d.lua`),
+and the corridor has recessed doors (real corridors do).
+
+---
+
+## 2. Dynamic obstacle avoidance
+
+Layered, from slow/predictive to fast/reactive:
+
+| Layer | Rate | What it does |
+|---|---|---|
+| `people_tracker` → **people cost mask** (KeepoutFilter `people_filter`) | 5 Hz | predicts where each walking person will be over the next 2 s (constant-velocity Kalman filter) and writes a fading cost along that track: the planner routes **behind** people instead of cutting in front of them |
+| Global planner (NavFn A*) | 2 Hz | replans continuously (custom BT) on a costmap that contains the lidar obstacles + the predictions |
+| `people_tracker` → **social speed governor** (`/speed_limit`) | 5 Hz | 70 % speed within 2.2 m of a person, 45 % within 1.2 m, 60 % in doorways/corridors |
+| Regulated Pure Pursuit | 20 Hz | slows down with costmap cost (near obstacles) and checks the footprint for collision up to the carrot |
+| **collision_monitor** (between the smoother and the wheels) | scan rate | keep **≥ 1.2 s time-to-collision** along the commanded motion (the footprint is simulated forward, so turning in place next to a wall stays allowed), **slow to 40 %** when something is within 50 cm ahead, emergency **stop** if anything is within 7 cm of the bumper. Works on the raw scan: independent from localization and costmaps |
+| Behavior tree recovery | on failure | the first recovery is **wait 3 s** (a person in the way usually moves), then clear costmaps, back up 30 cm, spin, wait 5 s |
+| `delivery_manager` | 10 Hz | reports **BLOCKED** when the remaining distance stops decreasing, shows the number of people around in the UI |
+
+People tracker pipeline (`people_tracker.py`): scan → map frame → drop points within 20 cm of an
+occupied cell of the static map (distance transform) → euclidean clustering (person-sized clusters,
+centroid pushed back by the body radius) → nearest-neighbour association + constant-velocity Kalman
+filter per track (confirmed after 3 hits, dropped after 1 s unseen). Because each cost mask fully
+replaces the previous one, predictions never leave "ghost" obstacles behind (an obstacle-layer
+approach would).
+
+---
+
+## 3. Complex layout handling and recovery
+
+* **Footprint-aware planning**: rectangular footprint in both costmaps; inflation tuned so the 0.9 m
+  doorways stay passable (cost at the doorway centre line ≈ 113 < inscribed 253) while the path is
+  pushed to the middle of corridors.
+* **Rotation shim**: the robot turns in place towards the path before driving, which is what makes
+  the corridor L-turn and the doorways safe for a rectangular base.
+* **Speed zones**: 60 % speed in the doorways and corridors (`slow_zones`).
+* **Keepout zones**: tabletops (invisible to the 2D lidar) and the staff-only kitchen.
+* **Reachability pre-check**: before committing to a goal the manager asks the planner for a path.
+  No path → "route blocked": it clears stale obstacles and re-checks for up to 30 s (people usually
+  move away), then uses the next approach pose.
+* **Alternate approach poses**: every table has 2 approach poses (both sides of the table group); a
+  blocked approach (trolley, chairs, people) is skipped automatically.
+* **Nav2 recovery** (custom BT, 6 rounds): wait → clear costmaps → back up → spin → wait.
+* **Mission-level recovery**: a table that stays unreachable fails *only that order* (reason recorded
+  and shown in the UI); the queue continues. After 3 consecutive failures the robot returns to the dock
+  and enters **ERROR**, waiting for an operator `resume` (no endless retry loop).
+* **Localization watchdog**: if `map → odom` stops being refreshed, AMCL is re-seeded from the last
+  consistent pose.
+* **Robust docking**: Nav2 to a pre-dock pose → rotate to the dock axis → check lateral offset
+  (re-approach if > 8 cm) → straight reverse in odometry closed loop until the pad is reached → the
+  battery must report charging contact, otherwise drive out and retry (3 attempts, then ERROR).
+
+---
+
+## 4. Battery & state simulation
+
+### 4.1 Battery model (`battery_simulator`)
+
+Integrated on simulation time at 10 Hz:
+
+```
+P = P_idle                                  28 W  (computer, lidar, screen, drivers)
+  + P_drive              (if moving)        12 W
+  + (m·g·C_rr·|v| + max(0, m·a·v)) / η      traction: m = 40 kg + 4 kg payload while a tray is loaded,
+                                            C_rr = 0.03, η = 0.65
+  + k_turn·|ω|                              18 W per rad/s
+  − P_charge             (on the dock)      240 W constant power below 80 % SoC, then CV taper
+```
+
+* 7S Li-ion pack, 10 Ah, 259 Wh. Terminal voltage = 7 × OCV(SoC) − I·R_int (NMC curve, 0.08 Ω);
+  current = P / V. Published as a standard `sensor_msgs/BatteryState`.
+* Charging only happens when the robot is **physically on the charging pad** (pose within 15 cm of the
+  dock and stopped) — the docking manoeuvre must actually succeed.
+* `time_acceleration` (default ×25, shown in the UI) multiplies the energy flows so a battery cycle
+  fits in a demo: ~12 min of driving or ~22 min idle per charge instead of ~6–9 h.
+* The node **learns the real consumption per metre** (moving average of measured energy / distance)
+  — it includes the turning, accelerations, payload and the idle power while driving.
+* Test hooks: `/battery/set_soc`, `/battery/charger` (also in the web UI).
+
+### 4.2 Energy-aware decisions (`delivery_manager`)
+
+All estimates use **real Nav2 path lengths** (`ComputePathToPose`), not straight lines:
+
+* **Before leaving with an order**: E = (robot → pickup → table → dock) × Wh/m × 1.3 + idle energy
+  during loading and serving. The robot leaves only if SoC ≥ E + reserve (8 %) and ≥ 25 %. Otherwise it
+  charges — *only as long as needed* for that order (+5 %), not to 100 %.
+* **While away from the dock** (every 3 s): E_return = path(robot → dock) × Wh/m × 1.3. As soon as
+  `energy left − E_return < reserve`, the mission is interrupted, the order is **re-queued at the
+  front** (not lost), the robot docks, charges and resumes.
+* **Hard safety net**: SoC ≤ 10 % → abort everything and dock.
+* **Idle**: below 25 % or after 20 s without orders → dock.
+
+### 4.3 States
+
+```
+STARTING → DOCKED ⇄ CHARGING
+DOCKED → UNDOCKING → TO_PICKUP → LOADING → TO_TABLE → SERVING → (next order | IDLE)
+IDLE → RETURNING_TO_DOCK → DOCKING → DOCKED
+any moving state → RETURNING_TO_DOCK      (energy / battery critical / operator)
+any state → EMERGENCY_STOP → (resume)     (operator)
+3 failed orders → ERROR → (resume)
+nav sub-status: moving (x m left) | blocked | waiting: route blocked
+```
+
+Every transition and decision is published on `/delivery/events` (and shown in the UI), e.g.
+`[battery] Order #1 interrupted (energy to reach the dock: 31.2 Wh needed, 29.8 Wh left above the
+reserve); re-queued, going to charge`.
+
+---
+
+## 5. Testing
+
+`scenario_runner` executes 12 scripted scenarios on a fresh stack each (`scripts/run_tests.sh`), with
+metrics from **Gazebo ground truth** — not from the robot's own estimate:
+
+* minimum distance between the robot footprint and any person body (≤ 0 = collision),
+* bumper contacts with anything,
+* delivery outcomes, durations, path length, minimum battery level, the full event log.
+
+Results, plots and pass criteria: [TEST_CASES.md](TEST_CASES.md).

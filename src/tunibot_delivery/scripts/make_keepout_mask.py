@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a Nav2 keepout mask for the cafe_table tops.
+"""Build the Nav2 keepout mask: cafe_table tops + staff-only zones.
 
 The 2D lidar (18 cm high) only sees the thin central column of each cafe_table,
 but the 0.91 x 0.91 m tabletop (75 cm high) overhangs it and the robot is 1.1 m
@@ -7,7 +7,10 @@ tall. The table positions come from the Gazebo world, the mask is expressed in
 the SLAM map frame (= the robot spawn/dock pose), and Nav2's KeepoutFilter marks
 those cells as lethal. Gazebo models are left unchanged.
 
-usage: make_keepout_mask.py <world> <out_dir> [--dock-x -9.0 --dock-y 0.0]
+Staff-only zones (the kitchen: the robot is served through the windows and must
+never go in, even through the staff door) are added as keepout rectangles.
+
+usage: make_keepout_mask.py <world> <out_dir> [--dock-x -9.0 --dock-y 2.2]
 """
 import argparse
 import math
@@ -17,6 +20,8 @@ import xml.etree.ElementTree as ET
 RES = 0.05            # m/pixel
 TABLE_SIZE = 0.913    # cafe_table top edge length (m)
 MARGIN = 0.05         # extra clearance around the tabletop (m)
+# staff-only rectangles, world frame: (xmin, xmax, ymin, ymax)
+STAFF_ONLY = [(-10.5, -2.4, 3.05, 10.5)]   # kitchen
 
 
 def main():
@@ -24,7 +29,7 @@ def main():
     ap.add_argument('world')
     ap.add_argument('out_dir')
     ap.add_argument('--dock-x', type=float, default=-9.0)
-    ap.add_argument('--dock-y', type=float, default=0.0)
+    ap.add_argument('--dock-y', type=float, default=2.2)
     ap.add_argument('--half-extent', type=float, default=10.5,
                     help='half size of the square area covered, world frame (m)')
     a = ap.parse_args()
@@ -52,6 +57,16 @@ def main():
                 lx, ly = c * wx + s * wy, -s * wx + c * wy
                 if abs(lx) <= half and abs(ly) <= half:
                     img[(n - 1 - py) * n + px] = 0   # PGM rows go top -> bottom
+
+    for x0, x1, y0, y1 in STAFF_ONLY:
+        for py in range(n):
+            wy = oy + (py + 0.5) * RES + a.dock_y
+            if not y0 <= wy <= y1:
+                continue
+            for px in range(n):
+                wx = ox + (px + 0.5) * RES + a.dock_x
+                if x0 <= wx <= x1:
+                    img[(n - 1 - py) * n + px] = 0
 
     os.makedirs(a.out_dir, exist_ok=True)
     with open(os.path.join(a.out_dir, 'keepout_mask.pgm'), 'wb') as f:

@@ -85,8 +85,10 @@ class DeliveryManager(Node):
             'energy_check_period_sec': 3.0,
             'nav_attempts_per_pose': 2,
             'max_consecutive_failures': 3,
-            'blocked_after_sec': 4.0,
+            'blocked_after_sec': 5.0,
+            'path_wait_sec': 30.0,         # wait this long for a blocked route to clear (people)
             'cruise_speed': 0.35,          # m/s, used for the time part of energy estimates
+            'pickup_depart_yaw': -1.5708,  # after loading, turn to face the dining room
         }
         for k, v in defaults.items():
             self.declare_parameter(k, v)
@@ -104,6 +106,7 @@ class DeliveryManager(Node):
         self.cancel_requested = False
         self.dock_requested = False
         self.estop = False
+        self.error = None              # latched until the operator sends "resume"
         self.consecutive_failures = 0
         self.energy = {}
         self.battery = {'soc': 100.0, 'charging': False, 'on_dock': True, 'capacity_wh': 259.0,
@@ -141,9 +144,11 @@ class DeliveryManager(Node):
         with self.lock:
             self.events.appendleft(ev)
         self.event_pub.publish(String(data=json.dumps(ev)))
-        log = self.get_logger().warn if kind in ('battery', 'failure', 'error', 'estop') \
-            else self.get_logger().info
-        log('[%s] %s' % (kind, text))
+        # (rclpy forbids changing the severity of a given logging call site)
+        if kind in ('battery', 'failure', 'error', 'estop'):
+            self.get_logger().warn('[%s] %s' % (kind, text))
+        else:
+            self.get_logger().info('[%s] %s' % (kind, text))
 
     def robot_pose(self):
         try:
@@ -198,6 +203,7 @@ class DeliveryManager(Node):
                 self.estop = True
             elif cmd == 'resume':
                 self.estop = False
+                self.error = None
                 self.consecutive_failures = 0
             else:
                 self.get_logger().warn('Unknown command "%s"' % cmd)
@@ -249,7 +255,7 @@ class DeliveryManager(Node):
                 'battery': {k: (round(v, 2) if isinstance(v, float) else v) for k, v in self.battery.items()},
                 'energy': self.energy, 'current_order': self.current, 'queue': list(self.queue),
                 'history': list(self.history), 'events': list(self.events)[:25], 'tables': self.tables,
-                'estop': self.estop, 'consecutive_failures': self.consecutive_failures,
+                'estop': self.estop, 'error': self.error, 'consecutive_failures': self.consecutive_failures,
                 'people': self.people, 'pose': self.robot_pose(), 'sim_time': round(self.now(), 1),
                 'places': {k: v[0] for k, v in self.places.items()},
                 'thresholds': {k: self.cfg[k] for k in ('battery_critical', 'battery_low',
@@ -265,6 +271,7 @@ class Mission:
         self.mgr = mgr
         self.nav = BasicNavigator('delivery_navigator')
         self.planner = BasicNavigator('delivery_energy_planner')   # separate node: path queries
+        self.planner.get_logger().set_level(rclpy.logging.LoggingSeverity.WARN)  # one query every few s
         self.last_energy_check = 0.0
         self.last_good_map_odom = None
 
@@ -377,23 +384,30 @@ class Mission:
     def navigate(self, x, y, yaw, label, away=True):
         """One Nav2 NavigateToPose with monitoring. Returns True on success."""
         self.nav.goToPose(self.pose_msg(x, y, yaw))
-        best, best_t, blocked, recoveries = float('inf'), self.mgr.now(), False, 0
+        blocked, recoveries = False, 0
+        anchor, anchor_t = self.mgr.robot_pose(), self.mgr.now()
         base_state = self.mgr.state
         try:
             while not self.nav.isTaskComplete():
                 self.check_interrupts(away)
                 self.localization_watchdog()
                 fb = self.nav.getFeedback()
+                # blocked = the robot has not really moved (10 cm or 30 deg) for a while
+                pose = self.mgr.robot_pose()
+                if pose is not None and anchor is not None and (
+                        math.hypot(pose[0] - anchor[0], pose[1] - anchor[1]) > 0.10 or
+                        abs(math.remainder(pose[2] - anchor[2], 2 * math.pi)) > 0.5):
+                    anchor, anchor_t = pose, self.mgr.now()
+                    if blocked:
+                        blocked = False
+                        self.mgr.event('nav', 'Moving again towards %s' % label)
+                elif anchor is None:
+                    anchor, anchor_t = pose, self.mgr.now()
+                elif not blocked and self.mgr.now() - anchor_t > self.mgr.cfg['blocked_after_sec']:
+                    blocked = True
+                    self.mgr.event('nav', 'Blocked on the way to %s (people around: %s) - waiting / replanning'
+                                   % (label, self.mgr.people.get('count', 0)))
                 if fb is not None:
-                    if fb.distance_remaining < best - 0.1:
-                        best, best_t = fb.distance_remaining, self.mgr.now()
-                        if blocked:
-                            blocked = False
-                            self.mgr.event('nav', 'Path clear again, moving to %s' % label)
-                    elif not blocked and self.mgr.now() - best_t > self.mgr.cfg['blocked_after_sec']:
-                        blocked = True
-                        self.mgr.event('nav', 'Blocked on the way to %s (people: %s) - waiting / replanning'
-                                       % (label, self.mgr.people.get('count', 0)))
                     if fb.number_of_recoveries > recoveries:
                         recoveries = fb.number_of_recoveries
                         self.mgr.event('recovery', 'Nav2 recovery #%d on the way to %s' % (recoveries, label))
@@ -405,13 +419,43 @@ class Mission:
             raise
         return self.nav.getResult() == TaskResult.SUCCEEDED
 
+    def wait_for_path(self, pose, label, away):
+        """Reachability check with the global planner before committing to a goal.
+
+        A route blocked by people usually clears within seconds: re-check (clearing
+        stale obstacles) for up to path_wait_sec, then give up on this approach.
+        """
+        m = self.mgr
+        deadline = m.now() + m.cfg['path_wait_sec']
+        announced = False
+        while True:
+            self.check_interrupts(away)
+            _, ok = self.path_length(None, pose)
+            if ok:
+                if announced:
+                    m.event('nav', 'Route to %s is free again' % label)
+                return True
+            if not announced:
+                m.event('nav', 'No route to %s right now (blocked?) - re-checking for %.0f s'
+                        % (label, m.cfg['path_wait_sec']))
+                announced = True
+                m.set_state(m.state, 'waiting: route blocked')
+            if m.now() > deadline:
+                return False
+            self.nav.clearAllCostmaps()
+            m.sleep(2.0)
+
     def go(self, name, away=True, label=None):
-        """Navigate to a named place, trying each approach pose. Raises Abort if impossible."""
+        """Navigate to a named place, trying each approach pose. Returns False if impossible."""
         label = label or name
         poses = self.mgr.places[name]
         for i, (x, y, yaw) in enumerate(poses):
             for attempt in range(int(self.mgr.cfg['nav_attempts_per_pose'])):
+                if not self.wait_for_path((x, y, yaw), label, away):
+                    self.mgr.event('failure', 'Approach %d/%d of %s unreachable' % (i + 1, len(poses), label))
+                    break
                 if self.navigate(x, y, yaw, label, away):
+                    self.rotate_to(yaw, tol=0.08)   # face the window / table
                     return True
                 self.mgr.event('failure', 'Navigation to %s failed (approach %d/%d, attempt %d)' % (
                     label, i + 1, len(poses), attempt + 1))
@@ -463,41 +507,90 @@ class Mission:
                 m.docked = False
             m.event('dock', 'Undocked')
 
+    def goto_point(self, tx, ty, tol=0.03, timeout=25.0):
+        """Short, precise closed-loop move to (tx, ty) on the localized pose: turn to
+        face the point, then drive with heading correction (used for docking)."""
+        m = self.mgr
+        end = m.now() + timeout
+        cmd = Twist()
+        while m.now() < end and not m.estop:
+            pose = m.robot_pose()
+            if pose is None:
+                break
+            dx, dy = tx - pose[0], ty - pose[1]
+            dist = math.hypot(dx, dy)
+            if dist < tol:
+                break
+            err = math.remainder(math.atan2(dy, dx) - pose[2], 2 * math.pi)
+            if abs(err) > 0.35:
+                cmd.linear.x, cmd.angular.z = 0.0, math.copysign(min(0.5, max(0.15, abs(err))), err)
+            else:
+                cmd.linear.x = min(0.12, max(0.04, 0.6 * dist))
+                cmd.angular.z = max(-0.4, min(0.4, 1.5 * err))
+            m.cmd_pub.publish(cmd)
+            time.sleep(0.05)
+        m.cmd_pub.publish(Twist())
+
+    def reverse_onto_dock(self, dx, dy, dyaw, speed=0.08, timeout=40.0):
+        """Straight reverse along the dock axis, holding the heading and correcting
+        the lateral offset, until the robot reaches the charging pad."""
+        m = self.mgr
+        end = m.now() + timeout
+        cmd = Twist()
+        c, s = math.cos(dyaw), math.sin(dyaw)
+        while m.now() < end and not m.estop:
+            pose = m.robot_pose()
+            if pose is None:
+                break
+            along = (pose[0] - dx) * c + (pose[1] - dy) * s       # > 0: still in front of the pad
+            lateral = -(pose[0] - dx) * s + (pose[1] - dy) * c
+            if along < 0.015:
+                break
+            # reversing: a small positive yaw moves the robot to its right, so the
+            # desired heading leans towards the axis by an amount ~ lateral offset
+            desired = dyaw + max(-0.2, min(0.2, 1.2 * lateral))
+            heading_err = math.remainder(desired - pose[2], 2 * math.pi)
+            cmd.linear.x = -min(speed, max(0.03, along))
+            cmd.angular.z = max(-0.3, min(0.3, 2.0 * heading_err))
+            m.cmd_pub.publish(cmd)
+            time.sleep(0.05)
+        m.cmd_pub.publish(Twist())
+
     def dock(self, reason):
         """Return to the dock and get onto the charging contacts. True when charging."""
         m = self.mgr
         m.set_state(TO_DOCK)
         m.event('dock', 'Returning to dock: %s' % reason)
         dx, dy, dyaw = m.places['dock'][0]
+        px, py, _ = m.places['pre_dock'][0]
         for attempt in range(3):
             if not self.go('pre_dock', away=False, label='the dock'):
                 continue
             m.set_state(DOCKING)
-            self.rotate_to(dyaw)
+            # Nav2 stops within 25 cm of the pre-dock pose: fine alignment on the axis
+            self.goto_point(px, py)
+            self.rotate_to(dyaw, tol=0.03)
             pose = m.robot_pose()
-            if pose is not None:
-                # lateral offset to the docking axis
-                lat = -(pose[0] - dx) * math.sin(dyaw) + (pose[1] - dy) * math.cos(dyaw)
-                if abs(lat) > 0.08:
-                    m.event('dock', 'Docking: %.2f m off the axis, re-approaching' % lat)
-                    continue
-            px, py, _ = m.places['pre_dock'][0]
-            dist = math.hypot(px - dx, py - dy)
-            def on_pad():
-                p = m.robot_pose()
-                return p is not None and math.hypot(p[0] - dx, p[1] - dy) < 0.03
-            self.drive(-(dist + 0.05), 0.08, until=on_pad)
+            lat = 0.0 if pose is None else -(pose[0] - dx) * math.sin(dyaw) + (pose[1] - dy) * math.cos(dyaw)
+            if abs(lat) > 0.06:
+                m.event('dock', 'Docking: %.2f m off the axis, aligning again' % lat)
+                self.drive(0.3, 0.1)
+                continue
+            self.reverse_onto_dock(dx, dy, dyaw)
             self.mgr.sleep(1.5)
             if m.battery.get('on_dock', False) or m.battery.get('charging', False):
                 with m.lock:
                     m.docked = True
                     m.dock_requested = False
                 m.set_state(DOCKED)
-                m.event('dock', 'Docked, charging contacts OK (%.0f%%)' % m.soc)
+                pose = m.robot_pose() or (dx, dy, dyaw)
+                m.event('dock', 'Docked, charging contacts OK (%.0f%%), pad offset %.1f cm' % (
+                    m.soc, 100 * math.hypot(pose[0] - dx, pose[1] - dy)))
                 return True
             m.event('failure', 'Docking attempt %d: no charging contact, retrying' % (attempt + 1))
             self.drive(0.6, 0.12)
-        m.set_state(ERROR, 'docking failed')
+        m.error = 'docking failed'
+        m.set_state(ERROR, 'docking failed - send "resume"')
         m.event('error', 'Docking failed 3 times - operator needed')
         return False
 
@@ -516,6 +609,9 @@ class Mission:
             m.set_state(LOADING)
             self.wait_checked(m.cfg['load_time_sec'])
             m.set_state(TO_TABLE)
+            # deliberate departure: turn in place towards the dining room before handing
+            # over to Nav2 (the robot is 25 cm from the counter of the serving window)
+            self.rotate_to(m.cfg['pickup_depart_yaw'], tol=0.1)
             if not self.go(order['table']):
                 raise Abort('%s unreachable' % order['table'])
             m.set_state(SERVING)
@@ -622,16 +718,19 @@ class Mission:
         with m.lock:
             order = m.queue[0] if m.queue else None
             docked = m.docked
-        if m.state == ERROR:
-            if m.consecutive_failures == 0:      # operator sent "resume"
-                m.set_state(DOCKED if docked else IDLE)
+        if m.error:
+            if m.state != ERROR:
+                m.set_state(ERROR, '%s - send "resume"' % m.error)
             return idle_since
+        if m.state == ERROR:                     # operator sent "resume"
+            m.set_state(DOCKED if docked else IDLE)
+            return m.now()
         if m.consecutive_failures >= m.cfg['max_consecutive_failures']:
             m.event('error', '%d consecutive failed deliveries - returning to dock, operator needed'
                     % m.consecutive_failures)
             if not docked:
                 self.dock('too many failures')
-            m.set_state(ERROR, 'send "resume" to continue')
+            m.error = '%d failed deliveries' % m.consecutive_failures
             return idle_since
         if not docked:
             if m.soc <= m.cfg['battery_critical']:

@@ -13,8 +13,8 @@
 //   - if the robot is right in front of it (closer than `yield_distance`, inside a
 //     +-50 deg cone), it stops and waits like a polite pedestrian;
 //   - if it has been waiting more than `max_yield_time` s, it turns around and
-//     walks back to the previous waypoint (avoids a robot/person standoff in a
-//     corridor).
+//     walks back to the previous waypoint, ignoring the robot for 4 s while it
+//     does so (two polite agents waiting for each other would deadlock).
 //
 // SDF parameters (all optional except <waypoint>):
 //   <waypoint>x y</waypoint>        (repeat, world frame, metres)
@@ -102,22 +102,23 @@ private:
       return;
     }
 
-    // Yield to the robot when it is right in front of us.
-    if (RobotAhead()) {
+    // Yield to the robot when it is right in front of us (stop walking, keep turning).
+    bool yielding = false;
+    if (now >= ignore_robot_until_ && RobotAhead()) {
       if (yield_start_ < 0.0) {
         yield_start_ = now;
       }
       if (now - yield_start_ < max_yield_time_) {
-        Apply();
-        return;
+        yielding = true;
+      } else {
+        // Waited long enough: give way by walking back to the previous waypoint,
+        // without re-checking the robot while turning around and leaving.
+        std::swap(target_, previous_);
+        direction_ = -direction_;
+        ignore_robot_until_ = now + 4.0;
+        yield_start_ = -1.0;
       }
-      // Waited long enough: give way by turning back.
-      std::swap(target_, previous_);
-      if (target_ == previous_) {
-        previous_ = target_ == 0 ? 1 : target_ - 1;
-      }
-      yield_start_ = -1.0;
-    } else {
+    } else if (now >= ignore_robot_until_) {
       yield_start_ = -1.0;
     }
 
@@ -137,7 +138,7 @@ private:
     const double max_turn = 2.5 * dt;
     yaw_ += std::clamp(err, -max_turn, max_turn);
     double step = 0.0;
-    if (std::fabs(err) < 0.6) {
+    if (!yielding && std::fabs(err) < 0.6) {
       step = std::min(speed_ * dt, dist);
       pos_ += to_goal * (step / dist);
     }
@@ -214,6 +215,7 @@ private:
   double last_time_{0.0};
   double wait_until_{0.0};
   double yield_start_{-1.0};
+  double ignore_robot_until_{0.0};
   std::string body_name_;
   std::string robot_name_;
 };

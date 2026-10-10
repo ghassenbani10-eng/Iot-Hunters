@@ -96,7 +96,10 @@ controller_server:
     controller_plugins: [FollowPath]
     # the robot may legitimately stand still while a person crosses: 15 s allowance
     progress_checker: {plugin: 'nav2_controller::SimpleProgressChecker', required_movement_radius: 0.3, movement_time_allowance: 15.0}
-    general_goal_checker: {stateful: true, plugin: 'nav2_controller::SimpleGoalChecker', xy_goal_tolerance: 0.25, yaw_goal_tolerance: 0.35}
+    # heading is NOT checked by Nav2 (Humble RPP prunes the whole path once inside the xy
+    # tolerance and then aborts with "plan has 0 poses"): the delivery manager turns the
+    # robot to the final heading itself (window / table / dock axis)
+    general_goal_checker: {stateful: true, plugin: 'nav2_controller::SimpleGoalChecker', xy_goal_tolerance: 0.25, yaw_goal_tolerance: 3.14}
     FollowPath: {plugin: 'nav2_rotation_shim_controller::RotationShimController', primary_controller: 'nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController',
       angular_dist_threshold: 0.785, forward_sampling_distance: 0.5, rotate_to_heading_angular_vel: 0.8, max_angular_accel: 2.0,
       simulate_ahead_time: 1.0, desired_linear_vel: 0.40, lookahead_dist: 0.7, min_lookahead_dist: 0.35, max_lookahead_dist: 1.0,
@@ -104,7 +107,7 @@ controller_server:
       approach_velocity_scaling_dist: 0.8, use_collision_detection: true, max_allowed_time_to_collision_up_to_carrot: 1.5,
       use_regulated_linear_velocity_scaling: true, use_cost_regulated_linear_velocity_scaling: true, regulated_linear_scaling_min_radius: 0.9,
       regulated_linear_scaling_min_speed: 0.10, cost_scaling_dist: 0.5, cost_scaling_gain: 1.0, inflation_cost_scaling_factor: 4.0,
-      use_rotate_to_heading: true, rotate_to_heading_min_angle: 0.785,
+      use_rotate_to_heading: false,
       allow_reversing: false, max_robot_pose_search_dist: 10.0}
 local_costmap:
   local_costmap:
@@ -226,21 +229,28 @@ collision_monitor:
     base_shift_correction: true
     stop_pub_timeout: 2.0
     # footprint: x in [-0.27, 0.27], y in [-0.25, 0.25]; the lidar sees the front 290 deg
-    polygons: [PolygonStop, PolygonSlow, FootprintApproach]
-    PolygonStop:     # something within 15 cm of the front bumper: immediate stop
+    polygons: [PolygonStop, PolygonSlow]
+    # Static polygons do not depend on the motion: a large stop zone also freezes
+    # rotation, and a robot turning in place 0.5 m from a wall (serving window)
+    # would sweep its corner over the wall and never be able to turn away.
+    # So: a small "bumper" stop zone + a slowdown zone. The footprint collision check
+    # of the controller (RPP, along the path to the carrot) prevents driving into
+    # obstacles; the "approach" model was tested and removed: near walls it toggled
+    # approach/continue every 100-200 ms and made the robot stutter.
+    PolygonStop:     # something within 7 cm of the bumper, in front: immediate stop
       type: polygon
-      points: [0.42, 0.28, 0.42, -0.28, 0.15, -0.28, 0.15, 0.28]
+      points: [0.34, 0.22, 0.34, -0.22, 0.2, -0.22, 0.2, 0.22]
       action_type: stop
       max_points: 3
       visualize: true
       polygon_pub_topic: polygon_stop
       enabled: true
-    PolygonSlow:     # something within 55 cm ahead: 40 % speed
+    PolygonSlow:     # something within 45 cm ahead: 50 % speed
       type: polygon
-      points: [0.82, 0.34, 0.82, -0.34, 0.15, -0.34, 0.15, 0.34]
+      points: [0.72, 0.30, 0.72, -0.30, 0.2, -0.30, 0.2, 0.30]
       action_type: slowdown
       max_points: 3
-      slowdown_ratio: 0.4
+      slowdown_ratio: 0.5
       visualize: true
       polygon_pub_topic: polygon_slowdown
       enabled: true
@@ -269,9 +279,8 @@ people_tracker:
     close_distance: 2.2
     close_speed_pct: 70.0
     zone_speed_pct: 60.0
-    # narrow passages, map frame (= world + (9, 0)): [xmin, xmax, ymin, ymax] * n
-    #   kitchen door D1, service corridor + door D2, west corridor, lounge door D3
-    slow_zones: [4.2, 5.8, 2.2, 3.8,
-                 15.9, 17.5, 2.2, 10.4,
-                 6.4, 17.5, 8.8, 10.4,
-                 9.7, 11.2, 8.0, 9.7]
+    # narrow passages, map frame (= world + (9, -2.2)): [xmin, xmax, ymin, ymax] * n
+    #   service door D2 + service corridor, west corridor, lounge door D3
+    slow_zones: [15.9, 17.5, 0.0, 8.2,
+                 6.4, 17.5, 6.6, 8.2,
+                 9.7, 11.2, 5.8, 7.5]

@@ -7,7 +7,8 @@ Pipeline, on every lidar scan:
      person size become detections (centroid pushed back by ~ the body radius,
      because the lidar only sees the near side of a person);
   3. a multi-target tracker (constant-velocity Kalman filter per track,
-     nearest-neighbour gating) estimates position and velocity;
+     nearest-neighbour gating) estimates position and velocity; a track counts
+     as a person once it has walked 0.6 m (furniture never does);
   4. outputs:
      /people                 std_msgs/String JSON: tracks, count, nearest distance
      /people/cost_mask       nav_msgs/OccupancyGrid: cost mask of where each moving
@@ -54,6 +55,8 @@ class Track:
         self.x = np.array([z[0], z[1], 0.0, 0.0])
         self.P = np.diag([0.05, 0.05, 1.0, 1.0])
         self.hits, self.last_seen, self.t = 1, t, t
+        self.origin = (z[0], z[1])
+        self.walked = False      # becomes a person once it has really moved
 
     def predict(self, t, q=1.5):
         dt = max(0.0, t - self.t)
@@ -72,6 +75,8 @@ class Track:
         self.P = (np.eye(4) - K @ H) @ self.P
         self.hits += 1
         self.last_seen = t
+        if math.hypot(self.x[0] - self.origin[0], self.x[1] - self.origin[1]) > 0.6:
+            self.walked = True
 
     @property
     def speed(self):
@@ -83,9 +88,9 @@ class PeopleTracker(Node):
     def __init__(self):
         super().__init__('people_tracker')
         params = {
-            'static_margin': 0.2, 'cluster_gap': 0.25, 'min_points': 3, 'max_cluster_size': 0.9,
+            'static_margin': 0.3, 'cluster_gap': 0.25, 'min_points': 3, 'max_cluster_size': 0.9,
             'body_radius': 0.22, 'gate': 0.8, 'confirm_hits': 3, 'track_timeout': 1.0,
-            'max_range': 8.0, 'horizon': 2.0, 'horizon_step': 0.25, 'moving_speed': 0.15,
+            'max_range': 8.0, 'horizon': 2.0, 'horizon_step': 0.25, 'moving_speed': 0.25,
             'mask_resolution': 0.1, 'mask_publish_hz': 5.0,
             'near_distance': 1.2, 'near_speed_pct': 45.0, 'close_distance': 2.2, 'close_speed_pct': 70.0,
             'zone_speed_pct': 60.0,
@@ -102,7 +107,12 @@ class PeopleTracker(Node):
         self.static = None       # (dist_to_occupied grid, origin x, origin y, res)
         self.tracks = []
         self.tf = Buffer()
-        TransformListener(self.tf, self)
+        # TF is received by a helper node spun in its own thread: on_scan waits for the
+        # transform at the scan time, which could never arrive if the listener shared
+        # this node's (single-threaded) executor.
+        self.tf_node = rclpy.create_node('people_tracker_tf', parameter_overrides=[
+            rclpy.parameter.Parameter('use_sim_time', value=self.get_parameter('use_sim_time').value)])
+        self.tf_listener = TransformListener(self.tf, self.tf_node, spin_thread=True)
         self.create_subscription(OccupancyGrid, '/map', self.on_map, LATCHED)
         self.create_subscription(LaserScan, '/scan', self.on_scan, qos_profile_sensor_data)
         self.people_pub = self.create_publisher(String, '/people', 10)
@@ -111,6 +121,7 @@ class PeopleTracker(Node):
         self.marker_pub = self.create_publisher(MarkerArray, '/people/markers', 10)
         self.speed_pub = self.create_publisher(SpeedLimit, '/speed_limit', 10)
         self.last_mask = 0.0
+        self.last_mask_digest = None
         self.last_speed = None
         self.last_speed_pub = 0.0
         self.create_timer(1.0 / float(self.p['mask_publish_hz']), self.publish_outputs)
@@ -160,6 +171,11 @@ class PeopleTracker(Node):
         py = sy + r * np.sin(a + yaw)
         dyn = ~self.is_static(px, py)
         detections = self.cluster(px[dyn], py[dyn], sx, sy)
+        # a person's centre cannot be inside ~0.45 m of the robot centre (body radius
+        # 0.22 + robot half-width 0.25): such clusters are artefacts, not people
+        robot = self.robot_xy()
+        if robot is not None:
+            detections = [d for d in detections if math.hypot(d[0] - robot[0], d[1] - robot[1]) > 0.45]
         self.track(detections, t)
 
     def cluster(self, xs, ys, sx, sy):
@@ -200,7 +216,10 @@ class PeopleTracker(Node):
 
     # ------------------------------------------------------------- outputs
     def confirmed(self):
-        return [tr for tr in self.tracks if tr.hits >= self.p['confirm_hits']]
+        """Tracks that are people: seen several times and have walked at least 0.6 m.
+        Clusters that never move (furniture edges, a trolley...) stay plain obstacles
+        for the costmaps; they get no motion prediction and no social speed limit."""
+        return [tr for tr in self.tracks if tr.hits >= self.p['confirm_hits'] and tr.walked]
 
     def robot_xy(self):
         try:
@@ -261,6 +280,13 @@ class PeopleTracker(Node):
                 t = k * self.p['horizon_step']
                 frac = t / self.p['horizon']
                 stamp(tr.x[0] + tr.x[2] * t, tr.x[1] + tr.x[3] * t, 0.32, int(round(95 - 55 * frac)))
+        # republish only when the mask changes (or every 2 s): each new mask makes
+        # both costmaps re-process their filter
+        digest = hash(mask.tobytes())
+        now = self.get_clock().now().nanoseconds * 1e-9
+        if digest == self.last_mask_digest and now - self.last_mask < 2.0:
+            return
+        self.last_mask_digest, self.last_mask = digest, now
         msg = OccupancyGrid()
         msg.header.frame_id = self.p['global_frame']
         msg.header.stamp = self.get_clock().now().to_msg()

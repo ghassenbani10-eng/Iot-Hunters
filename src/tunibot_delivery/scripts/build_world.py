@@ -1,21 +1,23 @@
 #!/usr/bin/env python3
 """Phase 2 layout generator for worlds/restaurant.world.
 
-Adds to the Phase 1 dining room (idempotent: re-running replaces the generated
-block between the GENERATED markers):
+The restaurant is divided in two by a partition wall at y = 3.0:
+  * north-west: the KITCHEN (staff only). Cooks hand the food to the robot
+    through two SERVING WINDOWS in the partition (counter at 0.95 m, opening
+    up to 1.75 m). The robot never enters the kitchen (staff-only keepout zone);
+    staff reach the dining room through a staff door and the service corridor.
+  * south: the DINING ROOM (Phase 1 tables); the charging dock is in its
+    north-west corner, next to the serving windows.
+  * north-east (customer side): a VIP lounge reached from the dining room
+    through door D2 (0.9 m), a 1.05 m service corridor, an L-turn into a
+    1.36 m corridor and door D3 (0.9 m) - the tight-passage part of Phase 2.
 
-  * a full-height partition wall at y = 3.0 with two 0.9 m doorways
-      - D1 (x = -4.0): dining room -> kitchen
-      - D2 (x = 7.7) : dining room -> service corridor
-  * a kitchen (north-west) with the pickup pass counter, a stove island,
-    fridges and shelves
-  * a 1.05 m wide service corridor going north, an L-turn into a 1.36 m wide
-    corridor going west, and a third 0.9 m doorway D3 into a VIP lounge
-    with two tables (table_8, table_9)
-  * walking people: Gazebo actors driven by libtunibot_human_actor.so, each
-    with an invisible collision body so the lidar/bumper perceive them
-  * the gazebo_ros_state plugin (ground-truth poses for the test metrics)
-  * the open exterior door in the south wall is closed
+Also generated (idempotent: re-running replaces the block between the
+GENERATED markers): kitchen furniture, VIP tables, walking people (Gazebo
+actors driven by libtunibot_human_actor.so, each with an invisible collision
+body so the lidar/bumper perceive them), the gazebo_ros_state plugin
+(ground-truth poses for the tests), the closed exterior door of the south wall,
+and the docking station pose.
 
 usage: build_world.py [world_file] [--no-humans OUT]
   default world_file: ../worlds/restaurant.world
@@ -37,30 +39,52 @@ X_MIN, X_MAX = -10.415, 9.535     # inner faces of the west / east walls
 Y_MAX = 10.34                      # inner face of the north wall
 Y_PART = 3.0                       # partition wall centre line
 
-# Wall segments as (x1, y1, x2, y2) centre lines, world frame.
+# Docking station (world frame). The robot spawns on it, facing +x: SLAM map origin.
+DOCK_STATION = (-9.75, 2.2)
+ROBOT_DOCK = (-9.0, 2.2)
+
+# Serving windows in the kitchen/dining partition: centre x, width; sill and top heights
+WINDOWS = [(-6.5, 1.0), (-4.5, 1.0)]
+SILL_Z, TOP_Z = 0.95, 1.75
+
+# Full-height wall segments: (x1, y1, x2, y2[, extend_start, extend_end]), centre
+# lines, world frame. Ends are extended by half the thickness to close corners,
+# except at door edges (extend flag False) so that doors keep their nominal width.
 WALLS = [
-    # partition, doorways D1 [-4.45, -3.55] and D2 [7.25, 8.15]
-    (X_MIN, Y_PART, -4.45, Y_PART),
-    (-3.55, Y_PART, 7.25, Y_PART),
-    (8.15, Y_PART, X_MAX, Y_PART),
-    # kitchen east wall
-    (-2.5, Y_PART, -2.5, Y_MAX),
-    # service corridor: west wall (lounge side) and east wall (storage side)
+    # partition, kitchen part (with the serving windows) is generated from WINDOWS;
+    # customer part: door D2 [7.25, 8.15] (0.9 m) into the service corridor
+    (-2.5, Y_PART, 7.25, Y_PART, True, False),
+    (8.15, Y_PART, X_MAX, Y_PART, False, True),
+    # kitchen east wall, staff door [9.1, 10.0] onto the west corridor
+    (-2.5, Y_PART, -2.5, 9.1, True, False),
+    (-2.5, 10.0, -2.5, Y_MAX, False, True),
+    # service corridor: west wall (lounge side) and east wall (storage side), 1.05 m clear.
+    # The east wall has two recessed storage doors (niches, see NICHES): a long corridor
+    # with two flat parallel walls gives a lidar nothing to measure along its axis.
     (7.1, Y_PART, 7.1, 8.9),
-    (8.3, Y_PART, 8.3, Y_MAX),
-    # lounge north wall = south side of the west corridor, doorway D3 [1.0, 1.9]
-    (-2.5, 8.9, 1.0, 8.9),
-    (1.9, 8.9, 7.1, 8.9),
+    (8.3, Y_PART, 8.3, 4.4, True, False),
+    (8.3, 5.2, 8.3, 7.1, False, False),
+    (8.3, 8.3, 8.3, Y_MAX, False, True),
+    # lounge north wall = south side of the west corridor, doorway D3 [1.0, 1.9] (0.9 m)
+    (-2.5, 8.9, 1.0, 8.9, True, False),
+    (1.9, 8.9, 7.1, 8.9, False, True),
     # close the exterior door of the south wall
     (7.55, -9.686, 8.6, -9.686),
 ]
 
+# Backs of the corridor niches: (x, y_from, y_to), 0.15 m behind the corridor wall.
+# Different widths and irregular spacing on purpose: identical, evenly spaced
+# features make a corridor look the same at two places (perceptual aliasing).
+NICHES = [(8.45, 4.4, 5.2), (8.45, 7.1, 8.3)]
+
 # Static furniture: (name, cx, cy, sx, sy, sz, material)
 FURNITURE = [
-    ('pickup_counter', -4.0, 6.5, 1.8, 0.6, 0.95, 'Gazebo/Wood'),
-    ('stove_island', -7.5, 6.5, 3.0, 1.0, 0.95, 'Gazebo/Grey'),
-    ('fridge_1', -10.05, 4.2, 0.7, 0.8, 2.0, 'Gazebo/White'),
-    ('fridge_2', -10.05, 5.1, 0.7, 0.8, 2.0, 'Gazebo/White'),
+    ('pass_counter_1', -6.5, 3.35, 1.4, 0.55, 0.95, 'Gazebo/Wood'),   # kitchen side of the windows
+    ('pass_counter_2', -4.5, 3.35, 1.4, 0.55, 0.95, 'Gazebo/Wood'),
+    ('stove_island', -7.0, 6.5, 3.6, 1.0, 0.95, 'Gazebo/Grey'),
+    ('prep_table', -4.0, 6.5, 1.6, 0.8, 0.95, 'Gazebo/Wood'),
+    ('fridge_1', -10.05, 4.6, 0.7, 0.8, 2.0, 'Gazebo/White'),
+    ('fridge_2', -10.05, 5.5, 0.7, 0.8, 2.0, 'Gazebo/White'),
     ('kitchen_shelf', -6.5, 9.95, 6.0, 0.6, 1.8, 'Gazebo/DarkGrey'),
     ('storage_rack', 8.9, 6.5, 1.0, 5.0, 1.8, 'Gazebo/DarkGrey'),
     ('lounge_sofa', 3.0, 3.45, 3.0, 0.7, 0.8, 'Gazebo/Red'),
@@ -73,7 +97,7 @@ VIP_TABLES = [('cafe_table_vip_1', 0.5, 6.0), ('cafe_table_vip_2', 4.5, 6.0)]
 HUMANS = [
     ('human_waiter', [(-7.5, 0.9), (6.0, 0.9)], 0.75, 3.0, 5.0),
     ('human_guest', [(2.4, -4.2), (2.4, 1.8)], 0.6, 4.0, 12.0),
-    ('human_cook', [(-8.2, 5.0), (-5.6, 5.0)], 0.5, 5.0, 3.0),
+    ('human_cook', [(-8.6, 4.3), (-3.6, 4.3)], 0.5, 5.0, 3.0),
     ('human_vip', [(-1.5, 7.6), (6.2, 7.6)], 0.55, 6.0, 20.0),
 ]
 
@@ -92,16 +116,39 @@ def box_link(name, cx, cy, cz, sx, sy, sz, yaw, material):
 
 def layout_model():
     links = []
-    for i, (x1, y1, x2, y2) in enumerate(WALLS):
-        length = math.hypot(x2 - x1, y2 - y1) + T  # overlap the corners
+    for i, w in enumerate(WALLS):
+        x1, y1, x2, y2 = w[:4]
+        ext1, ext2 = (w[4], w[5]) if len(w) > 4 else (True, True)
         yaw = math.atan2(y2 - y1, x2 - x1)
+        ux, uy = math.cos(yaw), math.sin(yaw)
+        if ext1:
+            x1, y1 = x1 - ux * T / 2, y1 - uy * T / 2
+        if ext2:
+            x2, y2 = x2 + ux * T / 2, y2 + uy * T / 2
         links.append(box_link('wall_%d' % i, (x1 + x2) / 2, (y1 + y2) / 2, H / 2,
-                              length, T, H, yaw, 'Gazebo/Grey'))
+                              math.hypot(x2 - x1, y2 - y1), T, H, yaw, 'Gazebo/Grey'))
+    for i, (x, y0, y1) in enumerate(NICHES):
+        links.append(box_link('niche_%d' % i, x, (y0 + y1) / 2, H / 2, T, y1 - y0 + T, H, 0.0, 'Gazebo/Wood'))
+    # kitchen/dining partition with serving windows: below the sill and above the
+    # opening the wall is continuous; between the windows it is full height
+    x = X_MIN
+    for i, (wx, ww) in enumerate(sorted(WINDOWS) + [(-2.5 + 0.5, 1.0)]):
+        x0, x1 = wx - ww / 2, wx + ww / 2
+        if x0 > x:   # full-height pier
+            links.append(box_link('partition_pier_%d' % i, (x + x0) / 2, Y_PART, H / 2,
+                                  x0 - x + T / 2, T, H, 0.0, 'Gazebo/Grey'))
+        if i < len(WINDOWS):
+            links.append(box_link('window_%d_sill' % i, wx, Y_PART, SILL_Z / 2, ww, T, SILL_Z, 0.0, 'Gazebo/Grey'))
+            links.append(box_link('window_%d_lintel' % i, wx, Y_PART, (TOP_Z + H) / 2, ww, T, H - TOP_Z,
+                                  0.0, 'Gazebo/Grey'))
+            links.append(box_link('window_%d_ledge' % i, wx, Y_PART, SILL_Z + 0.015, ww, 0.3, 0.03, 0.0,
+                                  'Gazebo/Wood'))
+        x = x1
     for name, cx, cy, sx, sy, sz, mat in FURNITURE:
         links.append(box_link(name, cx, cy, sz / 2, sx, sy, sz, 0.0, mat))
     # visual-only floor markings: charging pad, pickup spot, doorways
-    marks = [('mark_dock', -9.0, 0.0, 0.7, 0.7, 'Gazebo/Green'),
-             ('mark_pickup', -4.0, 5.3, 0.6, 0.6, 'Gazebo/Yellow')]
+    marks = [('mark_dock', ROBOT_DOCK[0], ROBOT_DOCK[1], 0.7, 0.7, 'Gazebo/Green')]
+    marks += [('mark_window_%d' % i, wx, Y_PART - 0.55, 0.6, 0.6, 'Gazebo/Yellow') for i, (wx, _) in enumerate(WINDOWS)]
     for name, cx, cy, sx, sy, mat in marks:
         links.append(f"""
       <link name='{name}'>
@@ -172,8 +219,16 @@ def remove_old_partition(text):
     return re.sub(r"\n\s*<link name='Wall_16'>.*?</link>", '', text, flags=re.S)
 
 
+# Default gzclient camera: whole venue seen from the south, ~45 deg down (good for videos)
+GUI_CAMERA_POSE = '0.0 -17.5 19.0 0 0.86 1.5708'
+
+
 def generate(base, humans=True):
     text = re.sub(r'\n\s*' + re.escape(BEGIN) + '.*?' + re.escape(END), '', base, flags=re.S)
+    text = re.sub(r"(<camera name='user_camera'>\s*<pose>)[^<]*(</pose>)",
+                  r'\g<1>%s\g<2>' % GUI_CAMERA_POSE, text)
+    text = re.sub(r'(<model name="docking_station">\s*<static>1</static>\s*<pose>)[^<]*(</pose>)',
+                  r'\g<1>%s %s 0 0 0 0\g<2>' % DOCK_STATION, text)
     text = remove_old_partition(text)
     block = '\n    %s%s%s%s%s\n    %s' % (BEGIN, layout_model(), vip_tables(text),
                                          human_models() if humans else '', STATE_PLUGIN, END)

@@ -102,7 +102,7 @@
     <canvas id="map" width="900" height="560"></canvas>
     <div class="legend"><span class="dot" style="background:#2563eb"></span>robot
       <span class="dot" style="background:#ea580c"></span>person (tracked, arrow = predicted 2 s)
-      <span class="dot" style="background:#16a34a"></span>dock / kitchen <span class="dot" style="background:#7c3aed"></span>tables</div>
+      <span class="dot" style="background:#16a34a"></span>dock / kitchen window <span class="dot" style="background:#7c3aed"></span>tables</div>
   </section>
 
   <section>
@@ -153,7 +153,7 @@ function drawMap() {
     const [x, y] = P(p[0], p[1]);
     ctx.fillStyle = name.startsWith('table') ? '#7c3aed' : '#16a34a';
     ctx.beginPath(); ctx.arc(x, y, 4, 0, 7); ctx.fill();
-    ctx.font = '11px system-ui'; ctx.fillText(name.startsWith('table') ? label(name) : name, x + 6, y - 4);
+    ctx.font = '11px system-ui'; ctx.fillText(name.startsWith('table') ? label(name) : ({pickup: 'kitchen window', dock: 'dock'}[name] || name), x + 6, y - 4);
   }
   for (const t of (people.tracks || [])) {
     const [x, y] = P(t.x, t.y);

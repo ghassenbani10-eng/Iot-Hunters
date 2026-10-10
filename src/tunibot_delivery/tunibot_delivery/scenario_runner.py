@@ -31,7 +31,7 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from std_msgs.msg import Bool, Float32, String
 
-DOCK_WORLD = (-9.0, 0.0)          # map = world - DOCK_WORLD
+DOCK_WORLD = (-9.0, 2.2)          # map = world - DOCK_WORLD
 HALF_L, HALF_W = 0.27, 0.25       # robot footprint half sizes
 BODY_R = 0.22
 
@@ -242,6 +242,18 @@ class Runner(Node):
         x, y, yaw = self.truth['waiter_robot']
         return x - DOCK_WORLD[0], y - DOCK_WORLD[1], yaw
 
+    def ahead(self, forward, left=0.0):
+        """Map-frame point relative to the robot's true pose and heading."""
+        x, y, yaw = self.robot_map()
+        return (x + forward * math.cos(yaw) - left * math.sin(yaw),
+                y + forward * math.sin(yaw) + left * math.cos(yaw))
+
+    def wait_moving_away_from(self, place, dist, timeout):
+        """Wait until the robot is `dist` m away from a named place (map frame)."""
+        px, py = self.status.get('places', {}).get(place, (0.0, 0.0, 0.0))[:2]
+        return self.wait_until(lambda: self.robot_map() is not None and
+                               math.hypot(self.robot_map()[0] - px, self.robot_map()[1] - py) > dist, timeout)
+
     def history(self):
         return {o['id']: o for o in self.status.get('history', [])}
 
@@ -311,10 +323,9 @@ def tc02(r):
     """A person walks head-on towards the robot in the dining room."""
     r.order('table_5', 'TC02: 1 tea')
     r.wait_state('TO_TABLE', 300)
-    # robot leaves the kitchen door (map ~(5, 3)) heading south: spawn a person ahead walking north at it
-    r.wait_until(lambda: (r.robot_map() or (0, 9))[1] < 2.4, 120)
-    x, y, _ = r.robot_map()
-    r.spawn_person('tc_person_headon', [(x + 0.4, y - 4.5), (x + 0.4, y + 0.5), (x - 3.0, y + 0.5)],
+    r.wait_moving_away_from('pickup', 1.5, 120)
+    start, end = r.ahead(4.5, 0.15), r.ahead(-2.5, 0.15)
+    r.spawn_person('tc_person_headon', [start, end, (end[0] - 3.0, end[1])],
                    speed=0.9, dwell=30.0, ping_pong=False)
     done = r.wait_orders_done(1, 500)
     ok = done and delivered(r, 1)
@@ -327,10 +338,9 @@ def tc03(r):
     """A person crosses right in front of the moving robot."""
     r.order('table_4', 'TC03: 3 waters')
     r.wait_state('TO_TABLE', 300)
-    r.wait_until(lambda: (r.robot_map() or (0, 9))[1] < 1.8, 120)
-    x, y, _ = r.robot_map()
-    # crossing from the robot's left to its right ~1.8 m ahead (robot goes roughly south)
-    r.spawn_person('tc_person_cross', [(x + 2.8, y - 1.8), (x - 3.5, y - 1.8)], speed=1.0, dwell=60.0,
+    r.wait_moving_away_from('pickup', 1.5, 120)
+    # crossing from the robot's left to its right, ~2 m ahead, at a brisk 1 m/s
+    r.spawn_person('tc_person_cross', [r.ahead(2.0, 2.8), r.ahead(2.0, -3.5)], speed=1.0, dwell=60.0,
                    ping_pong=False)
     done = r.wait_orders_done(1, 500)
     ok = done and delivered(r, 1)
@@ -340,15 +350,16 @@ def tc03(r):
 
 
 def tc04(r):
-    """A person stands in the kitchen doorway for 25 s, then walks away."""
-    r.order('table_7', 'TC04: 1 juice')
-    r.wait_state(('UNDOCKING', 'TO_PICKUP'), 120)
+    """A person stands in the service-corridor door D2 for 25 s, then walks away."""
+    r.order('table_8', 'TC04: VIP order, doorway blocked')
+    r.wait_state('TO_TABLE', 300)
     t_spawn = r.now()
-    # person standing in door D1 (map (5.0, 3.0)), leaves after 25 s towards the dining room
-    r.spawn_person('tc_person_door', [(5.0, 3.0), (2.0, 1.6)], speed=0.7, dwell=100.0,
+    # person standing in door D2 (world (7.7, 3.0)), leaves after 25 s into the dining room
+    r.spawn_person('tc_person_door', [(16.7, 0.8), (13.0, -1.5)], speed=0.7, dwell=100.0,
                    start_delay=t_spawn + 25.0, ping_pong=False)
-    blocked = r.wait_until(lambda: any('Blocked' in e['text'] or 'recovery' == e['kind'] for e in r.events), 120)
-    done = r.wait_orders_done(1, 600)
+    blocked = r.wait_until(lambda: any('blocked' in e['text'].lower() or e['kind'] == 'recovery'
+                                       for e in r.events), 150)
+    done = r.wait_orders_done(1, 700)
     ok = done and delivered(r, 1)
     return {'title': 'Doorway blocked by a standing person (25 s)', 'passed': ok,
             'criteria': 'robot detects the blockage, waits/recovers without colliding, goes through once '
@@ -369,11 +380,11 @@ def tc05(r):
 
 def tc06(r):
     """The primary approach pose of table_5 is blocked by a trolley: alternate approach used."""
-    r.spawn_box('tc_trolley', 9.40, -3.77, 0.7, 0.5, 0.9)
+    r.spawn_box('tc_trolley', 9.40, -5.97, 0.7, 0.5, 0.9)
     r.order('table_5', 'TC06: 2 sodas')
     done = r.wait_orders_done(1, 700)
     ok = done and delivered(r, 1)
-    alt = any('approach 1/2' in e['text'] for e in r.events)
+    alt = any('approach 1/2' in e['text'].lower() for e in r.events)
     return {'title': 'Table approach blocked by a trolley -> alternate approach pose', 'passed': ok and alt,
             'criteria': 'first approach fails, robot uses the second approach pose, order delivered',
             'measured': {'delivered': ok, 'first_approach_failed': alt}, 'clearance_threshold': 0.05}
@@ -381,7 +392,7 @@ def tc06(r):
 
 def tc07(r):
     """The service corridor is fully blocked: VIP order fails gracefully, next order still served."""
-    r.spawn_box('tc_corridor_block', 16.70, 6.0, 1.0, 0.6, 1.2)
+    r.spawn_box('tc_corridor_block', 16.70, 3.8, 1.0, 0.6, 1.2)
     r.order('table_9', 'TC07: blocked VIP order', vip=False)
     r.order('table_7', 'TC07: next order')
     done = r.wait_orders_done(2, 900) and r.wait_state('DOCKED', 400)

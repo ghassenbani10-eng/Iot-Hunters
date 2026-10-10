@@ -168,10 +168,11 @@ class BatterySimulator(Node):
         p = self.p_idle + (self.p_drive if moving else 0.0) + self._traction(self.v, a) + self.k_turn * abs(self.w)
 
         charging = self.on_dock and self.charger_on and self.soc < 1.0
-        if charging:
-            cc = self.p_charge if self.soc < self.cv_soc else \
-                self.p_charge * max(0.05, (1.0 - self.soc) / (1.0 - self.cv_soc))
-            p -= cc
+        if self.on_dock and self.charger_on:
+            # the charger powers the robot's electronics and charges the pack (CC-CV);
+            # a full pack is held at 100 %
+            p = -(self.p_charge if self.soc < self.cv_soc else
+                  self.p_charge * max(0.05, (1.0 - self.soc) / (1.0 - self.cv_soc))) if charging else 0.0
         self.power = p
         self.power_avg += (p - self.power_avg) * min(1.0, dt / 10.0)
         e_wh = p * dt / 3600.0 * self.accel

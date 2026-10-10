@@ -9,9 +9,10 @@ from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 
-# Dock pose in the Gazebo world frame. The robot starts here, so the SLAM map
-# origin (0, 0, 0) is the dock. delivery_points.yaml uses the same convention.
-DOCK_X, DOCK_Y, DOCK_YAW = '-9.0', '0.0', '0.0'
+# Dock pose in the Gazebo world frame (north-west corner of the dining room, next
+# to the serving windows). The robot starts here, so the SLAM map origin (0, 0, 0)
+# is the dock. delivery_points.yaml uses the same convention.
+DOCK_X, DOCK_Y, DOCK_YAW = '-9.0', '2.2', '0.0'
 
 
 def generate_launch_description():
