@@ -28,6 +28,11 @@ setup(
         'console_scripts': [
             'delivery_manager = tunibot_delivery.delivery_manager:main',
             'web_api = tunibot_delivery.web_api:main',
+            'auto_mapper = tunibot_delivery.auto_mapper:main',
+            'battery_simulator = tunibot_delivery.battery_simulator:main',
+            'people_tracker = tunibot_delivery.people_tracker:main',
+            'scenario_runner = tunibot_delivery.scenario_runner:main',
+            'make_test_report = tunibot_delivery.make_test_report:main',
         ],
     },
 )

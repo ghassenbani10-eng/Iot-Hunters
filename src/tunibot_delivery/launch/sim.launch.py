@@ -23,7 +23,9 @@ def generate_launch_description():
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
             get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')),
-        launch_arguments={'world': world}.items(),
+        launch_arguments={'world': LaunchConfiguration('world'),
+                          'gui': LaunchConfiguration('gui'),
+                          'params_file': os.path.join(pkg, 'config', 'gazebo_params.yaml')}.items(),
     )
 
     robot_state_publisher = Node(
@@ -46,6 +48,8 @@ def generate_launch_description():
 
     return LaunchDescription([
         DeclareLaunchArgument('use_sim_time', default_value='true'),
+        DeclareLaunchArgument('gui', default_value='true', description='Start gzclient'),
+        DeclareLaunchArgument('world', default_value=world),
         gazebo,
         robot_state_publisher,
         spawn,

@@ -2,8 +2,8 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>tunibot_delivery</name>
-  <version>0.1.0</version>
-  <description>Autonomous restaurant delivery robot (CSTAM-TUNIBOT): Gazebo simulation, Cartographer SLAM, Nav2 navigation, delivery task manager, auto-docking and web UI.</description>
+  <version>0.2.0</version>
+  <description>Autonomous restaurant delivery robot (CSTAM-TUNIBOT): Gazebo simulation with walking people, Cartographer SLAM, Nav2 navigation with collision monitor and people prediction, energy-aware delivery task manager, battery simulation, auto-docking, web UI and automated test scenarios.</description>
   <maintainer email="ghassen.bani@supcom.tn">Ghassen Bani</maintainer>
   <license>Apache-2.0</license>
 
@@ -21,6 +21,29 @@
   <exec_depend>nav2_simple_commander</exec_depend>
   <exec_depend>nav2_map_server</exec_depend>
   <exec_depend>rviz2</exec_depend>
+  <!-- Phase 2 -->
+  <exec_depend>tunibot_gazebo_plugins</exec_depend>
+  <exec_depend>gazebo_msgs</exec_depend>
+  <exec_depend>nav2_msgs</exec_depend>
+  <exec_depend>nav2_common</exec_depend>
+  <exec_depend>nav2_amcl</exec_depend>
+  <exec_depend>nav2_controller</exec_depend>
+  <exec_depend>nav2_planner</exec_depend>
+  <exec_depend>nav2_behaviors</exec_depend>
+  <exec_depend>nav2_bt_navigator</exec_depend>
+  <exec_depend>nav2_smoother</exec_depend>
+  <exec_depend>nav2_velocity_smoother</exec_depend>
+  <exec_depend>nav2_waypoint_follower</exec_depend>
+  <exec_depend>nav2_collision_monitor</exec_depend>
+  <exec_depend>nav2_lifecycle_manager</exec_depend>
+  <exec_depend>nav2_regulated_pure_pursuit_controller</exec_depend>
+  <exec_depend>nav2_rotation_shim_controller</exec_depend>
+  <exec_depend>nav2_navfn_planner</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-scipy</exec_depend>
+  <exec_depend>python3-matplotlib</exec_depend>
 
   <export>
     <build_type>ament_python</build_type>

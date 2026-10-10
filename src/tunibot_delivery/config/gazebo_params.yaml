@@ -1,0 +1,7 @@
+# Parameters of the gazebo_ros node (libgazebo_ros_init.so).
+# /clock defaults to 10 Hz: simulation time would then advance in 100 ms steps,
+# which starves every 10-20 Hz sim-time loop of Nav2 (controller, velocity
+# smoother, costmaps, AMCL TF). 100 Hz keeps sim time smooth.
+gazebo:
+  ros__parameters:
+    publish_rate: 100.0

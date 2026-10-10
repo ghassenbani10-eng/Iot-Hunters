@@ -1,16 +1,32 @@
-"""Delivery task manager for the TuniBot waiter robot.
+"""Delivery task manager for the TuniBot waiter robot (Phase 2).
 
-Receives food/beverage orders, queues them, and drives the robot through
-  dock -> bar (pickup) -> table (serve) -> next order ... -> dock
-using Nav2 (nav2_simple_commander). When idle for a while, or when the simulated
-battery is low, it returns to the docking station: Nav2 brings it to a pre-dock
-pose, then a straight odometry-controlled reverse puts it on the charging pad.
+Receives food/beverage orders, queues them and drives the robot through
+  dock -> kitchen pass (pickup) -> table (serve) -> next order ... -> dock
+with Nav2. Phase 2 additions:
+
+  * energy-aware mission planning: before an order starts, the energy for
+    current -> pickup -> table -> dock is estimated from real Nav2 path lengths
+    and the consumption per metre learned by the battery simulator. If it does
+    not fit (plus a reserve), the robot charges first, only as long as needed.
+  * return-to-dock before the battery dies: while driving, the energy needed to
+    reach the dock from the current pose is re-planned every few seconds; the
+    mission is interrupted (order re-queued at the front) as soon as
+    remaining - needed < reserve. A critical SoC threshold is a hard safety net.
+  * navigation failure handling: several approach poses per place, retries with
+    costmap clearing, BLOCKED detection from Nav2 feedback, failed orders are
+    reported without stalling the queue, ERROR state after repeated failures.
+  * robust docking: Nav2 to the pre-dock pose, heading alignment, straight
+    reverse until the charging contacts report power, retry if missed.
+  * localization watchdog, emergency stop / resume, VIP priority, event log.
 
 Interfaces
-  sub  /delivery/order    std_msgs/String  '{"table": "table_3", "items": "2 coffees"}' or 'table_3'
-  sub  /delivery/command  std_msgs/String  'dock' | 'cancel' | 'clear'
-  pub  /delivery/status   std_msgs/String  JSON snapshot (state, queue, battery, history)
-  pub  /battery_state     sensor_msgs/BatteryState
+  sub  /delivery/order    std_msgs/String  '{"table": "table_3", "items": "2 coffees", "priority": "vip"}' or 'table_3'
+  sub  /delivery/command  std_msgs/String  dock | cancel | clear | estop | resume
+  sub  /battery_state     sensor_msgs/BatteryState  (from battery_simulator)
+  sub  /battery/info      std_msgs/String  JSON (learned Wh/m, idle power, ...)
+  sub  /people            std_msgs/String  JSON (people_tracker, optional)
+  pub  /delivery/status   std_msgs/String  JSON snapshot for the UI
+  pub  /delivery/events   std_msgs/String  JSON, one message per event
 """
 import itertools
 import json
@@ -25,12 +41,27 @@ from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from nav_msgs.msg import Odometry
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
+from rclpy.time import Time
 from sensor_msgs.msg import BatteryState
 from std_msgs.msg import String
+from tf2_ros import Buffer, TransformException, TransformListener
 
-DOCKED, UNDOCKING, IDLE, TO_PICKUP, LOADING, TO_TABLE, SERVING, TO_DOCK, DOCKING, CHARGING = (
-    'DOCKED', 'UNDOCKING', 'IDLE', 'TO_PICKUP', 'LOADING', 'TO_TABLE', 'SERVING',
-    'RETURNING_TO_DOCK', 'DOCKING', 'CHARGING')
+DOCKED, UNDOCKING, IDLE, TO_PICKUP, LOADING, TO_TABLE, SERVING = (
+    'DOCKED', 'UNDOCKING', 'IDLE', 'TO_PICKUP', 'LOADING', 'TO_TABLE', 'SERVING')
+TO_DOCK, DOCKING, CHARGING, ESTOP, ERROR, STARTING = (
+    'RETURNING_TO_DOCK', 'DOCKING', 'CHARGING', 'EMERGENCY_STOP', 'ERROR', 'STARTING')
+
+
+class Abort(Exception):
+    """Raised inside the mission thread to unwind the current task."""
+
+    def __init__(self, reason):
+        super().__init__(reason)
+        self.reason = reason
+
+
+def yaw_of(q):
+    return math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z))
 
 
 class DeliveryManager(Node):
@@ -42,38 +73,89 @@ class DeliveryManager(Node):
         self.places = {}
         for name in ['dock', 'pre_dock', 'pickup'] + self.tables:
             self.declare_parameter(name, [0.0, 0.0, 0.0])
-            self.places[name] = list(self.get_parameter(name).value)
-        for name, default in [('load_time_sec', 5.0), ('serve_time_sec', 8.0),
-                              ('idle_dock_timeout_sec', 15.0), ('battery_drain_per_sec', 0.15),
-                              ('battery_charge_per_sec', 1.0), ('battery_low_threshold', 25.0)]:
-            self.declare_parameter(name, default)
-        p = lambda n: float(self.get_parameter(n).value)  # noqa: E731
-        self.load_time, self.serve_time = p('load_time_sec'), p('serve_time_sec')
-        self.idle_timeout = p('idle_dock_timeout_sec')
-        self.drain, self.charge = p('battery_drain_per_sec'), p('battery_charge_per_sec')
-        self.low_battery = p('battery_low_threshold')
+            flat = [float(v) for v in self.get_parameter(name).value]
+            self.places[name] = [flat[i:i + 3] for i in range(0, len(flat) - 2, 3)]
+        defaults = {
+            'load_time_sec': 5.0, 'serve_time_sec': 8.0, 'idle_dock_timeout_sec': 20.0,
+            'battery_critical': 10.0,      # % : abort everything and go to the dock
+            'battery_low': 25.0,           # % : no new order below this
+            'battery_resume': 60.0,        # % : charging target when no order waits
+            'energy_reserve': 8.0,         # % of capacity that must remain at the dock
+            'energy_safety_factor': 1.3,   # margin on the path-length energy estimate
+            'energy_check_period_sec': 3.0,
+            'nav_attempts_per_pose': 2,
+            'max_consecutive_failures': 3,
+            'blocked_after_sec': 4.0,
+            'cruise_speed': 0.35,          # m/s, used for the time part of energy estimates
+        }
+        for k, v in defaults.items():
+            self.declare_parameter(k, v)
+        self.cfg = {k: self.get_parameter(k).value for k in defaults}
 
-        self.lock = threading.Lock()
+        self.lock = threading.RLock()
         self.queue = deque()
-        self.history = deque(maxlen=20)
+        self.history = deque(maxlen=30)
+        self.events = deque(maxlen=60)
         self.ids = itertools.count(1)
         self.current = None
-        self.state = DOCKED
-        self.battery = 100.0
+        self.state = STARTING
+        self.nav_status = ''
         self.docked = True
         self.cancel_requested = False
         self.dock_requested = False
+        self.estop = False
+        self.consecutive_failures = 0
+        self.energy = {}
+        self.battery = {'soc': 100.0, 'charging': False, 'on_dock': True, 'capacity_wh': 259.0,
+                        'wh_per_m': 1.1, 'idle_wh_per_s': 0.2, 'depleted': False}
+        self.people = {'count': 0, 'nearest': None}
         self.odom = None
 
+        self.tf = Buffer()
+        TransformListener(self.tf, self)
         self.create_subscription(String, '/delivery/order', self.on_order, 10)
         self.create_subscription(String, '/delivery/command', self.on_command, 10)
         self.create_subscription(Odometry, '/odom', self.on_odom, 10)
+        self.create_subscription(BatteryState, '/battery_state', self.on_battery_state, 10)
+        self.create_subscription(String, '/battery/info', self.on_battery_info, 10)
+        self.create_subscription(String, '/people', self.on_people, 10)
         self.status_pub = self.create_publisher(String, '/delivery/status', 10)
-        self.battery_pub = self.create_publisher(BatteryState, '/battery_state', 10)
+        self.event_pub = self.create_publisher(String, '/delivery/events', 10)
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
-        self.last_tick = time.monotonic()
-        self.create_timer(0.5, self.tick)
+        self.create_timer(0.5, self.publish_status)
         self.get_logger().info('Delivery manager ready. Tables: %s' % ', '.join(self.tables))
+
+    # ------------------------------------------------------------------ utils
+    def now(self):
+        """Simulation time in seconds."""
+        return self.get_clock().now().nanoseconds * 1e-9
+
+    def sleep(self, seconds):
+        end = self.now() + seconds
+        while self.now() < end and rclpy.ok():
+            time.sleep(0.05)
+
+    def event(self, kind, text, **data):
+        ev = {'t': round(self.now(), 1), 'wall': time.time(), 'kind': kind, 'text': text}
+        ev.update(data)
+        with self.lock:
+            self.events.appendleft(ev)
+        self.event_pub.publish(String(data=json.dumps(ev)))
+        log = self.get_logger().warn if kind in ('battery', 'failure', 'error', 'estop') \
+            else self.get_logger().info
+        log('[%s] %s' % (kind, text))
+
+    def robot_pose(self):
+        try:
+            t = self.tf.lookup_transform('map', 'base_footprint', Time())
+        except TransformException:
+            return None
+        tr = t.transform
+        return tr.translation.x, tr.translation.y, yaw_of(tr.rotation)
+
+    @property
+    def soc(self):
+        return float(self.battery.get('soc', 100.0))
 
     # ------------------------------------------------------------------ inputs
     def on_order(self, msg):
@@ -85,13 +167,20 @@ class DeliveryManager(Node):
             data = {'table': msg.data.strip()}
         table = str(data.get('table', ''))
         if table not in self.tables:
-            self.get_logger().warn('Rejected order for unknown table "%s"' % table)
+            self.event('order', 'Rejected order for unknown table "%s"' % table)
             return
+        vip = str(data.get('priority', '')).lower() == 'vip'
         order = {'id': next(self.ids), 'table': table, 'items': str(data.get('items', '')),
-                 'status': 'queued', 'created': time.time()}
+                 'priority': 'vip' if vip else 'normal', 'status': 'queued',
+                 'created': time.time(), 'attempts': 0, 'notes': []}
         with self.lock:
-            self.queue.append(order)
-        self.get_logger().info('Order #%d queued -> %s (%s)' % (order['id'], table, order['items']))
+            if vip:  # VIP orders go before every normal order
+                idx = sum(1 for o in self.queue if o['priority'] == 'vip')
+                self.queue.insert(idx, order)
+            else:
+                self.queue.append(order)
+        self.event('order', 'Order #%d queued -> %s %s(%s)' % (
+            order['id'], table, '[VIP] ' if vip else '', order['items']), order_id=order['id'])
 
     def on_command(self, msg):
         cmd = msg.data.strip().lower()
@@ -105,48 +194,82 @@ class DeliveryManager(Node):
                     o['status'] = 'cancelled'
                     self.history.appendleft(o)
                 self.queue.clear()
-        self.get_logger().info('Command: %s' % cmd)
+            elif cmd == 'estop':
+                self.estop = True
+            elif cmd == 'resume':
+                self.estop = False
+                self.consecutive_failures = 0
+            else:
+                self.get_logger().warn('Unknown command "%s"' % cmd)
+                return
+        self.event('command', 'Operator command: %s' % cmd)
 
     def on_odom(self, msg):
-        self.odom = msg.pose.pose
+        self.odom = msg
 
-    # --------------------------------------------------------- battery/status
-    def tick(self):
-        now = time.monotonic()
-        dt, self.last_tick = now - self.last_tick, now
+    def on_battery_state(self, msg):
         with self.lock:
-            if self.docked:
-                self.battery = min(100.0, self.battery + self.charge * dt)
-            else:
-                self.battery = max(0.0, self.battery - self.drain * dt)
+            self.battery['soc'] = msg.percentage * 100.0
+            self.battery['voltage'] = round(msg.voltage, 2)
+            self.battery['current'] = round(msg.current, 2)
+            self.battery['charging'] = msg.power_supply_status in (
+                BatteryState.POWER_SUPPLY_STATUS_CHARGING, BatteryState.POWER_SUPPLY_STATUS_FULL)
+            self.battery['depleted'] = msg.power_supply_health == BatteryState.POWER_SUPPLY_HEALTH_DEAD
+
+    def on_battery_info(self, msg):
+        try:
+            info = json.loads(msg.data)
+        except ValueError:
+            return
+        with self.lock:
+            self.battery.update({k: info[k] for k in (
+                'capacity_wh', 'wh_per_m', 'idle_wh_per_s', 'power_w', 'power_avg_w', 'on_dock',
+                'time_to_empty_min', 'time_acceleration', 'energy_used_wh', 'distance_m',
+                'charger_on') if k in info})
+
+    def on_people(self, msg):
+        try:
+            self.people = json.loads(msg.data)
+        except ValueError:
+            pass
+
+    # ------------------------------------------------------------------ status
+    def set_state(self, state, nav_status=''):
+        with self.lock:
+            changed = state != self.state
+            self.state = state
+            self.nav_status = nav_status
+        if changed:
+            self.get_logger().info('State -> %s' % state)
+
+    def publish_status(self):
+        with self.lock:
             status = {
-                'state': self.state, 'battery': round(self.battery, 1), 'docked': self.docked,
-                'current_order': self.current, 'queue': list(self.queue),
-                'history': list(self.history), 'tables': self.tables,
+                'state': self.state, 'nav_status': self.nav_status, 'docked': self.docked,
+                'battery': {k: (round(v, 2) if isinstance(v, float) else v) for k, v in self.battery.items()},
+                'energy': self.energy, 'current_order': self.current, 'queue': list(self.queue),
+                'history': list(self.history), 'events': list(self.events)[:25], 'tables': self.tables,
+                'estop': self.estop, 'consecutive_failures': self.consecutive_failures,
+                'people': self.people, 'pose': self.robot_pose(), 'sim_time': round(self.now(), 1),
+                'places': {k: v[0] for k, v in self.places.items()},
+                'thresholds': {k: self.cfg[k] for k in ('battery_critical', 'battery_low',
+                                                        'battery_resume', 'energy_reserve')},
             }
         self.status_pub.publish(String(data=json.dumps(status)))
-        b = BatteryState()
-        b.percentage = self.battery / 100.0
-        b.power_supply_status = (BatteryState.POWER_SUPPLY_STATUS_CHARGING if self.docked
-                                 else BatteryState.POWER_SUPPLY_STATUS_DISCHARGING)
-        b.present = True
-        self.battery_pub.publish(b)
-
-    def set_state(self, state):
-        with self.lock:
-            self.state = state
-        self.get_logger().info('State -> %s' % state)
 
 
 class Mission:
-    """State machine, run in its own thread because BasicNavigator blocks."""
+    """Mission state machine, run in its own thread (BasicNavigator blocks)."""
 
     def __init__(self, mgr: DeliveryManager):
         self.mgr = mgr
-        self.nav = BasicNavigator()
+        self.nav = BasicNavigator('delivery_navigator')
+        self.planner = BasicNavigator('delivery_energy_planner')   # separate node: path queries
+        self.last_energy_check = 0.0
+        self.last_good_map_odom = None
 
-    def pose(self, name):
-        x, y, yaw = self.mgr.places[name]
+    # ------------------------------------------------------------ helpers
+    def pose_msg(self, x, y, yaw):
         ps = PoseStamped()
         ps.header.frame_id = 'map'
         ps.header.stamp = self.nav.get_clock().now().to_msg()
@@ -154,150 +277,398 @@ class Mission:
         ps.pose.orientation.z, ps.pose.orientation.w = math.sin(yaw / 2), math.cos(yaw / 2)
         return ps
 
-    def refresh_localization(self):
-        """Re-seed AMCL from the current odometry estimate.
+    def path_length(self, start, goal):
+        """Length of the Nav2 global plan from start (None = robot) to goal pose list entry."""
+        g = self.pose_msg(*goal)
+        try:
+            if start is None:
+                path = self.planner.getPath(g, g, use_start=False)
+            else:
+                path = self.planner.getPath(self.pose_msg(*start), g, use_start=True)
+        except Exception:  # noqa: BLE001 - planner unavailable
+            path = None
+        if path is None or len(path.poses) < 2:
+            # fall back to 1.5 x the straight line (conservative)
+            s = start or self.mgr.robot_pose() or (0.0, 0.0, 0.0)
+            return 1.5 * math.hypot(goal[0] - s[0], goal[1] - s[1]), False
+        pts = [(p.pose.position.x, p.pose.position.y) for p in path.poses]
+        return sum(math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(pts, pts[1:])), True
 
-        Workaround for an observed nav2_amcl behavior on this machine where its
-        map->odom broadcast can silently stop a few minutes into a run (TF
-        lookups then fail with "transform too old"/extrapolation errors even
-        though /scan, /odom and /clock keep publishing normally). Republishing
-        /initialpose reliably restarts the broadcast. odom and world share the
-        same orientation/scale here, so the map-frame estimate is just the
-        odom position shifted by the dock's world offset (+9.0, 0.0).
-        """
-        odom = self.mgr.odom
-        if odom is None:
+    def energy_for(self, length_m, extra_wait_s=0.0):
+        """Wh needed for a path of length_m (+ waiting time), with the safety factor."""
+        b, c = self.mgr.battery, self.mgr.cfg
+        drive = length_m * float(b.get('wh_per_m', 1.1))
+        wait = extra_wait_s * float(b.get('idle_wh_per_s', 0.2))
+        dock_manoeuvre = 1.5 * float(b.get('wh_per_m', 1.1))
+        return (drive + wait + dock_manoeuvre) * c['energy_safety_factor']
+
+    def reserve_wh(self):
+        return self.mgr.cfg['energy_reserve'] / 100.0 * float(self.mgr.battery.get('capacity_wh', 259.0))
+
+    def available_wh(self):
+        return self.mgr.soc / 100.0 * float(self.mgr.battery.get('capacity_wh', 259.0))
+
+    def order_energy(self, order):
+        """Energy (Wh) to do the whole order from where the robot is and get back to the dock."""
+        m = self.mgr
+        pickup, table, dock = m.places['pickup'][0], m.places[order['table']][0], m.places['pre_dock'][0]
+        start = None if not m.docked else m.places['pre_dock'][0]
+        l1, ok1 = self.path_length(start, pickup)
+        l2, ok2 = self.path_length(pickup, table)
+        l3, ok3 = self.path_length(table, dock)
+        total = l1 + l2 + l3
+        need = self.energy_for(total, m.cfg['load_time_sec'] + m.cfg['serve_time_sec'])
+        return need, total, ok1 and ok2 and ok3
+
+    def check_return_energy(self, force=False):
+        """While away from the dock: abort if the energy to get back is running out."""
+        m = self.mgr
+        if m.soc <= m.cfg['battery_critical']:
+            raise Abort('battery critical (%.0f%%)' % m.soc)
+        t = m.now()
+        if not force and t - self.last_energy_check < m.cfg['energy_check_period_sec']:
             return
-        x = odom.position.x + 9.0
-        y = odom.position.y
+        self.last_energy_check = t
+        length, planned = self.path_length(None, m.places['pre_dock'][0])
+        need = self.energy_for(length)
+        margin = self.available_wh() - need - self.reserve_wh()
+        with m.lock:
+            m.energy = {'return_path_m': round(length, 1), 'return_wh': round(need, 1),
+                        'available_wh': round(self.available_wh(), 1), 'reserve_wh': round(self.reserve_wh(), 1),
+                        'margin_wh': round(margin, 1), 'planned': planned}
+        if margin < 0.0:
+            raise Abort('energy to reach the dock: %.1f Wh needed, %.1f Wh left above the reserve'
+                        % (need, self.available_wh() - self.reserve_wh()))
+
+    def localization_watchdog(self):
+        """Republish the pose if AMCL stopped refreshing map->odom (stale TF)."""
+        try:
+            t = self.mgr.tf.lookup_transform('map', 'odom', Time())
+        except TransformException:
+            return
+        stamp = Time.from_msg(t.header.stamp).nanoseconds * 1e-9
+        if self.mgr.now() - stamp < 3.0:
+            self.last_good_map_odom = t
+            return
+        pose = self.mgr.robot_pose()
+        if pose is None:
+            return
+        self.mgr.event('recovery', 'Localization watchdog: map->odom stale for %.0fs, re-seeding AMCL'
+                       % (self.mgr.now() - stamp))
         ps = PoseWithCovarianceStamped()
         ps.header.frame_id = 'map'
         ps.header.stamp = self.nav.get_clock().now().to_msg()
-        ps.pose.pose.position.x, ps.pose.pose.position.y = x, y
-        ps.pose.pose.orientation = odom.orientation
-        ps.pose.covariance[0] = ps.pose.covariance[7] = 0.1
-        ps.pose.covariance[35] = 0.1
+        ps.pose.pose.position.x, ps.pose.pose.position.y = pose[0], pose[1]
+        ps.pose.pose.orientation.z, ps.pose.pose.orientation.w = math.sin(pose[2] / 2), math.cos(pose[2] / 2)
+        ps.pose.covariance[0] = ps.pose.covariance[7] = 0.05
+        ps.pose.covariance[35] = 0.05
         self.nav.initial_pose_pub.publish(ps)
 
-    def go(self, name, retries=2):
-        """Navigate to a named place. Returns True on success."""
-        for attempt in range(retries + 1):
-            if attempt > 0:
-                self.refresh_localization()
-                time.sleep(1.0)
-            self.nav.goToPose(self.pose(name))
+    def check_interrupts(self, away=True):
+        m = self.mgr
+        if m.estop:
+            raise Abort('emergency stop')
+        if m.cancel_requested:
+            raise Abort('cancelled by operator')
+        if away:
+            self.check_return_energy()
+
+    # ------------------------------------------------------------ motion
+    def navigate(self, x, y, yaw, label, away=True):
+        """One Nav2 NavigateToPose with monitoring. Returns True on success."""
+        self.nav.goToPose(self.pose_msg(x, y, yaw))
+        best, best_t, blocked, recoveries = float('inf'), self.mgr.now(), False, 0
+        base_state = self.mgr.state
+        try:
             while not self.nav.isTaskComplete():
-                if self.mgr.cancel_requested:
-                    self.nav.cancelTask()
+                self.check_interrupts(away)
+                self.localization_watchdog()
+                fb = self.nav.getFeedback()
+                if fb is not None:
+                    if fb.distance_remaining < best - 0.1:
+                        best, best_t = fb.distance_remaining, self.mgr.now()
+                        if blocked:
+                            blocked = False
+                            self.mgr.event('nav', 'Path clear again, moving to %s' % label)
+                    elif not blocked and self.mgr.now() - best_t > self.mgr.cfg['blocked_after_sec']:
+                        blocked = True
+                        self.mgr.event('nav', 'Blocked on the way to %s (people: %s) - waiting / replanning'
+                                       % (label, self.mgr.people.get('count', 0)))
+                    if fb.number_of_recoveries > recoveries:
+                        recoveries = fb.number_of_recoveries
+                        self.mgr.event('recovery', 'Nav2 recovery #%d on the way to %s' % (recoveries, label))
+                    self.mgr.set_state(base_state, 'blocked' if blocked else
+                                       'moving (%.1f m left)' % fb.distance_remaining)
                 time.sleep(0.1)
-            result = self.nav.getResult()
-            if result == TaskResult.SUCCEEDED:
-                return True
-            if self.mgr.cancel_requested:
-                return False
-            self.mgr.get_logger().warn('Navigation to %s failed (attempt %d)' % (name, attempt + 1))
-            self.nav.clearAllCostmaps()
+        except Abort:
+            self.nav.cancelTask()
+            raise
+        return self.nav.getResult() == TaskResult.SUCCEEDED
+
+    def go(self, name, away=True, label=None):
+        """Navigate to a named place, trying each approach pose. Raises Abort if impossible."""
+        label = label or name
+        poses = self.mgr.places[name]
+        for i, (x, y, yaw) in enumerate(poses):
+            for attempt in range(int(self.mgr.cfg['nav_attempts_per_pose'])):
+                if self.navigate(x, y, yaw, label, away):
+                    return True
+                self.mgr.event('failure', 'Navigation to %s failed (approach %d/%d, attempt %d)' % (
+                    label, i + 1, len(poses), attempt + 1))
+                self.nav.clearAllCostmaps()
+                self.mgr.sleep(1.0)
         return False
 
-    def drive_straight(self, distance, speed):
-        """Odometry-closed-loop straight motion (negative distance = reverse)."""
-        while self.mgr.odom is None:
+    def drive(self, distance, speed, until=None, timeout=None):
+        """Odometry closed-loop straight motion (negative = reverse). Stops early if until()."""
+        m = self.mgr
+        while m.odom is None:
             time.sleep(0.1)
-        start = self.mgr.odom.position
+        start = m.odom.pose.pose.position
         cmd = Twist()
         cmd.linear.x = math.copysign(speed, distance)
-        deadline = time.monotonic() + abs(distance) / speed * 3 + 5
-        while time.monotonic() < deadline:
-            cur = self.mgr.odom.position
-            if math.hypot(cur.x - start.x, cur.y - start.y) >= abs(distance):
+        deadline = m.now() + (timeout or abs(distance) / speed * 2.5 + 3.0)
+        while m.now() < deadline and not m.estop:
+            cur = m.odom.pose.pose.position
+            if math.hypot(cur.x - start.x, cur.y - start.y) >= abs(distance) or (until and until()):
                 break
-            self.mgr.cmd_pub.publish(cmd)
+            m.cmd_pub.publish(cmd)
             time.sleep(0.05)
-        self.mgr.cmd_pub.publish(Twist())
+        m.cmd_pub.publish(Twist())
 
-    def wait(self, seconds):
-        end = time.monotonic() + seconds
-        while time.monotonic() < end and not self.mgr.cancel_requested:
-            time.sleep(0.1)
+    def rotate_to(self, yaw_target, tol=0.03, timeout=15.0):
+        m = self.mgr
+        end = m.now() + timeout
+        cmd = Twist()
+        while m.now() < end and not m.estop:
+            pose = m.robot_pose()
+            if pose is None:
+                break
+            err = math.remainder(yaw_target - pose[2], 2 * math.pi)
+            if abs(err) < tol:
+                break
+            cmd.angular.z = max(-0.5, min(0.5, 1.5 * err))
+            if abs(cmd.angular.z) < 0.12:
+                cmd.angular.z = math.copysign(0.12, err)
+            m.cmd_pub.publish(cmd)
+            time.sleep(0.05)
+        m.cmd_pub.publish(Twist())
 
     def undock(self):
-        if self.mgr.docked:
-            self.mgr.set_state(UNDOCKING)
-            with self.mgr.lock:
-                self.mgr.docked = False
-            self.drive_straight(0.6, 0.1)
+        m = self.mgr
+        if m.docked:
+            m.set_state(UNDOCKING)
+            self.drive(0.6, 0.15)
+            with m.lock:
+                m.docked = False
+            m.event('dock', 'Undocked')
 
-    def dock(self):
-        self.mgr.set_state(TO_DOCK)
-        if not self.go('pre_dock', retries=2):
-            self.mgr.set_state(IDLE)
-            return
-        self.mgr.set_state(DOCKING)
-        dx = self.mgr.places['pre_dock'][0] - self.mgr.places['dock'][0]
-        dy = self.mgr.places['pre_dock'][1] - self.mgr.places['dock'][1]
-        self.drive_straight(-math.hypot(dx, dy), 0.08)
-        with self.mgr.lock:
-            self.mgr.docked = True
-            self.mgr.dock_requested = False
-        self.mgr.set_state(DOCKED)
+    def dock(self, reason):
+        """Return to the dock and get onto the charging contacts. True when charging."""
+        m = self.mgr
+        m.set_state(TO_DOCK)
+        m.event('dock', 'Returning to dock: %s' % reason)
+        dx, dy, dyaw = m.places['dock'][0]
+        for attempt in range(3):
+            if not self.go('pre_dock', away=False, label='the dock'):
+                continue
+            m.set_state(DOCKING)
+            self.rotate_to(dyaw)
+            pose = m.robot_pose()
+            if pose is not None:
+                # lateral offset to the docking axis
+                lat = -(pose[0] - dx) * math.sin(dyaw) + (pose[1] - dy) * math.cos(dyaw)
+                if abs(lat) > 0.08:
+                    m.event('dock', 'Docking: %.2f m off the axis, re-approaching' % lat)
+                    continue
+            px, py, _ = m.places['pre_dock'][0]
+            dist = math.hypot(px - dx, py - dy)
+            def on_pad():
+                p = m.robot_pose()
+                return p is not None and math.hypot(p[0] - dx, p[1] - dy) < 0.03
+            self.drive(-(dist + 0.05), 0.08, until=on_pad)
+            self.mgr.sleep(1.5)
+            if m.battery.get('on_dock', False) or m.battery.get('charging', False):
+                with m.lock:
+                    m.docked = True
+                    m.dock_requested = False
+                m.set_state(DOCKED)
+                m.event('dock', 'Docked, charging contacts OK (%.0f%%)' % m.soc)
+                return True
+            m.event('failure', 'Docking attempt %d: no charging contact, retrying' % (attempt + 1))
+            self.drive(0.6, 0.12)
+        m.set_state(ERROR, 'docking failed')
+        m.event('error', 'Docking failed 3 times - operator needed')
+        return False
 
+    # ------------------------------------------------------------ tasks
     def deliver(self, order):
         m = self.mgr
         order['status'] = 'in_progress'
+        order['attempts'] += 1
+        order['started'] = time.time()
         with m.lock:
             m.current = order
-        steps = [(TO_PICKUP, lambda: self.go('pickup')),
-                 (LOADING, lambda: self.wait(m.load_time) or True),
-                 (TO_TABLE, lambda: self.go(order['table'])),
-                 (SERVING, lambda: self.wait(m.serve_time) or True)]
-        ok = True
-        for state, step in steps:
-            m.set_state(state)
-            if m.cancel_requested or not step():
-                ok = False
-                break
-        order['status'] = 'delivered' if ok else ('cancelled' if m.cancel_requested else 'failed')
-        order['finished'] = time.time()
-        with m.lock:
-            m.history.appendleft(order)
-            m.current = None
-            m.cancel_requested = False
-        m.get_logger().info('Order #%d %s' % (order['id'], order['status']))
+        try:
+            m.set_state(TO_PICKUP)
+            if not self.go('pickup', label='the kitchen pass'):
+                raise Abort('kitchen pass unreachable')
+            m.set_state(LOADING)
+            self.wait_checked(m.cfg['load_time_sec'])
+            m.set_state(TO_TABLE)
+            if not self.go(order['table']):
+                raise Abort('%s unreachable' % order['table'])
+            m.set_state(SERVING)
+            self.wait_checked(m.cfg['serve_time_sec'])
+            order['status'] = 'delivered'
+            m.consecutive_failures = 0
+            m.event('delivery', 'Order #%d delivered to %s' % (order['id'], order['table']),
+                    order_id=order['id'])
+        except Abort as a:
+            order['notes'].append(a.reason)
+            if a.reason.startswith(('battery', 'energy')):
+                order['status'] = 'queued'
+                with m.lock:
+                    m.queue.appendleft(order)       # not lost: first in line after charging
+                m.event('battery', 'Order #%d interrupted (%s); re-queued, going to charge'
+                        % (order['id'], a.reason))
+                raise
+            if a.reason in ('emergency stop',):
+                order['status'] = 'queued'
+                with m.lock:
+                    m.queue.appendleft(order)
+                raise
+            order['status'] = 'cancelled' if 'cancel' in a.reason else 'failed'
+            if order['status'] == 'failed':
+                m.consecutive_failures += 1
+            m.event('failure', 'Order #%d %s: %s' % (order['id'], order['status'], a.reason),
+                    order_id=order['id'])
+        finally:
+            with m.lock:
+                if order['status'] != 'queued':
+                    order['finished'] = time.time()
+                    m.history.appendleft(order)
+                m.current = None
+                m.cancel_requested = False
 
+    def wait_checked(self, seconds):
+        end = self.mgr.now() + seconds
+        while self.mgr.now() < end:
+            self.check_interrupts()
+            time.sleep(0.1)
+
+    def handle_estop(self):
+        m = self.mgr
+        m.set_state(ESTOP)
+        m.event('estop', 'EMERGENCY STOP - motors held at zero until "resume"')
+        self.nav.cancelTask()
+        while m.estop and rclpy.ok():
+            m.cmd_pub.publish(Twist())
+            time.sleep(0.1)
+        m.event('command', 'Resumed after emergency stop')
+
+    def can_start(self, order):
+        """Energy check before leaving with an order. Returns (ok, need_soc)."""
+        m = self.mgr
+        need, length, planned = self.order_energy(order)
+        need_soc = (need + self.reserve_wh()) / float(m.battery.get('capacity_wh', 259.0)) * 100.0
+        with m.lock:
+            m.energy = {'order_id': order['id'], 'order_path_m': round(length, 1), 'order_wh': round(need, 1),
+                        'need_soc': round(need_soc, 1), 'planned': planned}
+        ok = m.soc >= max(need_soc, m.cfg['battery_low'])
+        return ok, max(need_soc, m.cfg['battery_low'])
+
+    def charge_until(self, target_soc, reason):
+        m = self.mgr
+        m.set_state(CHARGING, 'to %.0f%%' % target_soc)
+        m.event('battery', 'Charging to %.0f%% (%s), now %.0f%%' % (target_soc, reason, m.soc))
+        while rclpy.ok() and m.soc < target_soc and not m.estop and not m.cancel_requested:
+            if not m.battery.get('charging', False) and not m.battery.get('on_dock', False):
+                m.event('error', 'Not receiving charge on the dock - re-docking')
+                with m.lock:
+                    m.docked = False
+                self.drive(0.5, 0.12)
+                self.dock('charger contact lost')
+            time.sleep(0.5)
+        m.cancel_requested = False
+        m.set_state(DOCKED)
+
+    # ------------------------------------------------------------ main loop
     def run(self):
         m = self.mgr
-        self.nav.setInitialPose(self.pose('dock'))
+        self.nav.setInitialPose(self.pose_msg(*m.places['dock'][0]))
         self.nav.waitUntilNav2Active()
+        self.planner.waitUntilNav2Active(localizer='bt_navigator')
         m.set_state(DOCKED)
-        idle_since = time.monotonic()
+        m.event('system', 'Nav2 active, robot on the dock')
+        idle_since = m.now()
         while rclpy.ok():
-            with m.lock:
-                order = m.queue[0] if m.queue else None
-                battery, docked = m.battery, m.docked
-            if m.dock_requested and not docked:
-                self.dock()
-                idle_since = time.monotonic()
-            elif order and battery < m.low_battery:
-                if docked:
-                    if m.state != CHARGING:
-                        m.set_state(CHARGING)
+            try:
+                idle_since = self.step(idle_since)
+            except Abort as a:
+                if a.reason == 'emergency stop':
+                    self.handle_estop()
+                elif a.reason.startswith(('battery', 'energy')):
+                    self.dock(a.reason)
                 else:
-                    m.get_logger().warn('Battery low (%.0f%%): charging before next order' % battery)
-                    self.dock()
-            elif order:
-                with m.lock:
-                    m.queue.popleft()
-                self.undock()
-                self.deliver(order)
-                if m.state != DOCKED:
-                    m.set_state(IDLE)
-                idle_since = time.monotonic()
-            elif not docked and time.monotonic() - idle_since > m.idle_timeout:
-                self.dock()
-            elif docked and m.state == CHARGING:
-                m.set_state(DOCKED)
-            m.dock_requested = m.dock_requested and not m.docked
+                    m.event('failure', 'Aborted: %s' % a.reason)
+                idle_since = m.now()
             time.sleep(0.2)
+
+    def step(self, idle_since):
+        m = self.mgr
+        if m.estop:
+            raise Abort('emergency stop')
+        with m.lock:
+            order = m.queue[0] if m.queue else None
+            docked = m.docked
+        if m.state == ERROR:
+            if m.consecutive_failures == 0:      # operator sent "resume"
+                m.set_state(DOCKED if docked else IDLE)
+            return idle_since
+        if m.consecutive_failures >= m.cfg['max_consecutive_failures']:
+            m.event('error', '%d consecutive failed deliveries - returning to dock, operator needed'
+                    % m.consecutive_failures)
+            if not docked:
+                self.dock('too many failures')
+            m.set_state(ERROR, 'send "resume" to continue')
+            return idle_since
+        if not docked:
+            if m.soc <= m.cfg['battery_critical']:
+                raise Abort('battery critical (%.0f%%)' % m.soc)
+            self.check_return_energy()
+        if m.dock_requested and not docked:
+            self.dock('operator request')
+            return m.now()
+        if order is not None:
+            ok, need_soc = self.can_start(order)
+            if not ok:
+                if docked:
+                    self.charge_until(need_soc + 5.0, 'order #%d needs %.0f%%' % (order['id'], need_soc))
+                else:
+                    raise Abort('energy: order #%d needs %.0f%%, battery %.0f%%' % (order['id'], need_soc, m.soc))
+                return m.now()
+            with m.lock:
+                if m.queue and m.queue[0] is order:
+                    m.queue.popleft()
+            self.undock()
+            self.deliver(order)
+            if m.state not in (DOCKED, ERROR):
+                m.set_state(IDLE)
+            return m.now()
+        if docked:
+            if m.soc < m.cfg['battery_resume'] and m.battery.get('charging', False):
+                m.set_state(CHARGING, 'to %.0f%%' % m.cfg['battery_resume'])
+            elif m.state != DOCKED:
+                m.set_state(DOCKED)
+            return idle_since
+        if m.soc < m.cfg['battery_low']:
+            self.dock('battery low (%.0f%%)' % m.soc)
+            return m.now()
+        if m.now() - idle_since > m.cfg['idle_dock_timeout_sec']:
+            self.dock('idle for %.0fs' % m.cfg['idle_dock_timeout_sec'])
+            return m.now()
+        return idle_since
 
 
 def main():
