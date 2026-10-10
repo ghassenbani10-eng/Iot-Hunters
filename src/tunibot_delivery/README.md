@@ -9,7 +9,7 @@ run out of battery.
 | Phase 1 — Core MVP | How |
 |---|---|
 | Mapping & localization (SLAM) | Cartographer 2D (`config/cartographer_2d.lua`), **autonomous mapping tour** (`auto_mapping.launch.py`); AMCL on the saved map |
-| Autonomous navigation | Nav2: NavFn A*, RotationShim + Regulated Pure Pursuit, footprint-aware costmaps, tabletop + staff-only **keepout filter** |
+| Autonomous navigation | Nav2: NavFn A*, MPPI controller (benchmarked against RotationShim + RPP), footprint-aware costmaps, tabletop + staff-only **keepout filter** |
 | Delivery task management | `delivery_manager`: order queue (VIP first), serving window → table → serve, retries, cancel, status/events |
 | Auto-docking | idle / low energy / operator → Nav2 to the pre-dock pose → closed-loop alignment → reverse onto the pad → charging-contact check |
 

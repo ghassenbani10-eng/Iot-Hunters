@@ -29,8 +29,8 @@
 </g>
 <g id="clust6" class="cluster">
 <title>cluster_sim</title>
-<path fill="#f3e5f5" stroke="#6a1b9a" d="M105,-8C105,-8 823,-8 823,-8 829,-8 835,-14 835,-20 835,-20 835,-125 835,-125 835,-131 829,-137 823,-137 823,-137 105,-137 105,-137 99,-137 93,-131 93,-125 93,-125 93,-20 93,-20 93,-14 99,-8 105,-8"/>
-<text text-anchor="start" x="284.5" y="-122" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="15.00">Gazebo Classic Simulation (sim.launch.py)</text>
+<path fill="#f3e5f5" stroke="#6a1b9a" d="M75,-8C75,-8 793,-8 793,-8 799,-8 805,-14 805,-20 805,-20 805,-125 805,-125 805,-131 799,-137 793,-137 793,-137 75,-137 75,-137 69,-137 63,-131 63,-125 63,-125 63,-20 63,-20 63,-14 69,-8 75,-8"/>
+<text text-anchor="start" x="254.5" y="-122" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="15.00">Gazebo Classic Simulation (sim.launch.py)</text>
 </g>
 <g id="clust8" class="cluster">
 <title>cluster_slam</title>
@@ -114,18 +114,18 @@
 <!-- CM -->
 <g id="node11" class="node">
 <title>CM</title>
-<path fill="#ffcdd2" stroke="transparent" d="M134,-181C134,-181 236,-181 236,-181 242,-181 248,-187 248,-193 248,-193 248,-228 248,-228 248,-234 242,-240 236,-240 236,-240 134,-240 134,-240 128,-240 122,-234 122,-228 122,-228 122,-193 122,-193 122,-187 128,-181 134,-181"/>
-<text text-anchor="start" x="128" y="-224.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">collision_monitor</text>
-<text text-anchor="start" x="128.5" y="-206.3" font-family="Helvetica,sans-Serif" font-size="9.00">stop 15 cm · slow 55 cm</text>
-<text text-anchor="start" x="131" y="-189.3" font-family="Helvetica,sans-Serif" font-size="9.00">time&#45;to&#45;collision ≥ 1.2 s</text>
-<path fill="none" stroke="#c62828" d="M134,-181C134,-181 236,-181 236,-181 242,-181 248,-187 248,-193 248,-193 248,-228 248,-228 248,-234 242,-240 236,-240 236,-240 134,-240 134,-240 128,-240 122,-234 122,-228 122,-228 122,-193 122,-193 122,-187 128,-181 134,-181"/>
+<path fill="#ffcdd2" stroke="transparent" d="M88,-181C88,-181 222,-181 222,-181 228,-181 234,-187 234,-193 234,-193 234,-228 234,-228 234,-234 228,-240 222,-240 222,-240 88,-240 88,-240 82,-240 76,-234 76,-228 76,-228 76,-193 76,-193 76,-187 82,-181 88,-181"/>
+<text text-anchor="start" x="98" y="-224.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">collision_monitor</text>
+<text text-anchor="start" x="82" y="-206.3" font-family="Helvetica,sans-Serif" font-size="9.00">bumper stop 7 cm · slow 50 cm</text>
+<text text-anchor="start" x="101" y="-189.3" font-family="Helvetica,sans-Serif" font-size="9.00">time&#45;to&#45;collision ≥ 1.2 s</text>
+<path fill="none" stroke="#c62828" d="M88,-181C88,-181 222,-181 222,-181 228,-181 234,-187 234,-193 234,-193 234,-228 234,-228 234,-234 228,-240 222,-240 222,-240 88,-240 88,-240 82,-240 76,-234 76,-228 76,-228 76,-193 76,-193 76,-187 82,-181 88,-181"/>
 </g>
 <!-- DM&#45;&gt;CM -->
 <g id="edge13" class="edge">
 <title>DM&#45;&gt;CM</title>
-<path fill="none" stroke="#455a64" stroke-width="1.3" stroke-dasharray="5,2" d="M582.84,-670.87C590.26,-663.36 596.81,-655.09 602,-646 659.07,-546.01 654.05,-492.08 607,-387 600.18,-371.77 588.44,-375.76 579,-362 562.61,-338.11 577.72,-320.18 556,-301 512.03,-262.16 351.36,-234.23 256.49,-220.7"/>
-<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="256.68,-217.9 248.36,-219.55 255.89,-223.44 256.68,-217.9"/>
-<text text-anchor="middle" x="678" y="-414" font-family="Helvetica,sans-Serif" font-size="10.00">/cmd_vel (docking)</text>
+<path fill="none" stroke="#455a64" stroke-width="1.3" stroke-dasharray="5,2" d="M582.89,-670.9C590.3,-663.38 596.84,-655.1 602,-646 658.81,-545.87 644.11,-495.64 606,-387 601.29,-373.57 593.13,-374.31 586,-362 571.4,-336.79 584.17,-319.91 562,-301 514.66,-260.62 347.17,-234.09 242.38,-221.04"/>
+<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="242.6,-218.25 234.32,-220.05 241.92,-223.8 242.6,-218.25"/>
+<text text-anchor="middle" x="673" y="-414" font-family="Helvetica,sans-Serif" font-size="10.00">/cmd_vel (docking)</text>
 </g>
 <!-- BATT -->
 <g id="node4" class="node">
@@ -167,109 +167,109 @@
 <!-- PLAN -->
 <g id="node7" class="node">
 <title>PLAN</title>
-<path fill="#c8e6c9" stroke="transparent" d="M211,-387C211,-387 317,-387 317,-387 323,-387 329,-393 329,-399 329,-399 329,-434 329,-434 329,-440 323,-446 317,-446 317,-446 211,-446 211,-446 205,-446 199,-440 199,-434 199,-434 199,-399 199,-399 199,-393 205,-387 211,-387"/>
-<text text-anchor="start" x="213.5" y="-430.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">planner_server</text>
-<text text-anchor="start" x="205" y="-412.3" font-family="Helvetica,sans-Serif" font-size="9.00">NavFn A*, global costmap</text>
-<text text-anchor="start" x="209" y="-396.3" font-family="Helvetica,sans-Serif" font-size="9.00">keepout + </text>
-<text text-anchor="start" x="260" y="-396.3" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#c62828">people filters</text>
-<path fill="none" stroke="#2e7d32" d="M211,-387C211,-387 317,-387 317,-387 323,-387 329,-393 329,-399 329,-399 329,-434 329,-434 329,-440 323,-446 317,-446 317,-446 211,-446 211,-446 205,-446 199,-440 199,-434 199,-434 199,-399 199,-399 199,-393 205,-387 211,-387"/>
+<path fill="#c8e6c9" stroke="transparent" d="M225,-387C225,-387 331,-387 331,-387 337,-387 343,-393 343,-399 343,-399 343,-434 343,-434 343,-440 337,-446 331,-446 331,-446 225,-446 225,-446 219,-446 213,-440 213,-434 213,-434 213,-399 213,-399 213,-393 219,-387 225,-387"/>
+<text text-anchor="start" x="227.5" y="-430.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">planner_server</text>
+<text text-anchor="start" x="219" y="-412.3" font-family="Helvetica,sans-Serif" font-size="9.00">NavFn A*, global costmap</text>
+<text text-anchor="start" x="223" y="-396.3" font-family="Helvetica,sans-Serif" font-size="9.00">keepout + </text>
+<text text-anchor="start" x="274" y="-396.3" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#c62828">people filters</text>
+<path fill="none" stroke="#2e7d32" d="M225,-387C225,-387 331,-387 331,-387 337,-387 343,-393 343,-399 343,-399 343,-434 343,-434 343,-440 337,-446 331,-446 331,-446 225,-446 225,-446 219,-446 213,-440 213,-434 213,-434 213,-399 213,-399 213,-393 219,-387 225,-387"/>
 </g>
 <!-- PT&#45;&gt;PLAN -->
 <g id="edge14" class="edge">
 <title>PT&#45;&gt;PLAN</title>
-<path fill="none" stroke="#c62828" stroke-width="1.3" d="M688.61,-880.9C692.68,-793.44 687.17,-603.23 573,-518 488.52,-454.94 447.08,-479.12 347,-446 343.66,-444.89 340.24,-443.75 336.79,-442.6"/>
-<polygon fill="#c62828" stroke="#c62828" stroke-width="1.3" points="337.67,-439.94 329.2,-440.04 335.89,-445.25 337.67,-439.94"/>
+<path fill="none" stroke="#c62828" stroke-width="1.3" d="M688.48,-880.76C692.27,-793.48 686.21,-604.2 573,-518 493.83,-457.72 455.17,-478.16 361,-446 357.67,-444.86 354.26,-443.7 350.81,-442.52"/>
+<polygon fill="#c62828" stroke="#c62828" stroke-width="1.3" points="351.71,-439.87 343.24,-439.92 349.9,-445.16 351.71,-439.87"/>
 <text text-anchor="start" x="660" y="-638" font-family="Helvetica,sans-Serif" font-size="10.00">/people/cost_mask</text>
 <text text-anchor="start" x="660" y="-627" font-family="Helvetica,sans-Serif" font-size="10.00">(people_filter)</text>
 </g>
 <!-- CTRL -->
 <g id="node8" class="node">
 <title>CTRL</title>
-<path fill="#c8e6c9" stroke="transparent" d="M377,-387C377,-387 543,-387 543,-387 549,-387 555,-393 555,-399 555,-399 555,-434 555,-434 555,-440 549,-446 543,-446 543,-446 377,-446 377,-446 371,-446 365,-440 365,-434 365,-434 365,-399 365,-399 365,-393 371,-387 377,-387"/>
-<text text-anchor="start" x="402.5" y="-430.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">controller_server</text>
-<text text-anchor="start" x="371" y="-412.3" font-family="Helvetica,sans-Serif" font-size="9.00">RotationShim + Regulated Pure Pursuit</text>
-<text text-anchor="start" x="414" y="-395.3" font-family="Helvetica,sans-Serif" font-size="9.00">local costmap 10 Hz</text>
-<path fill="none" stroke="#2e7d32" d="M377,-387C377,-387 543,-387 543,-387 549,-387 555,-393 555,-399 555,-399 555,-434 555,-434 555,-440 549,-446 543,-446 543,-446 377,-446 377,-446 371,-446 365,-440 365,-434 365,-434 365,-399 365,-399 365,-393 371,-387 377,-387"/>
+<path fill="#c8e6c9" stroke="transparent" d="M391.5,-387C391.5,-387 542.5,-387 542.5,-387 548.5,-387 554.5,-393 554.5,-399 554.5,-399 554.5,-434 554.5,-434 554.5,-440 548.5,-446 542.5,-446 542.5,-446 391.5,-446 391.5,-446 385.5,-446 379.5,-440 379.5,-434 379.5,-434 379.5,-399 379.5,-399 379.5,-393 385.5,-387 391.5,-387"/>
+<text text-anchor="start" x="410" y="-430.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">controller_server</text>
+<text text-anchor="start" x="386" y="-412.3" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#c62828">MPPI (default) | RotationShim + RPP</text>
+<text text-anchor="start" x="421.5" y="-395.3" font-family="Helvetica,sans-Serif" font-size="9.00">local costmap 10 Hz</text>
+<path fill="none" stroke="#2e7d32" d="M391.5,-387C391.5,-387 542.5,-387 542.5,-387 548.5,-387 554.5,-393 554.5,-399 554.5,-399 554.5,-434 554.5,-434 554.5,-440 548.5,-446 542.5,-446 542.5,-446 391.5,-446 391.5,-446 385.5,-446 379.5,-440 379.5,-434 379.5,-434 379.5,-399 379.5,-399 379.5,-393 385.5,-387 391.5,-387"/>
 </g>
 <!-- PT&#45;&gt;CTRL -->
 <g id="edge15" class="edge">
 <title>PT&#45;&gt;CTRL</title>
-<path fill="none" stroke="#c62828" stroke-width="1.3" d="M705.64,-880.55C728.87,-825.95 765.07,-731.48 778,-646 790.41,-563.96 777.06,-523.73 713,-471 689.95,-452.02 622.53,-438.32 563.09,-429.54"/>
-<polygon fill="#c62828" stroke="#c62828" stroke-width="1.3" points="563.46,-426.76 555.14,-428.38 562.65,-432.3 563.46,-426.76"/>
+<path fill="none" stroke="#c62828" stroke-width="1.3" d="M714.12,-880.84C747.97,-822.24 796.94,-717.01 778,-624 763.26,-551.6 769.91,-518.12 713,-471 690.05,-452 621.77,-438.06 562.96,-429.18"/>
+<polygon fill="#c62828" stroke="#c62828" stroke-width="1.3" points="563.05,-426.37 554.73,-427.97 562.23,-431.91 563.05,-426.37"/>
 <text text-anchor="middle" x="810.5" y="-632.5" font-family="Helvetica,sans-Serif" font-size="10.00">/speed_limit</text>
 </g>
 <!-- BT&#45;&gt;PLAN -->
 <g id="edge4" class="edge">
 <title>BT&#45;&gt;PLAN</title>
-<path fill="none" stroke="#455a64" stroke-width="1.3" d="M418.07,-513.51C386.97,-494.13 347.78,-469.71 316.71,-450.35"/>
-<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="416.79,-516.02 425.06,-517.87 419.75,-511.26 416.79,-516.02"/>
-<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="318.08,-447.9 309.81,-446.05 315.12,-452.66 318.08,-447.9"/>
+<path fill="none" stroke="#455a64" stroke-width="1.3" d="M421.26,-513.25C392.43,-493.99 356.27,-469.81 327.49,-450.58"/>
+<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="419.96,-515.75 428.17,-517.87 423.07,-511.1 419.96,-515.75"/>
+<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="328.92,-448.17 320.71,-446.05 325.81,-452.82 328.92,-448.17"/>
 </g>
 <!-- BT&#45;&gt;CTRL -->
 <g id="edge5" class="edge">
 <title>BT&#45;&gt;CTRL</title>
-<path fill="none" stroke="#455a64" stroke-width="1.3" d="M467.87,-509.79C466.39,-492.41 464.62,-471.69 463.14,-454.29"/>
-<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="465.09,-510.14 468.56,-517.87 470.67,-509.66 465.09,-510.14"/>
-<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="465.9,-453.78 462.43,-446.05 460.32,-454.26 465.9,-453.78"/>
+<path fill="none" stroke="#455a64" stroke-width="1.3" d="M469.86,-509.79C469.32,-492.41 468.68,-471.69 468.14,-454.29"/>
+<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="467.07,-509.96 470.11,-517.87 472.66,-509.79 467.07,-509.96"/>
+<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="470.93,-453.96 467.89,-446.05 465.33,-454.13 470.93,-453.96"/>
 </g>
 <!-- BEH -->
 <g id="node9" class="node">
 <title>BEH</title>
-<path fill="#c8e6c9" stroke="transparent" d="M53.5,-395.5C53.5,-395.5 150.5,-395.5 150.5,-395.5 156.5,-395.5 162.5,-401.5 162.5,-407.5 162.5,-407.5 162.5,-425.5 162.5,-425.5 162.5,-431.5 156.5,-437.5 150.5,-437.5 150.5,-437.5 53.5,-437.5 53.5,-437.5 47.5,-437.5 41.5,-431.5 41.5,-425.5 41.5,-425.5 41.5,-407.5 41.5,-407.5 41.5,-401.5 47.5,-395.5 53.5,-395.5"/>
-<text text-anchor="start" x="48" y="-422.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">behavior_server</text>
-<text text-anchor="start" x="57.5" y="-404.3" font-family="Helvetica,sans-Serif" font-size="9.00">wait · backup · spin</text>
-<path fill="none" stroke="#2e7d32" d="M53.5,-395.5C53.5,-395.5 150.5,-395.5 150.5,-395.5 156.5,-395.5 162.5,-401.5 162.5,-407.5 162.5,-407.5 162.5,-425.5 162.5,-425.5 162.5,-431.5 156.5,-437.5 150.5,-437.5 150.5,-437.5 53.5,-437.5 53.5,-437.5 47.5,-437.5 41.5,-431.5 41.5,-425.5 41.5,-425.5 41.5,-407.5 41.5,-407.5 41.5,-401.5 47.5,-395.5 53.5,-395.5"/>
+<path fill="#c8e6c9" stroke="transparent" d="M67.5,-395.5C67.5,-395.5 164.5,-395.5 164.5,-395.5 170.5,-395.5 176.5,-401.5 176.5,-407.5 176.5,-407.5 176.5,-425.5 176.5,-425.5 176.5,-431.5 170.5,-437.5 164.5,-437.5 164.5,-437.5 67.5,-437.5 67.5,-437.5 61.5,-437.5 55.5,-431.5 55.5,-425.5 55.5,-425.5 55.5,-407.5 55.5,-407.5 55.5,-401.5 61.5,-395.5 67.5,-395.5"/>
+<text text-anchor="start" x="62" y="-422.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">behavior_server</text>
+<text text-anchor="start" x="71.5" y="-404.3" font-family="Helvetica,sans-Serif" font-size="9.00">wait · backup · spin</text>
+<path fill="none" stroke="#2e7d32" d="M67.5,-395.5C67.5,-395.5 164.5,-395.5 164.5,-395.5 170.5,-395.5 176.5,-401.5 176.5,-407.5 176.5,-407.5 176.5,-425.5 176.5,-425.5 176.5,-431.5 170.5,-437.5 164.5,-437.5 164.5,-437.5 67.5,-437.5 67.5,-437.5 61.5,-437.5 55.5,-431.5 55.5,-425.5 55.5,-425.5 55.5,-407.5 55.5,-407.5 55.5,-401.5 61.5,-395.5 67.5,-395.5"/>
 </g>
 <!-- BT&#45;&gt;BEH -->
 <g id="edge6" class="edge">
 <title>BT&#45;&gt;BEH</title>
-<path fill="none" stroke="#455a64" stroke-width="1.3" d="M380.18,-515.36C322.97,-495.65 247.59,-469.55 181,-446 175.83,-444.17 170.47,-442.26 165.09,-440.34"/>
-<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="379.3,-518.01 387.77,-517.97 381.12,-512.72 379.3,-518.01"/>
-<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="165.69,-437.58 157.22,-437.52 163.8,-442.85 165.69,-437.58"/>
+<path fill="none" stroke="#455a64" stroke-width="1.3" d="M384.63,-515.12C320.99,-491.99 235.9,-461.07 178.68,-440.28"/>
+<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="383.74,-517.77 392.21,-517.87 385.65,-512.51 383.74,-517.77"/>
+<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="179.62,-437.64 171.15,-437.54 177.71,-442.9 179.62,-437.64"/>
 </g>
 <!-- SMOOTH -->
 <g id="node10" class="node">
 <title>SMOOTH</title>
-<path fill="#c8e6c9" stroke="transparent" d="M271.33,-301C271.33,-301 390.67,-301 390.67,-301 394.83,-301 399,-305.17 399,-309.33 399,-309.33 399,-317.67 399,-317.67 399,-321.83 394.83,-326 390.67,-326 390.67,-326 271.33,-326 271.33,-326 267.17,-326 263,-321.83 263,-317.67 263,-317.67 263,-309.33 263,-309.33 263,-305.17 267.17,-301 271.33,-301"/>
-<text text-anchor="start" x="269" y="-310.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">velocity_smoother</text>
-<path fill="none" stroke="#2e7d32" d="M271.33,-301C271.33,-301 390.67,-301 390.67,-301 394.83,-301 399,-305.17 399,-309.33 399,-309.33 399,-317.67 399,-317.67 399,-321.83 394.83,-326 390.67,-326 390.67,-326 271.33,-326 271.33,-326 267.17,-326 263,-321.83 263,-317.67 263,-317.67 263,-309.33 263,-309.33 263,-305.17 267.17,-301 271.33,-301"/>
+<path fill="#c8e6c9" stroke="transparent" d="M280.33,-301C280.33,-301 399.67,-301 399.67,-301 403.83,-301 408,-305.17 408,-309.33 408,-309.33 408,-317.67 408,-317.67 408,-321.83 403.83,-326 399.67,-326 399.67,-326 280.33,-326 280.33,-326 276.17,-326 272,-321.83 272,-317.67 272,-317.67 272,-309.33 272,-309.33 272,-305.17 276.17,-301 280.33,-301"/>
+<text text-anchor="start" x="278" y="-310.9" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">velocity_smoother</text>
+<path fill="none" stroke="#2e7d32" d="M280.33,-301C280.33,-301 399.67,-301 399.67,-301 403.83,-301 408,-305.17 408,-309.33 408,-309.33 408,-317.67 408,-317.67 408,-321.83 403.83,-326 399.67,-326 399.67,-326 280.33,-326 280.33,-326 276.17,-326 272,-321.83 272,-317.67 272,-317.67 272,-309.33 272,-309.33 272,-305.17 276.17,-301 280.33,-301"/>
 </g>
 <!-- CTRL&#45;&gt;SMOOTH -->
 <g id="edge8" class="edge">
 <title>CTRL&#45;&gt;SMOOTH</title>
-<path fill="none" stroke="#455a64" stroke-width="1.3" d="M396.78,-387C384.48,-379.85 372.25,-371.47 362,-362 353.21,-353.88 345.78,-342.76 340.4,-333.33"/>
-<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="342.82,-331.91 336.54,-326.21 337.89,-334.58 342.82,-331.91"/>
-<text text-anchor="middle" x="394.5" y="-354" font-family="Helvetica,sans-Serif" font-size="10.00">cmd_vel_nav</text>
+<path fill="none" stroke="#455a64" stroke-width="1.3" d="M404.07,-386.88C391.99,-379.77 380.01,-371.43 370,-362 361.37,-353.87 354.18,-342.76 349,-333.32"/>
+<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="351.47,-332.01 345.29,-326.21 346.5,-334.6 351.47,-332.01"/>
+<text text-anchor="middle" x="402.5" y="-354" font-family="Helvetica,sans-Serif" font-size="10.00">cmd_vel_nav</text>
 </g>
 <!-- BEH&#45;&gt;CM -->
 <g id="edge10" class="edge">
 <title>BEH&#45;&gt;CM</title>
-<path fill="none" stroke="#c62828" stroke-width="1.3" d="M110.26,-395.19C124.26,-360.78 152.84,-290.55 170.31,-247.6"/>
-<polygon fill="#c62828" stroke="#c62828" stroke-width="1.3" points="172.91,-248.63 173.34,-240.17 167.73,-246.52 172.91,-248.63"/>
-<text text-anchor="middle" x="180.5" y="-311" font-family="Helvetica,sans-Serif" font-size="10.00">cmd_vel_raw</text>
+<path fill="none" stroke="#c62828" stroke-width="1.3" d="M119.88,-395.19C126.43,-360.92 139.78,-291.13 148,-248.13"/>
+<polygon fill="#c62828" stroke="#c62828" stroke-width="1.3" points="150.77,-248.55 149.52,-240.17 145.27,-247.5 150.77,-248.55"/>
+<text text-anchor="middle" x="170.5" y="-311" font-family="Helvetica,sans-Serif" font-size="10.00">cmd_vel_raw</text>
 </g>
 <!-- SMOOTH&#45;&gt;CM -->
 <g id="edge9" class="edge">
 <title>SMOOTH&#45;&gt;CM</title>
-<path fill="none" stroke="#c62828" stroke-width="1.3" d="M302.95,-300.85C288.68,-294.39 271.36,-285.71 257,-276 243.98,-267.2 230.85,-256.2 219.43,-245.8"/>
-<polygon fill="#c62828" stroke="#c62828" stroke-width="1.3" points="221.05,-243.48 213.28,-240.1 217.24,-247.59 221.05,-243.48"/>
-<text text-anchor="middle" x="289.5" y="-268" font-family="Helvetica,sans-Serif" font-size="10.00">cmd_vel_raw</text>
+<path fill="none" stroke="#c62828" stroke-width="1.3" d="M271.7,-307.91C244.06,-303.17 213.25,-293.9 190,-276 180.49,-268.67 173.23,-258 167.87,-247.44"/>
+<polygon fill="#c62828" stroke="#c62828" stroke-width="1.3" points="170.39,-246.23 164.45,-240.18 165.33,-248.61 170.39,-246.23"/>
+<text text-anchor="middle" x="222.5" y="-268" font-family="Helvetica,sans-Serif" font-size="10.00">cmd_vel_raw</text>
 </g>
 <!-- ROBOT -->
 <g id="node16" class="node">
 <title>ROBOT</title>
-<path fill="#ce93d8" stroke="transparent" d="M119.5,-30.5C119.5,-30.5 250.5,-30.5 250.5,-30.5 256.5,-30.5 262.5,-36.5 262.5,-42.5 262.5,-42.5 262.5,-77.5 262.5,-77.5 262.5,-83.5 256.5,-89.5 250.5,-89.5 250.5,-89.5 119.5,-89.5 119.5,-89.5 113.5,-89.5 107.5,-83.5 107.5,-77.5 107.5,-77.5 107.5,-42.5 107.5,-42.5 107.5,-36.5 113.5,-30.5 119.5,-30.5"/>
-<text text-anchor="start" x="142" y="-74.4" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">waiter_robot</text>
-<text text-anchor="start" x="114" y="-55.8" font-family="Helvetica,sans-Serif" font-size="9.00">diff&#45;drive · 2D lidar 12 m / 290°</text>
-<text text-anchor="start" x="114" y="-38.8" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#c62828">bumper (contact sensor)</text>
-<path fill="none" stroke="#6a1b9a" d="M119.5,-30.5C119.5,-30.5 250.5,-30.5 250.5,-30.5 256.5,-30.5 262.5,-36.5 262.5,-42.5 262.5,-42.5 262.5,-77.5 262.5,-77.5 262.5,-83.5 256.5,-89.5 250.5,-89.5 250.5,-89.5 119.5,-89.5 119.5,-89.5 113.5,-89.5 107.5,-83.5 107.5,-77.5 107.5,-77.5 107.5,-42.5 107.5,-42.5 107.5,-36.5 113.5,-30.5 119.5,-30.5"/>
+<path fill="#ce93d8" stroke="transparent" d="M89.5,-30.5C89.5,-30.5 220.5,-30.5 220.5,-30.5 226.5,-30.5 232.5,-36.5 232.5,-42.5 232.5,-42.5 232.5,-77.5 232.5,-77.5 232.5,-83.5 226.5,-89.5 220.5,-89.5 220.5,-89.5 89.5,-89.5 89.5,-89.5 83.5,-89.5 77.5,-83.5 77.5,-77.5 77.5,-77.5 77.5,-42.5 77.5,-42.5 77.5,-36.5 83.5,-30.5 89.5,-30.5"/>
+<text text-anchor="start" x="112" y="-74.4" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">waiter_robot</text>
+<text text-anchor="start" x="84" y="-55.8" font-family="Helvetica,sans-Serif" font-size="9.00">diff&#45;drive · 2D lidar 12 m / 290°</text>
+<text text-anchor="start" x="84" y="-38.8" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#c62828">bumper (contact sensor)</text>
+<path fill="none" stroke="#6a1b9a" d="M89.5,-30.5C89.5,-30.5 220.5,-30.5 220.5,-30.5 226.5,-30.5 232.5,-36.5 232.5,-42.5 232.5,-42.5 232.5,-77.5 232.5,-77.5 232.5,-83.5 226.5,-89.5 220.5,-89.5 220.5,-89.5 89.5,-89.5 89.5,-89.5 83.5,-89.5 77.5,-83.5 77.5,-77.5 77.5,-77.5 77.5,-42.5 77.5,-42.5 77.5,-36.5 83.5,-30.5 89.5,-30.5"/>
 </g>
 <!-- CM&#45;&gt;ROBOT -->
 <g id="edge16" class="edge">
 <title>CM&#45;&gt;ROBOT</title>
-<path fill="none" stroke="#c62828" stroke-width="1.3" d="M185,-180.87C185,-157.14 185,-123.26 185,-97.57"/>
-<polygon fill="#c62828" stroke="#c62828" stroke-width="1.3" points="187.8,-97.54 185,-89.54 182.2,-97.54 187.8,-97.54"/>
-<text text-anchor="middle" x="207.5" y="-148" font-family="Helvetica,sans-Serif" font-size="10.00">/cmd_vel</text>
+<path fill="none" stroke="#c62828" stroke-width="1.3" d="M155,-180.87C155,-157.14 155,-123.26 155,-97.57"/>
+<polygon fill="#c62828" stroke="#c62828" stroke-width="1.3" points="157.8,-97.54 155,-89.54 152.2,-97.54 157.8,-97.54"/>
+<text text-anchor="middle" x="177.5" y="-148" font-family="Helvetica,sans-Serif" font-size="10.00">/cmd_vel</text>
 </g>
 <!-- AMCL -->
 <g id="node12" class="node">
@@ -292,31 +292,31 @@
 <!-- KEEP&#45;&gt;PLAN -->
 <g id="edge7" class="edge">
 <title>KEEP&#45;&gt;PLAN</title>
-<path fill="none" stroke="#455a64" stroke-width="1.3" d="M122.25,-526.34C148.44,-506.23 189.15,-474.97 220.24,-451.1"/>
-<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="222.08,-453.22 226.72,-446.13 218.66,-448.78 222.08,-453.22"/>
-<text text-anchor="middle" x="206.5" y="-479.5" font-family="Helvetica,sans-Serif" font-size="10.00"> mask</text>
+<path fill="none" stroke="#455a64" stroke-width="1.3" d="M124.44,-526.34C152.93,-506.15 197.28,-474.71 231.01,-450.8"/>
+<polygon fill="#455a64" stroke="#455a64" stroke-width="1.3" points="232.7,-453.04 237.61,-446.13 229.46,-448.47 232.7,-453.04"/>
+<text text-anchor="middle" x="213.5" y="-479.5" font-family="Helvetica,sans-Serif" font-size="10.00"> mask</text>
 </g>
 <!-- WORLD -->
 <g id="node14" class="node">
 <title>WORLD</title>
-<path fill="#e1bee7" stroke="transparent" d="M563.5,-22C563.5,-22 808.5,-22 808.5,-22 814.5,-22 820.5,-28 820.5,-34 820.5,-34 820.5,-86 820.5,-86 820.5,-92 814.5,-98 808.5,-98 808.5,-98 563.5,-98 563.5,-98 557.5,-98 551.5,-92 551.5,-86 551.5,-86 551.5,-34 551.5,-34 551.5,-28 557.5,-22 563.5,-22"/>
-<text text-anchor="start" x="558" y="-83.4" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">restaurant.world</text>
-<text text-anchor="start" x="673" y="-83.4" font-family="Helvetica,sans-Serif" font-size="12.00"> (scripts/build_world.py)</text>
-<text text-anchor="start" x="558" y="-64.8" font-family="Helvetica,sans-Serif" font-size="9.00">dining room, 16 tables, dock in the corner</text>
-<text text-anchor="start" x="558" y="-47.8" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#c62828">staff&#45;only kitchen, 2 serving windows</text>
-<text text-anchor="start" x="558" y="-30.8" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#c62828">1.05 m corridor + L&#45;turn → VIP lounge</text>
-<path fill="none" stroke="#6a1b9a" d="M563.5,-22C563.5,-22 808.5,-22 808.5,-22 814.5,-22 820.5,-28 820.5,-34 820.5,-34 820.5,-86 820.5,-86 820.5,-92 814.5,-98 808.5,-98 808.5,-98 563.5,-98 563.5,-98 557.5,-98 551.5,-92 551.5,-86 551.5,-86 551.5,-34 551.5,-34 551.5,-28 557.5,-22 563.5,-22"/>
+<path fill="#e1bee7" stroke="transparent" d="M533.5,-22C533.5,-22 778.5,-22 778.5,-22 784.5,-22 790.5,-28 790.5,-34 790.5,-34 790.5,-86 790.5,-86 790.5,-92 784.5,-98 778.5,-98 778.5,-98 533.5,-98 533.5,-98 527.5,-98 521.5,-92 521.5,-86 521.5,-86 521.5,-34 521.5,-34 521.5,-28 527.5,-22 533.5,-22"/>
+<text text-anchor="start" x="528" y="-83.4" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">restaurant.world</text>
+<text text-anchor="start" x="643" y="-83.4" font-family="Helvetica,sans-Serif" font-size="12.00"> (scripts/build_world.py)</text>
+<text text-anchor="start" x="528" y="-64.8" font-family="Helvetica,sans-Serif" font-size="9.00">dining room, 16 tables, dock in the corner</text>
+<text text-anchor="start" x="528" y="-47.8" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#c62828">staff&#45;only kitchen, 2 serving windows</text>
+<text text-anchor="start" x="528" y="-30.8" font-family="Helvetica,sans-Serif" font-size="9.00" fill="#c62828">1.05 m corridor + L&#45;turn → VIP lounge</text>
+<path fill="none" stroke="#6a1b9a" d="M533.5,-22C533.5,-22 778.5,-22 778.5,-22 784.5,-22 790.5,-28 790.5,-34 790.5,-34 790.5,-86 790.5,-86 790.5,-92 784.5,-98 778.5,-98 778.5,-98 533.5,-98 533.5,-98 527.5,-98 521.5,-92 521.5,-86 521.5,-86 521.5,-34 521.5,-34 521.5,-28 527.5,-22 533.5,-22"/>
 </g>
 <!-- HUM -->
 <g id="node15" class="node">
 <title>HUM</title>
-<path fill="#ffcdd2" stroke="transparent" d="M311,-22C311,-22 503,-22 503,-22 509,-22 515,-28 515,-34 515,-34 515,-86 515,-86 515,-92 509,-98 503,-98 503,-98 311,-98 311,-98 305,-98 299,-92 299,-86 299,-86 299,-34 299,-34 299,-28 305,-22 311,-22"/>
-<text text-anchor="start" x="305" y="-83.4" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">walking people</text>
-<text text-anchor="start" x="407" y="-83.4" font-family="Helvetica,sans-Serif" font-size="12.00"> (4 + test actors)</text>
-<text text-anchor="start" x="305" y="-64.8" font-family="Helvetica,sans-Serif" font-size="9.00">tunibot_gazebo_plugins/HumanActorPlugin:</text>
-<text text-anchor="start" x="305" y="-47.8" font-family="Helvetica,sans-Serif" font-size="9.00">animated actor + lidar&#45;visible body,</text>
-<text text-anchor="start" x="305" y="-30.8" font-family="Helvetica,sans-Serif" font-size="9.00">waypoints, yields to the robot</text>
-<path fill="none" stroke="#c62828" d="M311,-22C311,-22 503,-22 503,-22 509,-22 515,-28 515,-34 515,-34 515,-86 515,-86 515,-92 509,-98 503,-98 503,-98 311,-98 311,-98 305,-98 299,-92 299,-86 299,-86 299,-34 299,-34 299,-28 305,-22 311,-22"/>
+<path fill="#ffcdd2" stroke="transparent" d="M281,-22C281,-22 473,-22 473,-22 479,-22 485,-28 485,-34 485,-34 485,-86 485,-86 485,-92 479,-98 473,-98 473,-98 281,-98 281,-98 275,-98 269,-92 269,-86 269,-86 269,-34 269,-34 269,-28 275,-22 281,-22"/>
+<text text-anchor="start" x="275" y="-83.4" font-family="Helvetica,sans-Serif" font-weight="bold" font-size="12.00">walking people</text>
+<text text-anchor="start" x="377" y="-83.4" font-family="Helvetica,sans-Serif" font-size="12.00"> (4 + test actors)</text>
+<text text-anchor="start" x="275" y="-64.8" font-family="Helvetica,sans-Serif" font-size="9.00">tunibot_gazebo_plugins/HumanActorPlugin:</text>
+<text text-anchor="start" x="275" y="-47.8" font-family="Helvetica,sans-Serif" font-size="9.00">animated actor + lidar&#45;visible body,</text>
+<text text-anchor="start" x="275" y="-30.8" font-family="Helvetica,sans-Serif" font-size="9.00">waypoints, yields to the robot</text>
+<path fill="none" stroke="#c62828" d="M281,-22C281,-22 473,-22 473,-22 479,-22 485,-28 485,-34 485,-34 485,-86 485,-86 485,-92 479,-98 473,-98 473,-98 281,-98 281,-98 275,-98 269,-92 269,-86 269,-86 269,-34 269,-34 269,-28 275,-22 281,-22"/>
 </g>
 <!-- TEST -->
 <g id="node18" class="node">
@@ -331,31 +331,31 @@
 <!-- HUM&#45;&gt;TEST -->
 <g id="edge23" class="edge">
 <title>HUM&#45;&gt;TEST</title>
-<path fill="none" stroke="#c62828" stroke-width="1.3" stroke-dasharray="5,2" d="M459.54,-98.04C481.4,-112.01 507.58,-126.94 533,-137 592.17,-160.42 622.03,-128.9 673,-167 752,-226.07 699.14,-304.1 779,-362 828.76,-398.08 870.46,-344.66 915,-387 958.36,-428.22 939.06,-458.57 946,-518 960.61,-643.19 945.79,-680.18 901,-798 862.93,-898.14 881.5,-954.11 792,-1013 768.19,-1028.67 683.51,-1000.23 664,-1021 646.42,-1039.72 662.3,-1056.65 687.41,-1070.17"/>
+<path fill="none" stroke="#c62828" stroke-width="1.3" stroke-dasharray="5,2" d="M428.72,-98.17C450.68,-112.33 477.15,-127.36 503,-137 576.53,-164.41 612.43,-122.41 677,-167 759.79,-224.17 710.31,-303.26 792,-362 835.53,-393.3 871.51,-349.68 910,-387 953.03,-428.72 934.84,-458.5 942,-518 957.04,-642.93 944.5,-680.29 900,-798 862.19,-898.03 881.22,-954.05 792,-1013 768.22,-1028.71 683.51,-1000.23 664,-1021 646.42,-1039.72 662.3,-1056.65 687.41,-1070.17"/>
 <polygon fill="#c62828" stroke="#c62828" stroke-width="1.3" points="686.32,-1072.76 694.72,-1073.89 688.86,-1067.76 686.32,-1072.76"/>
-<text text-anchor="start" x="944" y="-485" font-family="Helvetica,sans-Serif" font-size="10.00">/gazebo/model_states</text>
-<text text-anchor="start" x="944" y="-474" font-family="Helvetica,sans-Serif" font-size="10.00">/bumper</text>
+<text text-anchor="start" x="940" y="-485" font-family="Helvetica,sans-Serif" font-size="10.00">/gazebo/model_states</text>
+<text text-anchor="start" x="940" y="-474" font-family="Helvetica,sans-Serif" font-size="10.00">/bumper</text>
 </g>
 <!-- ROBOT&#45;&gt;BATT -->
 <g id="edge19" class="edge">
 <title>ROBOT&#45;&gt;BATT</title>
-<path fill="none" stroke="#6a1b9a" stroke-width="1.3" d="M215.47,-89.66C233.44,-105.35 257.25,-124.16 281,-137 304.49,-149.7 311.75,-151.12 338,-156 364.25,-160.88 556.82,-150.75 578,-167 650.16,-222.35 574.17,-299.25 640,-362 671.29,-391.83 700.6,-359.56 734,-387 824.61,-461.45 823.54,-509.75 850,-624 880.39,-755.22 775.96,-796.74 655,-856 542.41,-911.17 495.73,-850.94 374,-881 370.7,-881.82 367.36,-882.72 364.02,-883.69"/>
+<path fill="none" stroke="#6a1b9a" stroke-width="1.3" d="M185.47,-89.66C203.44,-105.35 227.25,-124.16 251,-137 274.49,-149.7 281.73,-151.19 308,-156 337.53,-161.41 553.68,-149.39 578,-167 652.96,-221.27 584.01,-298.15 651,-362 677.35,-387.12 701.26,-363.42 729,-387 819.12,-463.59 822.34,-509.01 850,-624 881.5,-754.96 775.96,-796.74 655,-856 542.41,-911.17 495.73,-850.94 374,-881 370.7,-881.82 367.36,-882.72 364.02,-883.69"/>
 <polygon fill="#6a1b9a" stroke="#6a1b9a" stroke-width="1.3" points="363.03,-881.06 356.2,-886.08 364.67,-886.42 363.03,-881.06"/>
-<text text-anchor="middle" x="806.5" y="-414" font-family="Helvetica,sans-Serif" font-size="10.00">/odom</text>
+<text text-anchor="middle" x="801.5" y="-414" font-family="Helvetica,sans-Serif" font-size="10.00">/odom</text>
 </g>
 <!-- ROBOT&#45;&gt;PT -->
 <g id="edge18" class="edge">
 <title>ROBOT&#45;&gt;PT</title>
-<path fill="none" stroke="#6a1b9a" stroke-width="1.3" d="M213,-89.82C230.86,-106.4 255.4,-126.04 281,-137 304.52,-147.07 312.86,-140.24 338,-145 358.65,-148.91 363.19,-153.06 384,-156 410.43,-159.73 602.04,-151.82 624,-167 701.62,-220.67 634.76,-302.5 708,-362 751.3,-397.18 790.65,-348.48 831,-387 963.14,-513.17 937.03,-643.83 839,-798 819.8,-828.2 791.2,-854.85 763.84,-875.95"/>
-<polygon fill="#6a1b9a" stroke="#6a1b9a" stroke-width="1.3" points="761.97,-873.85 757.29,-880.92 765.36,-878.32 761.97,-873.85"/>
-<text text-anchor="middle" x="893" y="-414" font-family="Helvetica,sans-Serif" font-size="10.00">/scan</text>
+<path fill="none" stroke="#6a1b9a" stroke-width="1.3" d="M183,-89.82C200.86,-106.4 225.4,-126.04 251,-137 274.52,-147.07 282.86,-140.24 308,-145 328.65,-148.91 333.18,-153.12 354,-156 383.96,-160.15 600.72,-150.4 626,-167 706.42,-219.81 644.98,-301.76 720,-362 757.74,-392.31 791.03,-353.53 826,-387 958.02,-513.38 937.54,-644.08 839,-798 819.71,-828.14 791.09,-854.78 763.74,-875.89"/>
+<polygon fill="#6a1b9a" stroke="#6a1b9a" stroke-width="1.3" points="761.87,-873.79 757.19,-880.86 765.26,-878.25 761.87,-873.79"/>
+<text text-anchor="middle" x="888" y="-414" font-family="Helvetica,sans-Serif" font-size="10.00">/scan</text>
 </g>
 <!-- ROBOT&#45;&gt;AMCL -->
 <g id="edge17" class="edge">
 <title>ROBOT&#45;&gt;AMCL</title>
-<path fill="none" stroke="#6a1b9a" stroke-width="1.3" d="M216.23,-89.87C236.8,-108.79 264.38,-134.01 289,-156 392.85,-248.73 410,-283.51 525,-362 544.87,-375.56 560.52,-366.44 573,-387 586.6,-409.42 588.26,-424.68 573,-446 569.56,-450.8 433.39,-495.87 347.28,-524"/>
-<polygon fill="#6a1b9a" stroke="#6a1b9a" stroke-width="1.3" points="346.36,-521.35 339.63,-526.5 348.1,-526.67 346.36,-521.35"/>
-<text text-anchor="middle" x="510.5" y="-311" font-family="Helvetica,sans-Serif" font-size="10.00">/scan /odom /tf</text>
+<path fill="none" stroke="#6a1b9a" stroke-width="1.3" d="M184.81,-89.63C205.24,-108.91 233.21,-134.61 259,-156 376.27,-253.27 407.89,-275.05 533,-362 549.91,-373.75 562.12,-368.94 572,-387 584.58,-410.01 587.25,-424.67 572,-446 568.57,-450.79 432.87,-495.86 347.05,-523.99"/>
+<polygon fill="#6a1b9a" stroke="#6a1b9a" stroke-width="1.3" points="346.15,-521.34 339.42,-526.49 347.89,-526.66 346.15,-521.34"/>
+<text text-anchor="middle" x="516.5" y="-311" font-family="Helvetica,sans-Serif" font-size="10.00">/scan /odom /tf</text>
 </g>
 <!-- CARTO -->
 <g id="node17" class="node">
@@ -368,9 +368,9 @@
 <!-- ROBOT&#45;&gt;CARTO -->
 <g id="edge20" class="edge">
 <title>ROBOT&#45;&gt;CARTO</title>
-<path fill="none" stroke="#ef6c00" stroke-width="1.3" stroke-dasharray="5,2" d="M211.95,-89.66C229.78,-106.62 254.66,-126.73 281,-137 303.42,-145.74 365,-143.18 389,-145 515.24,-154.56 554.88,-121.43 673,-167 875.95,-245.3 1032.04,-410.51 1061,-471 1112.97,-579.56 1076.53,-966.4 1065.1,-1074.35"/>
-<polygon fill="#ef6c00" stroke="#ef6c00" stroke-width="1.3" points="1062.3,-1074.24 1064.23,-1082.49 1067.87,-1074.84 1062.3,-1074.24"/>
-<text text-anchor="middle" x="1098" y="-479.5" font-family="Helvetica,sans-Serif" font-size="10.00">/scan /odom</text>
+<path fill="none" stroke="#ef6c00" stroke-width="1.3" stroke-dasharray="5,2" d="M181.93,-89.69C199.76,-106.66 224.64,-126.78 251,-137 253.76,-138.07 674.24,-165.92 677,-167 878.45,-245.72 962.54,-276.44 1057,-471 1109.57,-579.27 1075.65,-966.32 1064.92,-1074.33"/>
+<polygon fill="#ef6c00" stroke="#ef6c00" stroke-width="1.3" points="1062.12,-1074.24 1064.1,-1082.48 1067.69,-1074.8 1062.12,-1074.24"/>
+<text text-anchor="middle" x="1095" y="-479.5" font-family="Helvetica,sans-Serif" font-size="10.00">/scan /odom</text>
 </g>
 <!-- CARTO&#45;&gt;AMCL -->
 <g id="edge21" class="edge">

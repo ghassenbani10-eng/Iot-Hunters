@@ -91,7 +91,7 @@ def generate_launch_description():
         DeclareLaunchArgument('use_sim_time', default_value='true'),
         DeclareLaunchArgument('rviz', default_value='true'),
         DeclareLaunchArgument('log_level', default_value='info'),
-        DeclareLaunchArgument('controller', default_value='rpp', description='rpp | mppi'),
+        DeclareLaunchArgument('controller', default_value='mppi', description='mppi (default) | rpp'),
         DeclareLaunchArgument('map', default_value=os.path.join(pkg, 'maps', 'restaurant_map.yaml')),
         DeclareLaunchArgument('keepout_mask', default_value=os.path.join(pkg, 'maps', 'keepout_mask.yaml')),
         DeclareLaunchArgument('params_file', default_value=os.path.join(pkg, 'config', 'nav2_params.yaml')),

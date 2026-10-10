@@ -382,6 +382,14 @@ class Mission:
             self.check_return_energy()
 
     # ------------------------------------------------------------ motion
+    def hold(self, seconds):
+        """Pause while actively braking (zero velocity at 10 Hz): any late velocity
+        command from another source cannot move the robot during the pause."""
+        end = self.mgr.now() + seconds
+        while self.mgr.now() < end and rclpy.ok():
+            self.mgr.cmd_pub.publish(Twist())
+            time.sleep(0.1)
+
     def stop(self):
         """Zero velocity, sent a few times: the simulated base (gazebo diff drive) has no
         command timeout and keeps executing the last /cmd_vel it received."""
@@ -479,7 +487,7 @@ class Mission:
                 self.mgr.event('failure', 'Navigation to %s failed (approach %d/%d, attempt %d)' % (
                     label, i + 1, len(poses), attempt + 1))
                 self.nav.clearAllCostmaps()
-                self.mgr.sleep(1.0)
+                self.hold(1.0)
         return False
 
     def drive(self, distance, speed, until=None, timeout=None):
@@ -596,7 +604,7 @@ class Mission:
                 self.drive(0.3, 0.1)
                 continue
             self.reverse_onto_dock(dx, dy, dyaw)
-            self.mgr.sleep(1.5)
+            self.hold(1.5)              # charger contact check, robot braked
             if m.battery.get('on_dock', False) or m.battery.get('charging', False):
                 with m.lock:
                     m.docked = True
@@ -724,6 +732,7 @@ class Mission:
         m.set_state(CHARGING, 'to %.0f%%' % target_soc)
         m.event('battery', 'Charging to %.0f%% (%s), now %.0f%%' % (target_soc, reason, m.soc))
         while rclpy.ok() and m.soc < target_soc and not m.estop and not m.cancel_requested:
+            m.cmd_pub.publish(Twist())          # parked on the charger: brake
             if not m.battery.get('charging', False) and not m.battery.get('on_dock', False):
                 m.event('error', 'Not receiving charge on the dock - re-docking')
                 with m.lock:
@@ -806,6 +815,7 @@ class Mission:
                 m.set_state(IDLE)
             return m.now()
         if docked:
+            m.cmd_pub.publish(Twist())          # parked on the charger: brake
             if m.soc < m.cfg['battery_resume'] and m.battery.get('charging', False):
                 m.set_state(CHARGING, 'to %.0f%%' % m.cfg['battery_resume'])
             elif m.state != DOCKED:

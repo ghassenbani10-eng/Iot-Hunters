@@ -33,6 +33,7 @@ setup(
             'people_tracker = tunibot_delivery.people_tracker:main',
             'scenario_runner = tunibot_delivery.scenario_runner:main',
             'make_test_report = tunibot_delivery.make_test_report:main',
+            'demo_recorder = tunibot_delivery.demo_recorder:main',
         ],
     },
 )
