@@ -4,13 +4,14 @@
 #   src/tunibot_delivery/scripts/run_tests.sh                 # all scenarios
 #   src/tunibot_delivery/scripts/run_tests.sh tc02 tc09       # a selection
 #   GUI=true RESULTS=~/results src/tunibot_delivery/scripts/run_tests.sh tc03
+#   CONTROLLER=rpp src/tunibot_delivery/scripts/run_tests.sh tc05   # rpp | mppi (default)
 #
 # Results: $RESULTS/<scenario>.{json,csv,png} + _events.json, logs in $RESULTS/logs.
 # Then: ros2 run tunibot_delivery make_test_report $RESULTS
-set -u
 WS="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 RESULTS="${RESULTS:-$HOME/tunibot_test_results}"
 GUI="${GUI:-false}"
+CONTROLLER="${CONTROLLER:-mppi}"
 SCENARIOS=("$@")
 [ ${#SCENARIOS[@]} -eq 0 ] && SCENARIOS=(tc01 tc02 tc03 tc04 tc05 tc06 tc07 tc08 tc09 tc10 tc11 tc12)
 mkdir -p "$RESULTS/logs"
@@ -38,12 +39,12 @@ for sc in "${SCENARIOS[@]}"; do
   stop_stack >/dev/null 2>&1
   ACC=25.0; SOC=100.0
   case "$sc" in
-    tc10) ACC=60.0 ;;     # endurance: faster drain so that several charging cycles happen
+    tc10) ACC=40.0 ;;     # endurance: faster drain so that several charging cycles happen
   esac
   L="$RESULTS/logs/$sc"
   ros2 launch tunibot_delivery sim.launch.py gui:=$GUI > "$L-sim.log" 2>&1 &
   sleep 15
-  ros2 launch tunibot_delivery navigation.launch.py rviz:=$GUI > "$L-nav.log" 2>&1 &
+  ros2 launch tunibot_delivery navigation.launch.py rviz:=$GUI controller:=$CONTROLLER > "$L-nav.log" 2>&1 &
   sleep 12
   ros2 launch tunibot_delivery delivery.launch.py time_acceleration:=$ACC initial_soc:=$SOC port:=8080 > "$L-delivery.log" 2>&1 &
   timeout 4200 ros2 run tunibot_delivery scenario_runner --ros-args -p use_sim_time:=true \

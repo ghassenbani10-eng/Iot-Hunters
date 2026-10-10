@@ -18,7 +18,7 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration
+from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
 from nav2_common.launch import RewrittenYaml
 
@@ -37,10 +37,15 @@ def generate_launch_description():
         convert_types=True)
     tf_remap = [('/tf', 'tf'), ('/tf_static', 'tf_static')]
 
-    def nav_node(package, executable, name=None, remaps=()):
+    def nav_node(package, executable, name=None, remaps=(), extra=()):
         return Node(package=package, executable=executable, name=name or executable, output='screen',
-                    parameters=[params], remappings=tf_remap + list(remaps),
+                    parameters=[params, *extra], remappings=tf_remap + list(remaps),
                     arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')])
+
+    # controller:=mppi -> MPPI overlay (config/nav2_mppi.yaml) on top of nav2_params.yaml
+    mppi = PythonExpression(["'", os.path.join(pkg, 'config', 'nav2_mppi.yaml'), "' if '",
+                             LaunchConfiguration('controller'), "' == 'mppi' else '",
+                             os.path.join(pkg, 'config', 'nav2_controller_default.yaml'), "'"])
 
     localization = [
         nav_node('nav2_map_server', 'map_server'),
@@ -51,7 +56,7 @@ def generate_launch_description():
                           'node_names': ['map_server', 'amcl']}]),
     ]
     navigation = [
-        nav_node('nav2_controller', 'controller_server', remaps=[('cmd_vel', 'cmd_vel_nav')]),
+        nav_node('nav2_controller', 'controller_server', remaps=[('cmd_vel', 'cmd_vel_nav')], extra=[mppi]),
         nav_node('nav2_smoother', 'smoother_server'),
         nav_node('nav2_planner', 'planner_server'),
         nav_node('nav2_behaviors', 'behavior_server', remaps=[('cmd_vel', 'cmd_vel_raw')]),
@@ -86,6 +91,7 @@ def generate_launch_description():
         DeclareLaunchArgument('use_sim_time', default_value='true'),
         DeclareLaunchArgument('rviz', default_value='true'),
         DeclareLaunchArgument('log_level', default_value='info'),
+        DeclareLaunchArgument('controller', default_value='rpp', description='rpp | mppi'),
         DeclareLaunchArgument('map', default_value=os.path.join(pkg, 'maps', 'restaurant_map.yaml')),
         DeclareLaunchArgument('keepout_mask', default_value=os.path.join(pkg, 'maps', 'keepout_mask.yaml')),
         DeclareLaunchArgument('params_file', default_value=os.path.join(pkg, 'config', 'nav2_params.yaml')),

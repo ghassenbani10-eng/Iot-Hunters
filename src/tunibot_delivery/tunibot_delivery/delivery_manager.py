@@ -89,6 +89,7 @@ class DeliveryManager(Node):
             'path_wait_sec': 30.0,         # wait this long for a blocked route to clear (people)
             'cruise_speed': 0.35,          # m/s, used for the time part of energy estimates
             'pickup_depart_yaw': -1.5708,  # after loading, turn to face the dining room
+            'pickup_staging_dist': 0.6,    # Nav2 stops this far back from a serving window
         }
         for k, v in defaults.items():
             self.declare_parameter(k, v)
@@ -381,6 +382,13 @@ class Mission:
             self.check_return_energy()
 
     # ------------------------------------------------------------ motion
+    def stop(self):
+        """Zero velocity, sent a few times: the simulated base (gazebo diff drive) has no
+        command timeout and keeps executing the last /cmd_vel it received."""
+        for _ in range(3):
+            self.mgr.cmd_pub.publish(Twist())
+            time.sleep(0.03)
+
     def navigate(self, x, y, yaw, label, away=True):
         """One Nav2 NavigateToPose with monitoring. Returns True on success."""
         self.nav.goToPose(self.pose_msg(x, y, yaw))
@@ -442,20 +450,31 @@ class Mission:
                 m.set_state(m.state, 'waiting: route blocked')
             if m.now() > deadline:
                 return False
-            self.nav.clearAllCostmaps()
+            # no costmap clearing here: it would also erase a real blockage (a trolley in
+            # the corridor) and send the robot back into the dead end; cells left by a
+            # person who walked away are cleared by the lidar raytracing anyway
             m.sleep(2.0)
 
     def go(self, name, away=True, label=None):
         """Navigate to a named place, trying each approach pose. Returns False if impossible."""
         label = label or name
         poses = self.mgr.places[name]
+        # Serving windows are 0.5 m from the partition wall: Nav2 stops at a staging
+        # pose in open floor, then the robot faces the window and creeps in straight.
+        # (Humble's rotation shim turns in place without collision checking: a turn
+        # close to a wall would sweep the robot's corner into it.)
+        staging = self.mgr.cfg['pickup_staging_dist'] if name == 'pickup' else 0.0
         for i, (x, y, yaw) in enumerate(poses):
+            sx, sy = x - staging * math.cos(yaw), y - staging * math.sin(yaw)
             for attempt in range(int(self.mgr.cfg['nav_attempts_per_pose'])):
-                if not self.wait_for_path((x, y, yaw), label, away):
+                if not self.wait_for_path((sx, sy, yaw), label, away):
                     self.mgr.event('failure', 'Approach %d/%d of %s unreachable' % (i + 1, len(poses), label))
                     break
-                if self.navigate(x, y, yaw, label, away):
-                    self.rotate_to(yaw, tol=0.08)   # face the window / table
+                if self.navigate(sx, sy, yaw, label, away):
+                    self.rotate_to(yaw, tol=0.05)   # face the window / table
+                    if staging:
+                        self.goto_point(x, y, tol=0.04)
+                        self.rotate_to(yaw, tol=0.05)
                     return True
                 self.mgr.event('failure', 'Navigation to %s failed (approach %d/%d, attempt %d)' % (
                     label, i + 1, len(poses), attempt + 1))
@@ -478,7 +497,7 @@ class Mission:
                 break
             m.cmd_pub.publish(cmd)
             time.sleep(0.05)
-        m.cmd_pub.publish(Twist())
+        self.stop()
 
     def rotate_to(self, yaw_target, tol=0.03, timeout=15.0):
         m = self.mgr
@@ -496,7 +515,7 @@ class Mission:
                 cmd.angular.z = math.copysign(0.12, err)
             m.cmd_pub.publish(cmd)
             time.sleep(0.05)
-        m.cmd_pub.publish(Twist())
+        self.stop()
 
     def undock(self):
         m = self.mgr
@@ -529,7 +548,7 @@ class Mission:
                 cmd.angular.z = max(-0.4, min(0.4, 1.5 * err))
             m.cmd_pub.publish(cmd)
             time.sleep(0.05)
-        m.cmd_pub.publish(Twist())
+        self.stop()
 
     def reverse_onto_dock(self, dx, dy, dyaw, speed=0.08, timeout=40.0):
         """Straight reverse along the dock axis, holding the heading and correcting
@@ -554,7 +573,7 @@ class Mission:
             cmd.angular.z = max(-0.3, min(0.3, 2.0 * heading_err))
             m.cmd_pub.publish(cmd)
             time.sleep(0.05)
-        m.cmd_pub.publish(Twist())
+        self.stop()
 
     def dock(self, reason):
         """Return to the dock and get onto the charging contacts. True when charging."""
@@ -609,8 +628,10 @@ class Mission:
             m.set_state(LOADING)
             self.wait_checked(m.cfg['load_time_sec'])
             m.set_state(TO_TABLE)
-            # deliberate departure: turn in place towards the dining room before handing
-            # over to Nav2 (the robot is 25 cm from the counter of the serving window)
+            # deliberate departure: back out of the window to the staging pose, then
+            # turn towards the dining room before handing over to Nav2
+            self.wait_rear_clear(m.cfg['pickup_staging_dist'] + 0.5)
+            self.drive(-m.cfg['pickup_staging_dist'], 0.1)
             self.rotate_to(m.cfg['pickup_depart_yaw'], tol=0.1)
             if not self.go(order['table']):
                 raise Abort('%s unreachable' % order['table'])
@@ -647,11 +668,35 @@ class Mission:
                 m.current = None
                 m.cancel_requested = False
 
+    def wait_rear_clear(self, dist, timeout=20.0):
+        """The lidar does not see behind the robot (290 deg): before backing out, wait
+        until no tracked person is within `dist` behind it."""
+        m = self.mgr
+        end = m.now() + timeout
+        announced = False
+        while m.now() < end:
+            pose = m.robot_pose()
+            behind = []
+            for t in m.people.get('tracks', []) if pose else []:
+                dx, dy = t['x'] - pose[0], t['y'] - pose[1]
+                along = dx * math.cos(pose[2]) + dy * math.sin(pose[2])
+                if along < 0.0 and math.hypot(dx, dy) < dist:
+                    behind.append(t)
+            if not behind:
+                return
+            if not announced:
+                m.event('nav', 'Person behind the robot - waiting before backing out')
+                announced = True
+            self.check_interrupts()
+            time.sleep(0.2)
+
     def wait_checked(self, seconds):
+        """Wait (loading / serving) holding the robot still, with interrupt checks."""
         end = self.mgr.now() + seconds
         while self.mgr.now() < end:
             self.check_interrupts()
-            time.sleep(0.1)
+            self.mgr.cmd_pub.publish(Twist())   # brake: hold position while staff/customers interact
+            time.sleep(0.2)
 
     def handle_estop(self):
         m = self.mgr
@@ -692,9 +737,14 @@ class Mission:
     # ------------------------------------------------------------ main loop
     def run(self):
         m = self.mgr
-        self.nav.setInitialPose(self.pose_msg(*m.places['dock'][0]))
-        self.nav.waitUntilNav2Active()
+        # AMCL initialises itself on the dock (set_initial_pose in nav2_params.yaml).
+        # Publishing another initial pose here raced with TF at startup ("Failed to
+        # transform initial pose in time") and BasicNavigator then waited forever
+        # for /amcl_pose: wait for the navigator and for the localized TF instead.
+        self.nav.waitUntilNav2Active(localizer='bt_navigator')
         self.planner.waitUntilNav2Active(localizer='bt_navigator')
+        while rclpy.ok() and m.robot_pose() is None:
+            time.sleep(0.5)
         m.set_state(DOCKED)
         m.event('system', 'Nav2 active, robot on the dock')
         idle_since = m.now()

@@ -3776,7 +3776,7 @@
         </visual>
       </link>
       <link name='window_0_ledge'>
-        <pose>-6.500 3.000 0.965 0 0 0.0000</pose>
+        <pose>-6.500 3.075 0.965 0 0 0.0000</pose>
         <collision name='window_0_ledge_collision'><geometry><box><size>1.000 0.300 0.030</size></box></geometry></collision>
         <visual name='window_0_ledge_visual'><geometry><box><size>1.000 0.300 0.030</size></box></geometry>
           <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Wood</name></script></material>
@@ -3804,7 +3804,7 @@
         </visual>
       </link>
       <link name='window_1_ledge'>
-        <pose>-4.500 3.000 0.965 0 0 0.0000</pose>
+        <pose>-4.500 3.075 0.965 0 0 0.0000</pose>
         <collision name='window_1_ledge_collision'><geometry><box><size>1.000 0.300 0.030</size></box></geometry></collision>
         <visual name='window_1_ledge_visual'><geometry><box><size>1.000 0.300 0.030</size></box></geometry>
           <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Wood</name></script></material>

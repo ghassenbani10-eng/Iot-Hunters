@@ -27,15 +27,24 @@
 //   <max_yield_time>6.0</max_yield_time>
 //   <animation_factor>5.1</animation_factor>
 //   <ping_pong>true</ping_pong>     true: A-B-C-B-A..., false: A-B-C-A-B...
+//   <ros><namespace>/human_x</namespace></ros>
+//                                   optional: subscribe to <namespace>/cmd
+//                                   (std_msgs/Float64MultiArray) to give the person a new
+//                                   walk at runtime (tests, demos):
+//                                   [speed, dwell, ping_pong(0/1), start_delay, x0, y0, x1, y1, ...]
+//                                   the person is moved to (x0, y0) and walks from there.
 
 #include <algorithm>
 #include <cmath>
+#include <mutex>
 #include <string>
 #include <vector>
 
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/physics/physics.hh>
 #include <ignition/math.hh>
+#include <gazebo_ros/node.hpp>
+#include <std_msgs/msg/float64_multi_array.hpp>
 
 namespace tunibot
 {
@@ -77,6 +86,16 @@ public:
     yaw_ = std::atan2(d.Y(), d.X());
     target_ = 1;
 
+    if (sdf->HasElement("ros")) {
+      ros_node_ = gazebo_ros::Node::Get(sdf);
+      cmd_sub_ = ros_node_->create_subscription<std_msgs::msg::Float64MultiArray>(
+        "cmd", 10, [this](const std_msgs::msg::Float64MultiArray::SharedPtr msg) {
+          std::lock_guard<std::mutex> lock(cmd_mutex_);
+          pending_cmd_ = msg->data;
+          has_pending_cmd_ = true;
+        });
+    }
+
     // Play the skin's "walking" animation under our own (custom) trajectory.
     auto traj = std::make_shared<gazebo::physics::TrajectoryInfo>();
     traj->type = "walking";
@@ -89,9 +108,40 @@ public:
   }
 
 private:
+  void ApplyCommand(const std::vector<double> & c, double now)
+  {
+    if (c.size() < 8) {
+      gzerr << "HumanActorPlugin[" << actor_->GetName() << "]: cmd needs >= 2 waypoints\n";
+      return;
+    }
+    speed_ = c[0];
+    dwell_ = c[1];
+    ping_pong_ = c[2] > 0.5;
+    waypoints_.clear();
+    for (size_t i = 4; i + 1 < c.size(); i += 2) {
+      waypoints_.emplace_back(c[i], c[i + 1]);
+    }
+    pos_ = waypoints_[0];
+    const auto d = waypoints_[1] - waypoints_[0];
+    yaw_ = std::atan2(d.Y(), d.X());
+    target_ = 1;
+    previous_ = 0;
+    direction_ = 1;
+    wait_until_ = now + c[3];
+    yield_start_ = -1.0;
+    ignore_robot_until_ = 0.0;
+  }
+
   void OnUpdate(const gazebo::common::UpdateInfo & info)
   {
     const double now = info.simTime.Double();
+    {
+      std::lock_guard<std::mutex> lock(cmd_mutex_);
+      if (has_pending_cmd_) {
+        ApplyCommand(pending_cmd_, now);
+        has_pending_cmd_ = false;
+      }
+    }
     double dt = now - last_time_;
     last_time_ = now;
     if (dt <= 0.0 || dt > 0.5) {
@@ -103,8 +153,15 @@ private:
     }
 
     // Yield to the robot when it is right in front of us (stop walking, keep turning).
+    // Hysteresis: the patience timer only resets once the robot has been out of the
+    // way for 1 s (a robot hovering at the edge of the cone would otherwise reset it
+    // forever and the two would stand in front of each other).
     bool yielding = false;
-    if (now >= ignore_robot_until_ && RobotAhead()) {
+    const bool ahead = now >= ignore_robot_until_ && RobotAhead();
+    if (ahead) {
+      last_ahead_ = now;
+    }
+    if (ahead || (yield_start_ >= 0.0 && now - last_ahead_ < 1.0)) {
       if (yield_start_ < 0.0) {
         yield_start_ = now;
       }
@@ -118,7 +175,7 @@ private:
         ignore_robot_until_ = now + 4.0;
         yield_start_ = -1.0;
       }
-    } else if (now >= ignore_robot_until_) {
+    } else {
       yield_start_ = -1.0;
     }
 
@@ -198,6 +255,11 @@ private:
   gazebo::physics::ModelPtr robot_;
   gazebo::physics::ModelPtr body_;
   gazebo::event::ConnectionPtr update_conn_;
+  gazebo_ros::Node::SharedPtr ros_node_;
+  rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr cmd_sub_;
+  std::mutex cmd_mutex_;
+  std::vector<double> pending_cmd_;
+  bool has_pending_cmd_{false};
 
   std::vector<ignition::math::Vector2d> waypoints_;
   ignition::math::Vector2d pos_;
@@ -216,6 +278,7 @@ private:
   double wait_until_{0.0};
   double yield_start_{-1.0};
   double ignore_robot_until_{0.0};
+  double last_ahead_{-1.0};
   std::string body_name_;
   std::string robot_name_;
 };

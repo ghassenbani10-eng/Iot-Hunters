@@ -26,7 +26,8 @@ delivery_manager:
     table_9:   [13.50, 5.10, -1.5708, 13.50, 2.50, 1.5708]   # VIP 2 (world 4.5, 6.0)
     tables: ["table_1", "table_2", "table_3", "table_4", "table_5", "table_6", "table_7", "table_8", "table_9"]
     load_time_sec: 5.0            # waiting at the serving window while the cook loads the trays
-    pickup_depart_yaw: -1.5708    # after loading, turn in place to face the dining room (south)
+    pickup_depart_yaw: -1.5708    # after loading: back out to the staging pose, turn to face the dining room
+    pickup_staging_dist: 0.6      # Nav2 stops 0.6 m before a window, the last 0.6 m is a straight creep
     serve_time_sec: 8.0           # waiting at the table while the customer takes the order
     idle_dock_timeout_sec: 20.0   # return to dock when idle for this long
     battery_critical: 10.0        # %: abort everything, go to the dock now (safety net)

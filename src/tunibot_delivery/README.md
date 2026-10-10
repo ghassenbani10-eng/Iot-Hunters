@@ -1,60 +1,44 @@
 # TuniBot — Autonomous Restaurant Delivery Robot (CSTAM-TUNIBOT)
 
-ROS 2 Humble software stack for a simulated waiter robot ("robot-étagère") that maps
-a restaurant, localizes itself, takes food/beverage orders, delivers them to tables
-and returns to its charging dock on its own.
+ROS 2 Humble software stack for a simulated waiter robot ("robot-étagère") in a restaurant.
+The robot maps the restaurant, localizes itself and takes food/beverage orders. It collects the
+food from the **kitchen's serving windows**, delivers it to the tables among **walking people**,
+and goes back to its **charging dock**. It returns to charge on its own, early enough to never
+run out of battery.
 
-| Phase 1 feature | How it is implemented |
+| Phase 1 — Core MVP | How |
 |---|---|
-| Mapping & localization (SLAM) | Cartographer 2D (`config/cartographer_2d.lua`) for mapping, AMCL on the saved map for localization |
-| Autonomous navigation | Nav2: NavFn planner, RotationShim + Regulated Pure Pursuit controller, footprint-aware costmaps, tabletop **keepout filter** |
-| Delivery task management | `delivery_manager` node: order queue, bar pickup → table → serve, retries, cancel, status topic |
-| Auto-docking | Idle timeout / low battery / operator command → Nav2 to pre-dock pose → odometry-closed-loop straight reverse onto the charging pad |
-| UI backend | `web_api` node: REST API + web page (order a delivery, admin view of state, battery, queue) |
+| Mapping & localization (SLAM) | Cartographer 2D (`config/cartographer_2d.lua`), **autonomous mapping tour** (`auto_mapping.launch.py`); AMCL on the saved map |
+| Autonomous navigation | Nav2: NavFn A*, RotationShim + Regulated Pure Pursuit, footprint-aware costmaps, tabletop + staff-only **keepout filter** |
+| Delivery task management | `delivery_manager`: order queue (VIP first), serving window → table → serve, retries, cancel, status/events |
+| Auto-docking | idle / low energy / operator → Nav2 to the pre-dock pose → closed-loop alignment → reverse onto the pad → charging-contact check |
+
+| Phase 2 — Integration & testing | How | Details |
+|---|---|---|
+| **Dynamic obstacle avoidance** | walking people in Gazebo (`tunibot_gazebo_plugins`), `people_tracker` (lidar detection + Kalman tracking + 2 s motion prediction → cost mask), social speed governor, Nav2 `collision_monitor`, 2 Hz replanning, wait-first recovery | [docs/PHASE2.md §2](docs/PHASE2.md) |
+| **Complex layout handling** | 3 doorways of 0.9 m, a 1.05 m corridor with an L-turn, VIP lounge; reachability pre-check, alternate approach poses, BLOCKED detection, custom behavior tree, staged window approach, failure handling | [§3](docs/PHASE2.md) |
+| **Battery & state simulation** | `battery_simulator` (power model, Li-ion voltage curve, CC-CV charging on dock contact, learned Wh/m); energy-aware decisions from Nav2 path lengths; return to the dock *before* the energy runs out | [§4](docs/PHASE2.md) |
+| Test cases | `scenario_runner`: 12 automated scenarios measured against Gazebo ground truth (person clearance, bumper contacts, SoC) | [docs/TEST_CASES.md](docs/TEST_CASES.md) |
 
 ## Architecture
 
 ![TuniBot high-level software architecture](docs/architecture.png)
 
-*(source: `docs/architecture.dot`, rendered with Graphviz — `dot -Tpng docs/architecture.dot -o docs/architecture.png`)*
+*(source: `docs/architecture.dot` — `dot -Tpng docs/architecture.dot -o docs/architecture.png`)*
 
-```mermaid
-flowchart LR
-  subgraph UI["User / Admin"]
-    WEB["Web page<br/>(order + admin view)"]
-  end
-  subgraph APP["tunibot_delivery (Python nodes)"]
-    API["web_api<br/>REST :8080"]
-    DM["delivery_manager<br/>queue · state machine<br/>battery sim · docking"]
-  end
-  subgraph NAV["Nav2"]
-    BT["bt_navigator"]
-    PL["planner_server<br/>(NavFn)"]
-    CT["controller_server<br/>RotationShim + RPP"]
-    VS["velocity_smoother"]
-    AMCL["amcl"]
-    MS["map_server"]
-    KO["keepout filter<br/>(tabletops)"]
-  end
-  subgraph SLAM["Mapping (phase: map build)"]
-    CARTO["cartographer_node<br/>+ occupancy_grid"]
-  end
-  subgraph SIM["Gazebo"]
-    WORLD["restaurant.world<br/>+ docking station"]
-    ROBOT["waiter_robot<br/>diff drive · 2D lidar"]
-  end
+### The restaurant
 
-  WEB -- HTTP/JSON --> API
-  API -- /delivery/order<br/>/delivery/command --> DM
-  DM -- /delivery/status --> API
-  DM -- NavigateToPose action --> BT
-  DM -- /cmd_vel (docking) --> ROBOT
-  BT --> PL & CT
-  CT --> VS -- /cmd_vel --> ROBOT
-  ROBOT -- /scan /odom /tf --> AMCL & CT & CARTO
-  MS -- /map --> AMCL & PL
-  KO -- /costmap_filter_info --> PL & CT
-  CARTO -- /map → map_saver --> MS
+```
+ north ┌──────────────────────────┬──────┬──────────────────┬──┐
+       │ KITCHEN (staff only)     │ west corridor (1.36 m) ┐ │  │
+       │  stove   prep   shelves  │──────┴──[D3]───────────┤ │st│
+       │ cook ↔ pass counters     │  VIP LOUNGE            │c│or│
+       │                          │  table 8     table 9   │o│ag│
+       ├──[window 1]──[window 2]──┤        sofa            │r│e │
+       │▣ dock                    └───────────────────[D2]─┘ │  │
+       │   waiter ↔                                           │
+       │   7 tables + 3 table groups (Phase 1 dining room)     │
+ south └──────────────────────────────────────────────────────┘
 ```
 
 ### Delivery state machine
@@ -62,39 +46,24 @@ flowchart LR
 ```mermaid
 stateDiagram-v2
   [*] --> DOCKED
-  DOCKED --> UNDOCKING: order queued & battery ok
-  DOCKED --> CHARGING: order queued & battery low
-  CHARGING --> UNDOCKING: battery ≥ threshold
+  DOCKED --> CHARGING: order needs more energy than available
+  CHARGING --> DOCKED: enough energy for the order (+ reserve)
+  DOCKED --> UNDOCKING: order queued & energy ok
   UNDOCKING --> TO_PICKUP
-  TO_PICKUP --> LOADING: at bar
+  TO_PICKUP --> LOADING: at the serving window
   LOADING --> TO_TABLE
-  TO_TABLE --> SERVING: at table
+  TO_TABLE --> SERVING: at the table
   SERVING --> TO_PICKUP: next order
   SERVING --> IDLE: queue empty
-  IDLE --> TO_PICKUP: new order
-  IDLE --> RETURNING_TO_DOCK: idle timeout / low battery / "dock"
-  RETURNING_TO_DOCK --> DOCKING: at pre-dock pose
-  DOCKING --> DOCKED: reversed 1.2 m onto pad
+  IDLE --> RETURNING_TO_DOCK: idle 20 s / battery low / "dock"
+  TO_PICKUP --> RETURNING_TO_DOCK: energy to reach the dock running out (order re-queued)
+  TO_TABLE --> RETURNING_TO_DOCK: energy to reach the dock running out (order re-queued)
+  RETURNING_TO_DOCK --> DOCKING: at the pre-dock pose
+  DOCKING --> DOCKED: on the pad, charging contact OK
+  DOCKING --> ERROR: 3 failed attempts (latched until "resume")
+  TO_TABLE --> EMERGENCY_STOP: "estop"
+  EMERGENCY_STOP --> TO_TABLE: "resume" (order re-queued)
 ```
-
-## Engineering notes (problems found and fixed)
-
-The first map was unusable (the room appeared several times, rotated, along a 66 m trail).
-Root causes and fixes:
-
-1. **Lidar self-occlusion** — the lidar (18 cm high) saw the robot's own rear column 35 cm
-   behind it. A feature fixed to the robot makes the scan matcher believe the robot is not
-   rotating → rotational drift. Fix: 290° field of view, rear ±35° excluded.
-2. **Two wheels, no caster** — the chassis tipped and scraped the floor → wheel slip,
-   tilted lidar. Fix: front/rear frictionless caster spheres, wheel friction set.
-3. **3.5 m lidar range in a 20 × 20 m room** — most of the room had no feature in view.
-   Fix: 12 m range (RPLidar-class sensor) and Cartographer `max_range = 12`.
-4. **Dynamic cardboard boxes** were pushed by the robot during mapping. Fix: made static.
-5. **No IMU** — Cartographer now tracks `base_footprint` (2D SLAM does not use IMU data),
-   so the fake `imu_link` static TF is no longer needed.
-6. **Pedestal tables** — the 2D lidar sees only the table column, but the robot (1.1 m tall)
-   would hit the 0.91 m tabletop. `scripts/make_keepout_mask.py` builds a Nav2 keepout mask
-   from the table poses in the world file; Gazebo models stay unchanged.
 
 ## Build
 
@@ -102,41 +71,103 @@ Root causes and fixes:
 sudo apt install python3-colcon-common-extensions
 cd ~/ros2_ws && colcon build --symlink-install && source install/setup.bash
 ```
+Two packages: `tunibot_delivery` (Python: nodes, launch, config, world, map, web UI) and
+`tunibot_gazebo_plugins` (C++: the walking-person actor plugin).
 
 ## Run
 
-**1. Build the map (SLAM)** — one terminal each:
+**One command (demo)** — Gazebo + RViz + Nav2 + delivery stack, started in the right order:
 ```bash
-ros2 launch tunibot_delivery sim.launch.py
-ros2 launch tunibot_delivery slam.launch.py
-ros2 run teleop_twist_keyboard teleop_twist_keyboard --ros-args -p speed:=0.2 -p turn:=0.5
-```
-Drive one loop around the room, come back to the dock, then:
-```bash
-ros2 run nav2_map_server map_saver_cli -f ~/ros2_ws/src/tunibot_delivery/maps/restaurant_map --ros-args -p use_sim_time:=true
-colcon build --symlink-install --packages-select tunibot_delivery
+ros2 launch tunibot_delivery demo.launch.py                 # then open http://localhost:8080
+ros2 launch tunibot_delivery demo.launch.py scenario:=tc03  # + a scripted scenario (person crossing)
 ```
 
-**2. Autonomous delivery** — stop SLAM, keep Gazebo running (robot back on the dock):
+**Step by step** — one terminal each:
 ```bash
-ros2 launch tunibot_delivery navigation.launch.py
-ros2 launch tunibot_delivery delivery.launch.py
+ros2 launch tunibot_delivery sim.launch.py            # gui:=false for headless
+ros2 launch tunibot_delivery navigation.launch.py     # rviz:=false
+ros2 launch tunibot_delivery delivery.launch.py       # time_acceleration:=25 initial_soc:=100
 ```
-Open http://localhost:8080, choose a table, press **Send robot**. Or from the CLI:
+Open **http://localhost:8080**: order form (with VIP priority), live map with the robot and the
+tracked people, battery and energy panel, events, emergency stop. From the CLI:
 ```bash
-ros2 topic pub --once /delivery/order std_msgs/String '{data: "{\"table\": \"table_3\", \"items\": \"2 coffees\"}"}'
-ros2 topic pub --once /delivery/command std_msgs/String '{data: dock}'
+ros2 topic pub --once -w 1 /delivery/order std_msgs/String '{data: "{\"table\": \"table_8\", \"items\": \"2 coffees\", \"priority\": \"vip\"}"}'
+ros2 topic pub --once -w 1 /delivery/command std_msgs/String '{data: dock}'      # dock | cancel | clear | estop | resume
+curl -X POST localhost:8080/api/battery -H 'Content-Type: application/json' -d '{"soc": 20}'   # test hook
 ```
+
+**Re-build the map** (autonomous; the world without people is used so that the map only
+contains static things):
+```bash
+ros2 launch tunibot_delivery sim.launch.py world:=$(ros2 pkg prefix tunibot_delivery)/share/tunibot_delivery/worlds/restaurant_mapping.world
+ros2 launch tunibot_delivery auto_mapping.launch.py map_path:=$HOME/ros2_ws/src/tunibot_delivery/maps/restaurant_map
+```
+(Manual mapping still works: `slam.launch.py` + `teleop_twist_keyboard` + `map_saver_cli`.)
+
+**Change the layout**: edit `scripts/build_world.py` (walls, windows, doors, furniture, people),
+then `python3 scripts/build_world.py worlds/restaurant.world --no-humans worlds/restaurant_mapping.world`
+and `python3 scripts/make_keepout_mask.py worlds/restaurant.world maps/`.
+
+## Tests
+
+```bash
+src/tunibot_delivery/scripts/run_tests.sh                   # all 12 scenarios, headless, fresh stack each
+src/tunibot_delivery/scripts/run_tests.sh tc03 tc09         # a selection
+ros2 run tunibot_delivery make_test_report ~/tunibot_test_results
+```
+Each scenario writes `<id>.json` (pass/fail + metrics), `<id>.csv` (10 Hz ground truth),
+`<id>.png` (trajectory, people, battery, clearance) and the event log. Results and the test-case
+documentation: [docs/TEST_CASES.md](docs/TEST_CASES.md).
+
+## Frames and conventions
+
+The robot spawns on the dock at Gazebo world (−9.0, 2.2, yaw 0) — north-west corner of the dining
+room, next to the serving windows. Cartographer starts the map there: **map = world + (9.0, −2.2)**.
+Named places (`config/delivery_points.yaml`) are in the map frame; each has one or more approach
+poses.
 
 ## Layout
 
 ```
-launch/     sim · slam · navigation · delivery
-config/     cartographer_2d.lua · nav2_params.yaml · delivery_points.yaml
-urdf/       waiter_robot.urdf.xacro
-worlds/     restaurant.world (static furniture + docking station)
+launch/     sim · slam · auto_mapping · navigation · delivery · demo
+config/     cartographer_2d.lua · nav2_params.yaml · navigate_tunibot.xml (behavior tree)
+            delivery_points.yaml (places + battery + energy policy) · gazebo_params.yaml · tunibot.rviz
+urdf/       waiter_robot.urdf.xacro (diff drive, 2D lidar, bumper)
+worlds/     restaurant.world · restaurant_mapping.world (generated by scripts/build_world.py)
 maps/       restaurant_map.{pgm,yaml} · keepout_mask.{pgm,yaml}
-scripts/    make_keepout_mask.py
-tunibot_delivery/  delivery_manager.py · web_api.py
+scripts/    build_world.py · make_keepout_mask.py · run_tests.sh
+tunibot_delivery/
+            delivery_manager.py   order queue, state machine, energy policy, docking, recovery
+            battery_simulator.py  power model, Li-ion pack, CC-CV charging, learned Wh/m
+            people_tracker.py     lidar people detection/tracking/prediction, speed governor
+            web_api.py            REST + web UI backend
+            auto_mapper.py        autonomous SLAM tour
+            scenario_runner.py · test_plots.py · make_test_report.py   automated tests
 web/        index.html
+docs/       PHASE2.md · TEST_CASES.md · architecture.{dot,png,svg}
+../tunibot_gazebo_plugins/   HumanActorPlugin (walking people visible to the lidar)
 ```
+
+## Engineering notes
+
+### Phase 1 (first map was unusable)
+1. **Lidar self-occlusion** — the lidar saw the robot's own rear column → 290° FOV.
+2. **No caster** — the chassis scraped the floor → frictionless casters.
+3. **3.5 m lidar range in a 20 m room** → 12 m.
+4. **Dynamic boxes pushed during mapping** → static.
+5. **No IMU** — Cartographer tracks `base_footprint`.
+6. **Pedestal tables invisible to a 2D lidar** → keepout mask.
+
+### Phase 2 (found by testing, see docs/PHASE2.md)
+7. **Traction** — soft wheel contact let the frictionless casters carry the robot: it reached only
+   15–20 % of the commanded speed (also in Phase 1). Fixed: 0.40 m/s commanded = 0.40 m/s measured.
+8. **`/clock` at 10 Hz** (gazebo_ros default) starved every 20 Hz Nav2 loop → 100 Hz.
+9. **Corridor degeneracy / perceptual aliasing in SLAM** — the estimate slid 2 m, then jumped 4 m,
+   in the corridor → odometry-weighted correlative matching, bounded loop-closure search,
+   non-identical corridor features.
+10. **Gazebo actors are invisible to ray sensors** → actor plugin moving a collision body.
+11. **Nav2 Humble pitfalls** — yaw tolerance + RPP pruning ("plan has 0 poses"), rotation shim turning
+    without collision checks next to walls, collision-monitor stop zone freezing in-place turns,
+    initial-pose race with AMCL at startup.
+12. **Two polite agents deadlock** (person and robot waiting for each other) → patience with
+    hysteresis in the person model, wait-first recovery for the robot.

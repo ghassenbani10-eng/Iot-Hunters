@@ -29,7 +29,7 @@ from gazebo_msgs.msg import ContactsState, ModelStates
 from gazebo_msgs.srv import DeleteEntity, SpawnEntity
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
-from std_msgs.msg import Bool, Float32, String
+from std_msgs.msg import Bool, Float32, Float64MultiArray, String
 
 DOCK_WORLD = (-9.0, 2.2)          # map = world - DOCK_WORLD
 HALF_L, HALF_W = 0.27, 0.25       # robot footprint half sizes
@@ -106,6 +106,7 @@ class Runner(Node):
         self.create_subscription(String, '/people', lambda m: setattr(self, 'people_est', json.loads(m.data)), 10)
         self.create_subscription(ModelStates, '/gazebo/model_states', self.on_models, 10)
         self.create_subscription(ContactsState, '/bumper', self.on_bumper, 10)
+        self.cmd_pubs = {}
         self.spawn_cli = self.create_client(SpawnEntity, '/spawn_entity')
         self.delete_cli = self.create_client(DeleteEntity, '/delete_entity')
         self.create_timer(0.1, self.sample)
@@ -147,7 +148,7 @@ class Runner(Node):
 
     def people_truth(self):
         return {n: p for n, p in self.truth.items()
-                if (n.startswith('human_') or n.startswith('tc_person')) and not n.endswith('_actor')}
+                if n.startswith('human_') and not n.endswith('_actor')}
 
     def sample(self):
         if self.t0 is None or 'waiter_robot' not in self.truth:
@@ -205,9 +206,18 @@ class Runner(Node):
         self.get_logger().info('spawn %s: %s' % (name, 'ok' if ok else 'FAILED'))
         return ok
 
-    def spawn_person(self, name, waypoints, **kw):
-        body, actor = person_sdf(name, [(x + DOCK_WORLD[0], y + DOCK_WORLD[1]) for x, y in waypoints], **kw)
-        return self.spawn(name, body) and self.spawn(name + '_actor', actor)
+    def walk_person(self, name, waypoints, speed=0.8, dwell=1000.0, start_delay=0.0, ping_pong=False):
+        """Send one of the world's people (e.g. human_extra_1, parked in the storage room)
+        on a scripted walk: it appears at waypoints[0] (map frame) and walks the list.
+        (gazebo_ros' spawn service cannot spawn actors, so test people are pre-placed.)"""
+        if name not in self.cmd_pubs:
+            self.cmd_pubs[name] = self.create_publisher(Float64MultiArray, '/%s/cmd' % name, 10)
+            self.wait_until(lambda: self.cmd_pubs[name].get_subscription_count() > 0, 5.0)
+        data = [float(speed), float(dwell), 1.0 if ping_pong else 0.0, float(start_delay)]
+        for x, y in waypoints:
+            data += [x + DOCK_WORLD[0], y + DOCK_WORLD[1]]
+        self.cmd_pubs[name].publish(Float64MultiArray(data=data))
+        self.get_logger().info('%s walks %s' % (name, [(round(x, 2), round(y, 2)) for x, y in waypoints]))
 
     def spawn_box(self, name, x, y, sx, sy, sz=1.0, yaw=0.0):
         """x, y in the map frame."""
@@ -325,8 +335,7 @@ def tc02(r):
     r.wait_state('TO_TABLE', 300)
     r.wait_moving_away_from('pickup', 1.5, 120)
     start, end = r.ahead(4.5, 0.15), r.ahead(-2.5, 0.15)
-    r.spawn_person('tc_person_headon', [start, end, (end[0] - 3.0, end[1])],
-                   speed=0.9, dwell=30.0, ping_pong=False)
+    r.walk_person('human_extra_1', [start, end, (end[0] - 3.0, end[1])], speed=0.9)
     done = r.wait_orders_done(1, 500)
     ok = done and delivered(r, 1)
     return {'title': 'Person walking head-on towards the robot', 'passed': ok,
@@ -340,8 +349,7 @@ def tc03(r):
     r.wait_state('TO_TABLE', 300)
     r.wait_moving_away_from('pickup', 1.5, 120)
     # crossing from the robot's left to its right, ~2 m ahead, at a brisk 1 m/s
-    r.spawn_person('tc_person_cross', [r.ahead(2.0, 2.8), r.ahead(2.0, -3.5)], speed=1.0, dwell=60.0,
-                   ping_pong=False)
+    r.walk_person('human_extra_1', [r.ahead(2.0, 2.8), r.ahead(2.0, -3.5)], speed=1.0)
     done = r.wait_orders_done(1, 500)
     ok = done and delivered(r, 1)
     return {'title': 'Person crossing just in front of the robot', 'passed': ok,
@@ -353,10 +361,8 @@ def tc04(r):
     """A person stands in the service-corridor door D2 for 25 s, then walks away."""
     r.order('table_8', 'TC04: VIP order, doorway blocked')
     r.wait_state('TO_TABLE', 300)
-    t_spawn = r.now()
     # person standing in door D2 (world (7.7, 3.0)), leaves after 25 s into the dining room
-    r.spawn_person('tc_person_door', [(16.7, 0.8), (13.0, -1.5)], speed=0.7, dwell=100.0,
-                   start_delay=t_spawn + 25.0, ping_pong=False)
+    r.walk_person('human_extra_1', [(16.7, 0.8), (13.0, -1.5)], speed=0.7, start_delay=25.0)
     blocked = r.wait_until(lambda: any('blocked' in e['text'].lower() or e['kind'] == 'recovery'
                                        for e in r.events), 150)
     done = r.wait_orders_done(1, 700)

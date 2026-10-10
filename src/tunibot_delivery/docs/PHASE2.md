@@ -64,7 +64,13 @@ table rows, a cook walking along the kitchen pass (behind the serving windows) a
 lounge. Test scenarios spawn more (head-on,
 crossing, standing in a doorway).
 
-### 1.3 Robot additions
+### 1.3 Robot model fixes and additions
+
+* **Traction fix** (affected Phase 1 too): the wheels used a soft contact (`minDepth` 1 mm), so they
+  sank until the frictionless casters — 1 mm above the floor — carried most of the weight. The robot
+  then only reached **15–20 % of the commanded speed** (0.4 m/s commanded → 0.05 m/s measured),
+  which looked like "slow navigation" and "failed to make progress". Casters are now 4 mm smaller
+  and the wheel contact is stiff: 0.40 m/s commanded → 0.40 m/s measured (ground truth).
 
 * **bumper** (contact sensor on the body, spine and lidar housing) → `/bumper`: ground truth for the
   collision count of the tests;
@@ -97,9 +103,9 @@ Layered, from slow/predictive to fast/reactive:
 |---|---|---|
 | `people_tracker` → **people cost mask** (KeepoutFilter `people_filter`) | 5 Hz | predicts where each walking person will be over the next 2 s (constant-velocity Kalman filter) and writes a fading cost along that track: the planner routes **behind** people instead of cutting in front of them |
 | Global planner (NavFn A*) | 2 Hz | replans continuously (custom BT) on a costmap that contains the lidar obstacles + the predictions |
-| `people_tracker` → **social speed governor** (`/speed_limit`) | 5 Hz | 70 % speed within 2.2 m of a person, 45 % within 1.2 m, 60 % in doorways/corridors |
+| `people_tracker` → **social speed governor** (`/speed_limit`) | 5 Hz | 70 % speed within 2.2 m of a person, 45 % within 1.2 m, 60 % in doorways/corridors. A track only counts as a person once it has walked 0.6 m (furniture edges never do), and nothing inside the robot's own radius is a person |
 | Regulated Pure Pursuit | 20 Hz | slows down with costmap cost (near obstacles) and checks the footprint for collision up to the carrot |
-| **collision_monitor** (between the smoother and the wheels) | scan rate | keep **≥ 1.2 s time-to-collision** along the commanded motion (the footprint is simulated forward, so turning in place next to a wall stays allowed), **slow to 40 %** when something is within 50 cm ahead, emergency **stop** if anything is within 7 cm of the bumper. Works on the raw scan: independent from localization and costmaps |
+| **collision_monitor** (between the smoother and the wheels; tuned so it never freezes an in-place turn next to a wall) | scan rate | **slow to 50 %** when something is within 45 cm ahead, emergency **stop** if anything is within 7 cm of the bumper. (A larger static stop zone, and the "approach" time-to-collision model, were tested and rejected: the first froze in-place turns at the serving windows, the second toggled every 100–200 ms near walls and made the robot stutter. Footprint collision checking along the path is done by the controller.) Works on the raw scan: independent from localization and costmaps |
 | Behavior tree recovery | on failure | the first recovery is **wait 3 s** (a person in the way usually moves), then clear costmaps, back up 30 cm, spin, wait 5 s |
 | `delivery_manager` | 10 Hz | reports **BLOCKED** when the remaining distance stops decreasing, shows the number of people around in the UI |
 
@@ -132,9 +138,21 @@ approach would).
   and enters **ERROR**, waiting for an operator `resume` (no endless retry loop).
 * **Localization watchdog**: if `map → odom` stops being refreshed, AMCL is re-seeded from the last
   consistent pose.
-* **Robust docking**: Nav2 to a pre-dock pose → rotate to the dock axis → check lateral offset
-  (re-approach if > 8 cm) → straight reverse in odometry closed loop until the pad is reached → the
-  battery must report charging contact, otherwise drive out and retry (3 attempts, then ERROR).
+* **Serving-window approach**: the window pose is 0.5 m from the partition. Nav2 stops at a
+  *staging* pose 0.6 m back in open floor, the robot faces the window and creeps in straight under
+  closed-loop control; after loading it backs out (only when no tracked person is behind it — the
+  lidar does not see the rear 70°) and turns towards the dining room. Reason: Humble's rotation shim
+  turns in place without collision checking, and a turn close to a wall swept the robot's corner
+  into it.
+* **Final heading**: Nav2 only checks the position (in Humble, RPP prunes the whole path once inside
+  the xy tolerance and aborts with "plan has 0 poses" while still turning); the delivery manager turns
+  the robot to face the window / table itself.
+* **Robust docking**: Nav2 to a pre-dock pose → closed-loop go-to-point onto the exact pre-dock pose
+  → rotate to the dock axis → check lateral offset → reverse along the axis with heading + lateral
+  correction until the pad is reached → the battery must report charging contact, otherwise drive
+  out and retry (3 attempts, then a latched ERROR). Measured: 0.7–2.5 cm from the pad centre.
+* **Hold position**: while loading/serving the robot actively holds zero velocity (the simulated base,
+  like many real ones without a watchdog, keeps executing the last velocity command it received).
 
 ---
 
@@ -142,7 +160,8 @@ approach would).
 
 ### 4.1 Battery model (`battery_simulator`)
 
-Integrated on simulation time at 10 Hz:
+Integrated on simulation time at 10 Hz (on the dock the charger powers the electronics and charges
+the pack):
 
 ```
 P = P_idle                                  28 W  (computer, lidar, screen, drivers)

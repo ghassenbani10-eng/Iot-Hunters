@@ -93,12 +93,17 @@ FURNITURE = [
 # VIP lounge tables (cafe_table copies; the keepout mask picks every cafe_table up)
 VIP_TABLES = [('cafe_table_vip_1', 0.5, 6.0), ('cafe_table_vip_2', 4.5, 6.0)]
 
-# Walking people: name, waypoints (world frame), speed, dwell, start delay
+# Walking people: name, waypoints (world frame), speed, dwell, start delay.
+# Each one also listens on /<name>/cmd (std_msgs/Float64MultiArray) to be given a
+# new walk at runtime. human_extra_1/2 wait, parked in the closed storage room,
+# until a test scenario or a demo sends them somewhere.
 HUMANS = [
     ('human_waiter', [(-7.5, 0.9), (6.0, 0.9)], 0.75, 3.0, 5.0),
     ('human_guest', [(2.4, -4.2), (2.4, 1.8)], 0.6, 4.0, 12.0),
     ('human_cook', [(-8.6, 4.3), (-3.6, 4.3)], 0.5, 5.0, 3.0),
     ('human_vip', [(-1.5, 7.6), (6.2, 7.6)], 0.55, 6.0, 20.0),
+    ('human_extra_1', [(8.95, 9.7), (8.95, 9.72)], 0.5, 1000.0, 0.0),
+    ('human_extra_2', [(8.95, 3.55), (8.95, 3.57)], 0.5, 1000.0, 0.0),
 ]
 
 
@@ -141,8 +146,10 @@ def layout_model():
             links.append(box_link('window_%d_sill' % i, wx, Y_PART, SILL_Z / 2, ww, T, SILL_Z, 0.0, 'Gazebo/Grey'))
             links.append(box_link('window_%d_lintel' % i, wx, Y_PART, (TOP_Z + H) / 2, ww, T, H - TOP_Z,
                                   0.0, 'Gazebo/Grey'))
-            links.append(box_link('window_%d_ledge' % i, wx, Y_PART, SILL_Z + 0.015, ww, 0.3, 0.03, 0.0,
-                                  'Gazebo/Wood'))
+            # pass-through ledge on the kitchen side only (flush with the dining-room
+            # face): nothing sticks out at counter height where a 2D lidar is blind
+            links.append(box_link('window_%d_ledge' % i, wx, Y_PART + T / 2, SILL_Z + 0.015, ww, T + 0.15, 0.03,
+                                  0.0, 'Gazebo/Wood'))
         x = x1
     for name, cx, cy, sx, sy, sz, mat in FURNITURE:
         links.append(box_link(name, cx, cy, sz / 2, sx, sy, sz, 0.0, mat))
@@ -183,7 +190,8 @@ def human_models():
       <pose>{x0} {y0} 1.0 1.5708 0 0</pose>
       <skin><filename>walk.dae</filename><scale>1.0</scale></skin>
       <animation name='walking'><filename>walk.dae</filename><scale>1.0</scale><interpolate_x>true</interpolate_x></animation>
-      <plugin name='{name}_walker' filename='libtunibot_human_actor.so'>{wp_xml}
+      <plugin name='{name}_walker' filename='libtunibot_human_actor.so'>
+          <ros><namespace>/{name}</namespace></ros>{wp_xml}
           <speed>{speed}</speed>
           <dwell>{dwell}</dwell>
           <start_delay>{delay}</start_delay>
