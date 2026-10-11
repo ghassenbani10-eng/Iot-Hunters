@@ -133,6 +133,9 @@ class DeliveryManager(Node):
         self.event_pub = self.create_publisher(String, '/delivery/events', 10)
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         self.create_timer(0.5, self.publish_status)
+        self.initialpose_pub = self.create_publisher(PoseWithCovarianceStamped, '/initialpose', 10)
+        self.last_reseed = 0.0
+        self.create_timer(1.0, self.localization_supervisor)
         self.get_logger().info('Delivery manager ready. Tables: %s' % ', '.join(self.tables))
 
     # ------------------------------------------------------------------ utils
@@ -180,6 +183,39 @@ class DeliveryManager(Node):
             return None
         tr = t.transform
         return tr.translation.x, tr.translation.y, yaw_of(tr.rotation)
+
+    def localization_supervisor(self):
+        """AMCL watchdog (1 Hz, independent of the mission).
+
+        AMCL (Humble) occasionally stops refreshing map->odom; every TF lookup then
+        fails with 'transform too old' and the robot is stuck. When map->odom is stale,
+        re-seed AMCL with the best current estimate: last map->odom composed with the
+        live odometry, stamped with the odometry time so that AMCL can use it."""
+        try:
+            m2o = self.tf.lookup_transform('map', 'odom', Time())
+            o2b = self.tf.lookup_transform('odom', 'base_footprint', Time())
+        except TransformException:
+            return
+        now = self.now()
+        age = now - Time.from_msg(m2o.header.stamp).nanoseconds * 1e-9
+        if age < 2.5 or now - self.last_reseed < 5.0:
+            return
+        self.last_reseed = now
+        a, b = m2o.transform, o2b.transform
+        ya, yb = yaw_of(a.rotation), yaw_of(b.rotation)
+        x = a.translation.x + math.cos(ya) * b.translation.x - math.sin(ya) * b.translation.y
+        y = a.translation.y + math.sin(ya) * b.translation.x + math.cos(ya) * b.translation.y
+        yaw = ya + yb
+        ps = PoseWithCovarianceStamped()
+        ps.header.frame_id = 'map'
+        ps.header.stamp = o2b.header.stamp
+        ps.pose.pose.position.x, ps.pose.pose.position.y = x, y
+        ps.pose.pose.orientation.z, ps.pose.pose.orientation.w = math.sin(yaw / 2), math.cos(yaw / 2)
+        ps.pose.covariance[0] = ps.pose.covariance[7] = 0.02
+        ps.pose.covariance[35] = 0.02
+        self.initialpose_pub.publish(ps)
+        self.event('recovery', 'Localization watchdog: map->odom stale for %.0f s, AMCL re-seeded at '
+                   '(%.2f, %.2f)' % (age, x, y))
 
     @property
     def soc(self):
@@ -296,7 +332,6 @@ class Mission:
         self.planner = BasicNavigator('delivery_energy_planner')   # separate node: path queries
         self.planner.get_logger().set_level(rclpy.logging.LoggingSeverity.WARN)  # one query every few s
         self.last_energy_check = 0.0
-        self.last_good_map_odom = None
 
     # ------------------------------------------------------------ helpers
     def pose_msg(self, x, y, yaw):
@@ -373,30 +408,6 @@ class Mission:
             raise Abort('energy to reach the dock: %.1f Wh needed, %.1f Wh left above the reserve'
                         % (need, self.available_wh() - self.reserve_wh()))
 
-    def localization_watchdog(self):
-        """Republish the pose if AMCL stopped refreshing map->odom (stale TF)."""
-        try:
-            t = self.mgr.tf.lookup_transform('map', 'odom', Time())
-        except TransformException:
-            return
-        stamp = Time.from_msg(t.header.stamp).nanoseconds * 1e-9
-        if self.mgr.now() - stamp < 3.0:
-            self.last_good_map_odom = t
-            return
-        pose = self.mgr.robot_pose()
-        if pose is None:
-            return
-        self.mgr.event('recovery', 'Localization watchdog: map->odom stale for %.0fs, re-seeding AMCL'
-                       % (self.mgr.now() - stamp))
-        ps = PoseWithCovarianceStamped()
-        ps.header.frame_id = 'map'
-        ps.header.stamp = self.nav.get_clock().now().to_msg()
-        ps.pose.pose.position.x, ps.pose.pose.position.y = pose[0], pose[1]
-        ps.pose.pose.orientation.z, ps.pose.pose.orientation.w = math.sin(pose[2] / 2), math.cos(pose[2] / 2)
-        ps.pose.covariance[0] = ps.pose.covariance[7] = 0.05
-        ps.pose.covariance[35] = 0.05
-        self.nav.initial_pose_pub.publish(ps)
-
     def check_interrupts(self, away=True):
         m = self.mgr
         if m.estop:
@@ -433,7 +444,6 @@ class Mission:
         try:
             while not self.nav.isTaskComplete():
                 self.check_interrupts(away)
-                self.localization_watchdog()
                 if self.mgr.now() > deadline:
                     self.mgr.event('failure', 'Giving up on %s: no arrival within %.0f s' % (
                         label, 60.0 + 4.0 * getattr(self, 'last_path_length', 20.0)))
