@@ -22,13 +22,21 @@ controller_server:
       wz_max: 0.9
       iteration_count: 1
       prune_distance: 1.7
-      transform_tolerance: 0.5
+      # The map->odom correction (AMCL) changes by centimetres per minute; under heavy CPU
+      # load the controller's own TF buffer was seen holding a correction that was a few
+      # minutes old, and rejecting it froze the robot. Accepting an older correction is
+      # harmless here; the delivery manager's goal timeouts and AMCL supervisor still apply.
+      transform_tolerance: 30.0
       temperature: 0.3
       gamma: 0.015
       motion_model: "DiffDrive"
       visualize: false
       reset_period: 1.0
-      critics: ["ConstraintCritic", "ObstaclesCritic", "GoalCritic", "GoalAngleCritic", "PathAlignCritic",
+      # No GoalAngleCritic: within 0.5 m of the goal it made the robot turn to the goal
+      # heading before arriving, and a differential-drive robot 0.45 m beside its goal
+      # (already facing that heading) then oscillated forever. Nav2 does not check the
+      # final heading here; the delivery manager turns the robot on arrival.
+      critics: ["ConstraintCritic", "ObstaclesCritic", "GoalCritic", "PathAlignCritic",
                 "PathFollowCritic", "PathAngleCritic", "PreferForwardCritic"]
       ConstraintCritic:
         enabled: true

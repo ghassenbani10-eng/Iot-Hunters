@@ -19,6 +19,7 @@ mkdir -p "$RESULTS/logs"
 source /opt/ros/humble/setup.bash
 source "$WS/install/setup.bash"
 export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-77}"   # isolate the tests from other ROS graphs
+[ -f /opt/ros/humble/lib/librmw_cyclonedds_cpp.so ] && export RMW_IMPLEMENTATION="${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}"
 
 stop_stack() {
   # anchored patterns: only processes started from ROS / this workspace

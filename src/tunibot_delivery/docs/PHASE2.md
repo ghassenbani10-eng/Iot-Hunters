@@ -271,7 +271,16 @@ Results, plots and pass criteria: [TEST_CASES.md](TEST_CASES.md).
 
 ## 6. Known limitations (honest list)
 
-* **Intermittent stale TF inside a Nav2 process.** Rarely (a few runs out of many hours of tests),
+* **(Solved) Intermittent stale TF / "plan has 0 poses".** Root causes found with a live GUI run (CPU
+  load makes them frequent): (1) the controller's own TF buffer intermittently held a map→odom
+  correction several minutes old while AMCL kept publishing (verified: a separate node received fresh
+  transforms at 9.5 Hz) — the controller rejected it with a 0.2–0.5 s tolerance and froze; since the
+  correction changes by centimetres per minute, the controller now accepts up to 30 s; (2) MPPI's
+  GoalAngleCritic made the robot turn to the goal heading 0.5 m before arriving, so a robot 0.45 m
+  beside its goal oscillated forever — removed (the delivery manager orients the robot). Result: full
+  delivery cycles with 0 such errors. CycloneDDS is installed and used by the test script; it did not
+  change this behaviour (measured), so the DDS layer was not the cause.
+* **Intermittent stale TF inside a Nav2 process (historical note).** Rarely (a few runs out of many hours of tests),
   the controller server's TF buffer stops receiving `map → odom` while the delivery manager still
   receives it; the controller then rejects every plan ("transform too old", "plan has 0 poses") until
   restarted. It could not be reproduced on demand. Mitigations in place: lighter AMCL/MPPI load,
