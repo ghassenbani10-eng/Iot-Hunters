@@ -283,7 +283,8 @@ people_tracker:
     close_speed_pct: 70.0
     zone_speed_pct: 60.0
     # narrow passages, map frame (= world + (9, -2.2)): [xmin, xmax, ymin, ymax] * n
-    #   service door D2 + service corridor, west corridor, lounge door D3
+    #   service door D2 + service corridor, back corridor, lounge door D3, along the takeaway queue
     slow_zones: [15.9, 17.5, 0.0, 8.2,
                  6.4, 17.5, 6.6, 8.2,
-                 9.7, 11.2, 5.8, 7.5]
+                 11.0, 12.7, 5.8, 7.5,
+                 4.6, 10.5, -1.0, 0.8]

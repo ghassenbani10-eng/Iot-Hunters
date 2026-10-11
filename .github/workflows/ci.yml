@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches: [main, phase2]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-22.04
+    container: ros:humble
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install dependencies
+        run: |
+          apt-get update
+          apt-get install -y python3-colcon-common-extensions python3-pytest python3-yaml \
+            python3-numpy python3-scipy python3-matplotlib ros-humble-gazebo-dev ros-humble-gazebo-ros
+      - name: Static layout / configuration tests (no ROS needed)
+        run: python3 -m pytest -q src/tunibot_delivery/test
+      - name: Build
+        shell: bash
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon build --packages-select tunibot_gazebo_plugins tunibot_delivery
+      - name: colcon test
+        shell: bash
+        run: |
+          source /opt/ros/humble/setup.bash
+          source install/setup.bash
+          colcon test --packages-select tunibot_delivery --event-handlers console_direct+
+          colcon test-result --verbose
+      - name: World and mask are up to date with the generators
+        shell: bash
+        run: |
+          cd src/tunibot_delivery
+          python3 scripts/build_world.py worlds/restaurant.world --no-humans worlds/restaurant_mapping.world
+          python3 scripts/make_keepout_mask.py worlds/restaurant.world maps/
+          git diff --exit-code -- worlds maps/keepout_mask.pgm maps/keepout_mask.yaml

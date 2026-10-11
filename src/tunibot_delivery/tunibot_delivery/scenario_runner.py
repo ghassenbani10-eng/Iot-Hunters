@@ -12,6 +12,9 @@ own estimate, so the metrics measure what really happened:
     <= 0 means a collision with a person
   * contacts: bumper contacts of the robot with anything (walls, furniture, people)
   * delivery outcome, durations, path length, battery curve, state/event timeline
+  * social navigation metrics (see social_metrics(), after the SocNavBench / Arena
+    benchmark definitions): time the robot spent inside people's intimate
+    (< 0.45 m) and personal (< 1.2 m) space, minimum time-to-collision, robot jerk
 
 Output per scenario: <out_dir>/<id>.json (summary + pass/fail), <id>.csv
 (10 Hz time series), <id>_events.json and <id>.png (trajectory over the map,
@@ -290,6 +293,8 @@ class Runner(Node):
                        for o in hist],
             'final_state': self.status.get('state'),
             'learned_wh_per_m': self.battery.get('wh_per_m'),
+            'social': social_metrics(samples),
+            'excuse_me_count': sum(1 for e in events if e.get('kind') == 'hri' and 'Excuse' in e.get('text', '')),
         })
         result['passed'] = bool(result.get('passed')) and result['person_collisions'] == 0 and not contacts
         with open(os.path.join(self.out_dir, sid + '.json'), 'w') as f:
@@ -513,7 +518,131 @@ def tc12(r):
             'measured': {'dockings': errors}, 'clearance_threshold': 0.05}
 
 
-SCENARIOS = {f.__name__: f for f in (tc01, tc02, tc03, tc04, tc05, tc06, tc07, tc08, tc09, tc10, tc11, tc12)}
+def tc13(r):
+    """Two people walking side by side head-on towards the robot (a group)."""
+    r.order('table_6', 'TC13: group')
+    r.wait_state('TO_TABLE', 300)
+    r.wait_moving_away_from('pickup', 1.5, 120)
+    # a pair 0.7 m apart (a group is not split: the robot must pass around it, not between)
+    for name, left in (('human_extra_1', 0.0), ('human_extra_2', 0.7)):
+        start, end = r.ahead(5.0, left), r.ahead(-2.5, left)
+        r.walk_person(name, [start, end, (end[0] - 2.0, end[1])], speed=0.8)
+    done = r.wait_orders_done(1, 500)
+    ok = done and delivered(r, 1)
+    return {'title': 'Group of two people walking head-on', 'passed': ok,
+            'criteria': 'robot gives way around the group (never between the two people), order delivered, '
+                        '0 collisions, clearance > 0.10 m',
+            'measured': {'delivered': ok}, 'clearance_threshold': 0.10}
+
+
+def tc14(r):
+    """A person cuts in front of the robot and stops dead in its path for 12 s."""
+    r.order('table_5', 'TC14: sudden stop')
+    r.wait_state('TO_TABLE', 300)
+    r.wait_moving_away_from('pickup', 1.5, 120)
+    side, front = r.ahead(1.8, 2.0), r.ahead(1.8, 0.0)
+    r.walk_person('human_extra_1', [side, front], speed=1.1)
+    r.wait_sim(2.5 + 12.0)           # walk in (~2.5 s), then stand there
+    away = (front[0] + 0.5, front[1] - 3.0)
+    r.walk_person('human_extra_1', [front, away], speed=0.8)
+    done = r.wait_orders_done(1, 500)
+    ok = done and delivered(r, 1)
+    stopped = any('blocked' in e['text'].lower() or 'excuse' in e['text'].lower() for e in r.events)
+    return {'title': 'Person stops suddenly in front of the robot', 'passed': ok,
+            'criteria': 'robot brakes without contact, waits or goes around (and says "excuse me" if it is '
+                        'blocked), then delivers; 0 collisions, clearance > 0.05 m',
+            'measured': {'delivered': ok, 'blocked_or_excuse_me': stopped}, 'clearance_threshold': 0.05}
+
+
+def tc15(r):
+    """Charger fault while the robot needs to charge: detected, reported, recovered."""
+    r.set_soc(18.0)
+    r.charger(False)
+    r.wait_sim(2.0)
+    r.order('table_7', 'TC15: charger fault')
+    fault = r.wait_until(lambda: any('charger fault' in e['text'].lower() for e in r.events), 120)
+    left_early = r.status.get('state') in ('UNDOCKING', 'TO_PICKUP', 'TO_TABLE')
+    r.wait_sim(10.0)
+    r.charger(True)
+    resumed = r.wait_until(lambda: any('charger ok again' in e['text'].lower() for e in r.events), 60)
+    done = r.wait_orders_done(1, 900)
+    ok = fault and resumed and not left_early and done and delivered(r, 1)
+    return {'title': 'Charger fault on the dock: detection and recovery', 'passed': ok and r.min_soc > 0,
+            'criteria': 'charger off at 18 %: robot detects "on the pad but no current" within ~10 s, reports '
+                        'it, does not leave with too little energy; after the repair it charges and delivers',
+            'measured': {'fault_detected': fault, 'left_without_energy': left_early, 'resumed': resumed,
+                         'delivered': done and delivered(r, 1)}, 'clearance_threshold': 0.05}
+
+
+def tc16(r):
+    """Serving window 1 occupied by a trolley: the robot uses window 2, next to the takeaway queue."""
+    # on the staging pose in front of window 1 (map (2.5, -0.4)): approach 1 unreachable
+    r.spawn_box('tc_window_trolley', 2.5, -0.3, 0.6, 0.5, 0.9)
+    r.order('table_4', 'TC16: window 1 blocked')
+    done = r.wait_orders_done(1, 600)
+    ok = done and delivered(r, 1)
+    used2 = any('approach 1/2' in e['text'].lower() for e in r.events)
+    return {'title': 'Serving window 1 blocked -> window 2 (beside the takeaway queue)', 'passed': ok and used2,
+            'criteria': 'pickup at window 2 without entering the takeaway queue zone, order delivered, '
+                        '0 collisions with the queueing customers',
+            'measured': {'delivered': ok, 'window_2_used': used2}, 'clearance_threshold': 0.05}
+
+
+SCENARIOS = {f.__name__: f for f in (tc01, tc02, tc03, tc04, tc05, tc06, tc07, tc08, tc09, tc10, tc11, tc12,
+                                          tc13, tc14, tc15, tc16)}
+
+
+ROBOT_R = 0.37    # circumscribed radius of the 0.54 x 0.50 m footprint
+
+
+def social_metrics(samples, dt_max=0.5):
+    """Social-navigation metrics from the 10 Hz ground-truth samples (map frame).
+
+    intimate_s / personal_s: time with the robot footprint closer than 0.45 m /
+    1.2 m to a person's body (Hall's proxemic zones) while the robot is moving;
+    min_ttc_s: smallest time-to-collision (constant-velocity, circle-circle) over
+    all robot-person pairs that are closing in, capped at 10 s;
+    path_irregularity_rad: total heading change per metre driven."""
+    out = {'intimate_s': 0.0, 'personal_s': 0.0, 'min_ttc_s': None, 'path_irregularity_rad_per_m': None}
+    turn, dist = 0.0, 0.0
+    min_ttc = 10.0
+    for a, b in zip(samples, samples[1:]):
+        dt = b['t'] - a['t']
+        if not 0.0 < dt <= dt_max:
+            continue
+        vx, vy = (b['x'] - a['x']) / dt, (b['y'] - a['y']) / dt
+        step = math.hypot(b['x'] - a['x'], b['y'] - a['y'])
+        dist += step
+        turn += abs(math.remainder(b['yaw'] - a['yaw'], 2 * math.pi))
+        moving = step / dt > 0.03
+        c = b.get('clearance')
+        if moving and c is not None:
+            if c < 0.45:
+                out['intimate_s'] += dt
+            if c < 1.2:
+                out['personal_s'] += dt
+        for k, v in b.items():
+            if not k.startswith('p_') or not v or not a.get(k):
+                continue
+            px1, py1 = map(float, v.split(';'))
+            px0, py0 = map(float, a[k].split(';'))
+            rx, ry = px1 - b['x'], py1 - b['y']
+            rvx, rvy = (px1 - px0) / dt - vx, (py1 - py0) / dt - vy
+            rr = ROBOT_R + BODY_R
+            vv = rvx * rvx + rvy * rvy
+            pv = rx * rvx + ry * rvy
+            if vv < 1e-6 or pv >= 0.0:
+                continue          # not closing in
+            disc = pv * pv - vv * (rx * rx + ry * ry - rr * rr)
+            if disc < 0.0:
+                continue          # passes by
+            ttc = max(0.0, (-pv - math.sqrt(disc)) / vv)
+            min_ttc = min(min_ttc, ttc)
+    out['intimate_s'] = round(out['intimate_s'], 1)
+    out['personal_s'] = round(out['personal_s'], 1)
+    out['min_ttc_s'] = round(min_ttc, 2)
+    out['path_irregularity_rad_per_m'] = round(turn / dist, 3) if dist > 0.5 else None
+    return out
 
 
 def main():

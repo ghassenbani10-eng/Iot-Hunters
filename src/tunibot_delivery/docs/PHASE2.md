@@ -5,12 +5,11 @@ Challenge CSTAM-TUNIBOT, Phase 2 (30 pts):
 | Criterion | Pts | Where it is implemented |
 |---|---|---|
 | Dynamic obstacle avoidance — react safely to moving obstacles (humans walking) in real time | 10 | walking people in Gazebo (`tunibot_gazebo_plugins`), `people_tracker` (detection, tracking, motion prediction, social speed), Nav2 `collision_monitor`, people cost filter, 2 Hz replanning, wait-first recovery |
-| Complex layout handling — tight corridors, doorways, recovering from navigation failures | 10 | world v2 (3 doorways of 0.9 m, 1.05 m corridor with an L-turn), custom behavior tree, reachability pre-check, alternate approach poses, BLOCKED detection, failure handling in `delivery_manager` |
+| Complex layout handling — tight corridors, doorways, recovering from navigation failures | 10 | realistic restaurant v3 (kitchen with 2 serving windows + takeaway counter and customer queue, toilets, painted robot lanes; doorways of 0.9 m, 1.05 m corridor with an L-turn), custom behavior tree, reachability pre-check, alternate approach poses, BLOCKED detection, failure handling in `delivery_manager` |
 | Battery & state simulation — accurate drain, return to dock before the battery dies | 10 | `battery_simulator` (physics-based power model, Li-ion voltage curve, CC-CV charging on dock contact, learned Wh/m), energy-aware `delivery_manager` |
 
 Deliverables: the complete Gazebo package (`tunibot_delivery` + `tunibot_gazebo_plugins`),
-the test-case documentation ([TEST_CASES.md](TEST_CASES.md), generated from automated runs — 12/12
-pass) and the recording of dynamic obstacle handling
+the test-case documentation ([TEST_CASES.md](TEST_CASES.md), generated from automated runs) and the recording of dynamic obstacle handling
 ([media/tunibot_demo_dynamic_obstacles.mp4](media/tunibot_demo_dynamic_obstacles.mp4), recorded by
 `demo_recorder` while scenario TC03 runs).
 
@@ -22,16 +21,28 @@ pass) and the recording of dynamic obstacle handling
 
 ### 1.1 Venue layout — `worlds/restaurant.world`
 
-The restaurant is **divided in two** by a partition wall:
+The layout follows how restaurants that use service robots are organised today: the kitchen is
+closed to the robot, the robot has its **own marked lanes**, and customers who only take away never
+cross the dining room's robot traffic. The restaurant is **divided in two** by a partition wall:
 
-* **Kitchen** (north-west, staff only). The cooks hand the food to the robot through **two serving
-  windows** in the partition (counter at 0.95 m, opening up to 1.75 m). For the 2D lidar (18 cm high)
-  the partition is a solid wall; the robot parks in front of a window, trays facing the cook.
-  The kitchen is a **staff-only keepout zone** in the navigation mask: the robot never enters it,
-  not even through the staff door. Window 2 is used automatically when window 1 is blocked.
-* **Dining room** (south, the Phase 1 tables). The **charging dock is in its north-west corner**,
-  right next to the serving windows (short dock → window trips).
-* **VIP lounge** (north-east, customer side) — the "complex layout" part of Phase 2, reached through:
+* **Kitchen** (north-west, staff only), fully equipped: cooking line under an extraction hood
+  (2 ranges, fryer, griddle, oven, salamander), cold room, fridges, dry storage, two stainless prep
+  tables, dish area (sink, dishwasher, plate rack) and two cooks. Three openings in the partition:
+  * **two serving windows** for the robot (counter at 0.95 m, opening up to 1.75 m) — the robot parks
+    in front of a window, trays facing the cook; window 2 is used automatically when window 1 is blocked;
+  * the **takeaway counter** (half door, counter at 1.0 m): customers who do not sit **queue along
+    stanchions** (rope posts) to get their meal and leave. The queue lane is a keepout zone: the robot
+    never drives into it.
+  For the 2D lidar (18 cm high) the partition is a solid wall. The kitchen is a staff-only keepout
+  zone too: the robot never enters it, not even through the staff door.
+* **Dining room** (south). The **charging dock is in its north-west corner**, next to the serving
+  windows. **Robot lanes** are painted on the floor (yellow edge lines): the service lane along the
+  windows, the west and east aisles and two cross aisles. The keepout mask gives every dining-room cell
+  off the lanes a small, non-lethal cost (`make_keepout_mask.py`, `scale` mode), so the planner uses the
+  lanes whenever it can and leaves them only for the last metres to a table.
+* **Toilets** (women / men, customer side) off the back corridor; keepout for the robot.
+* **Main entrance** (glass door, south-east), where takeaway customers come in.
+* **VIP lounge** (north-east, customer side, sofa + 2 tables) — the "complex layout" part, reached through:
 
 | Zone | Challenge for the robot (0.54 × 0.50 m footprint) |
 |---|---|
@@ -67,10 +78,12 @@ The plugin solves it:
   (Gazebo's spawn service cannot create actors, so two extra people wait parked in the closed storage
   room).
 
-Four people live in the world: a waiter crossing the whole dining room, a guest walking between the
-table rows, a cook walking along the kitchen pass (behind the serving windows) and a guest in the VIP
-lounge. Test scenarios spawn more (head-on,
-crossing, standing in a doorway).
+Ten people live in the world: a waiter crossing the dining room, a guest walking between the table
+rows, two cooks in the kitchen, a guest in the VIP lounge, a guest who goes to the toilet (through
+door D2 and the corridors, 60 s inside), three customers waiting in the takeaway queue (shuffling
+forward) and a takeaway customer who walks in from the entrance, waits at the end of the queue and
+leaves. Waypoints can carry their own pause (`<waypoint>x y dwell</waypoint>`). Test scenarios send
+two more people (head-on, crossing, a group, a sudden stop, standing in a doorway).
 
 ### 1.3 Robot model fixes and additions
 
@@ -115,12 +128,13 @@ Layered, from slow/predictive to fast/reactive:
 | Layer | Rate | What it does |
 |---|---|---|
 | `people_tracker` → **people cost mask** (KeepoutFilter `people_filter`) | 5 Hz | predicts where each walking person will be over the next 2 s (constant-velocity Kalman filter) and writes a fading cost along that track: the planner routes **behind** people instead of cutting in front of them |
+| `people_tracker` → **personal space** (same mask) | 5 Hz | around every tracked person an asymmetric Gaussian cost (Kirby et al. 2009; layered social costmaps, Lu et al. 2014): longer in front of a walking person (σ = 0.5 m + 0.8 s × speed) than behind (0.35 m) or beside (0.45 m), capped below lethal — it shapes the path (pass behind, keep a social distance) but never blocks a narrow passage |
 | Global planner (NavFn A*) | 2 Hz | replans continuously (custom BT) on a costmap that contains the lidar obstacles + the predictions |
 | `people_tracker` → **social speed governor** (`/speed_limit`) | 5 Hz | 70 % speed within 2.2 m of a person, 45 % within 1.2 m, 60 % in doorways/corridors. A track only counts as a person once it has walked 0.6 m (furniture edges never do), and nothing inside the robot's own radius is a person |
 | Regulated Pure Pursuit | 20 Hz | slows down with costmap cost (near obstacles) and checks the footprint for collision up to the carrot |
 | **collision_monitor** (between the smoother and the wheels; tuned so it never freezes an in-place turn next to a wall) | scan rate | **slow to 50 %** when something is within 45 cm ahead, emergency **stop** if anything is within 7 cm of the bumper. (A larger static stop zone, and the "approach" time-to-collision model, were tested and rejected: the first froze in-place turns at the serving windows, the second toggled every 100–200 ms near walls and made the robot stutter. Footprint collision checking along the path is done by the controller.) Works on the raw scan: independent from localization and costmaps |
 | Behavior tree recovery | on failure | the first recovery is **wait 3 s** (a person in the way usually moves), then clear costmaps, back up 30 cm, spin, wait 5 s |
-| `delivery_manager` | 10 Hz | reports **BLOCKED** when the remaining distance stops decreasing, shows the number of people around in the UI |
+| `delivery_manager` | 10 Hz | reports **BLOCKED** when the remaining distance stops decreasing, shows the number of people around in the UI; when blocked with a person closer than 1.8 m the robot **asks "Excuse me, may I pass?"** (`/tunibot/say`, shown in the UI; text-to-speech on the real robot) and announces the order at the table |
 
 People tracker pipeline (`people_tracker.py`): scan → map frame → drop points within 20 cm of an
 occupied cell of the static map (distance transform) → euclidean clustering (person-sized clusters,
@@ -237,6 +251,7 @@ larger of the two learned consumptions (driving / effective):
 * **Hard safety net**: SoC ≤ 10 % → abort everything and dock.
 * **Idle**: below 25 % or after 20 s without orders → dock.
 * While parked on the charger, loading or serving, the robot actively brakes (zero velocity).
+* **Charger fault detection**: on the pad (contacts OK) but no charging current for 10 s → the state shows "CHARGER FAULT", an error event alerts the staff, and orders wait (the robot never leaves without the energy for the whole order); when current flows again, charging resumes automatically (TC15).
 
 ### 4.3 States
 
@@ -258,12 +273,26 @@ reserve); re-queued, going to charge`.
 
 ## 5. Testing
 
-`scenario_runner` executes 12 scripted scenarios on a fresh stack each (`scripts/run_tests.sh`), with
+`scenario_runner` executes 16 scripted scenarios on a fresh stack each (`scripts/run_tests.sh`), with
 metrics from **Gazebo ground truth** — not from the robot's own estimate:
 
 * minimum distance between the robot footprint and any person body (≤ 0 = collision),
 * bumper contacts with anything,
+* social-navigation metrics (as defined by SocNavBench / Arena-Rosnav): minimum time-to-collision with
+  a person who is closing in, time spent inside people's intimate (< 0.45 m) and personal (< 1.2 m)
+  space while moving, path irregularity,
 * delivery outcomes, durations, path length, minimum battery level, the full event log.
+
+New in v3: TC13 (a group of two people head-on), TC14 (a person stops dead in front of the robot),
+TC15 (charger fault on the dock: detected after 10 s, reported, recovered), TC16 (serving window 1
+blocked → window 2, next to the takeaway queue). `REPEAT=N scripts/run_tests.sh` repeats every scenario
+on fresh stacks and the report adds success rates and metric spreads.
+
+**Static tests and CI.** `test/` holds unit tests that need no simulator: every delivery pose is
+checked against the walls, the furniture and the keepout mask; doors keep their width; lanes are clear;
+the queue zone does not cover a robot window; the battery voltage curve; the social metrics. GitHub
+Actions (`.github/workflows/ci.yml`) builds both packages in a `ros:humble` container, runs the tests
+and checks that the committed world and mask match their generators.
 
 Results, plots and pass criteria: [TEST_CASES.md](TEST_CASES.md).
 
@@ -280,13 +309,6 @@ Results, plots and pass criteria: [TEST_CASES.md](TEST_CASES.md).
   beside its goal oscillated forever — removed (the delivery manager orients the robot). Result: full
   delivery cycles with 0 such errors. CycloneDDS is installed and used by the test script; it did not
   change this behaviour (measured), so the DDS layer was not the cause.
-* **Intermittent stale TF inside a Nav2 process (historical note).** Rarely (a few runs out of many hours of tests),
-  the controller server's TF buffer stops receiving `map → odom` while the delivery manager still
-  receives it; the controller then rejects every plan ("transform too old", "plan has 0 poses") until
-  restarted. It could not be reproduced on demand. Mitigations in place: lighter AMCL/MPPI load,
-  0.5 s controller TF tolerance, per-goal timeouts, the order is reported failed (never a silent
-  deadlock), the lifecycle and localization watchdogs. A CycloneDDS installation (not available on
-  the test machine, no sudo) would be the next thing to try.
 * **Simulated people are scripted**, not reactive crowds: they follow waypoints, stop for the robot
   and walk around it after 6 s. Good enough to test reactions (crossing, head-on, blocking a door),
   not a model of crowd behaviour.

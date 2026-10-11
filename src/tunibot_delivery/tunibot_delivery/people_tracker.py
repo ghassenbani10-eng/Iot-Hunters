@@ -18,6 +18,11 @@ Pipeline, on every lidar scan:
                              *behind* walking people and the controller slows down /
                              stops before a predicted crossing. Each new mask replaces
                              the previous one: no ghost obstacles.
+                             Around every confirmed person the mask also holds a
+                             personal-space cost: an asymmetric Gaussian (Kirby et al.
+                             2009, "COMPANION"; the layered social costmap of Lu et al.
+                             2014) elongated in the walking direction, capped below
+                             lethal so that it shapes the path but never blocks it.
      /people/filter_info     nav2_msgs/CostmapFilterInfo for that filter
      /people/markers         visualization_msgs/MarkerArray (RViz)
      /speed_limit            nav2_msgs/SpeedLimit: social speed governor = min of
@@ -92,6 +97,9 @@ class PeopleTracker(Node):
             'body_radius': 0.22, 'gate': 0.8, 'confirm_hits': 3, 'track_timeout': 1.0,
             'max_range': 8.0, 'horizon': 2.0, 'horizon_step': 0.25, 'moving_speed': 0.25,
             'mask_resolution': 0.1, 'mask_publish_hz': 5.0,
+            # personal space (OccupancyGrid units 0..100, 100 = lethal)
+            'proxemics_amplitude': 60.0, 'proxemics_sigma_side': 0.45, 'proxemics_sigma_rear': 0.35,
+            'proxemics_sigma_front': 0.5, 'proxemics_front_per_speed': 0.8,
             'near_distance': 1.2, 'near_speed_pct': 45.0, 'close_distance': 2.2, 'close_speed_pct': 70.0,
             'zone_speed_pct': 60.0,
             # narrow-passage zones, map frame, flat list of [xmin, xmax, ymin, ymax] * n
@@ -271,6 +279,35 @@ class PeopleTracker(Node):
                 inside &= (sub_x - robot[0]) ** 2 + (sub_y - robot[1]) ** 2 > 0.45 ** 2
             region = mask[i0:i1, j0:j1]
             region[inside] = np.maximum(region[inside], cost)
+
+        def personal_space(tr):
+            """Asymmetric Gaussian: sigma_front grows with walking speed, sigma_rear is
+            short, sigma_side constant. Standing people get a round one."""
+            x, y, vx, vy = tr.x
+            v = tr.speed
+            heading = math.atan2(vy, vx) if v >= self.p['moving_speed'] else 0.0
+            s_side = self.p['proxemics_sigma_side']
+            s_front = (self.p['proxemics_sigma_front'] + self.p['proxemics_front_per_speed'] * v
+                       if v >= self.p['moving_speed'] else s_side)
+            s_rear = self.p['proxemics_sigma_rear'] if v >= self.p['moving_speed'] else s_side
+            r = 3.0 * max(s_front, s_side)
+            i0, i1 = max(int((y - r - oy) / res), 0), min(int((y + r - oy) / res) + 1, h)
+            j0, j1 = max(int((x - r - ox) / res), 0), min(int((x + r - ox) / res) + 1, w)
+            if i0 >= i1 or j0 >= j1:
+                return
+            dx, dy = cx_all[i0:i1, j0:j1] - x, cy_all[i0:i1, j0:j1] - y
+            c, s_ = math.cos(heading), math.sin(heading)
+            along, across = c * dx + s_ * dy, -s_ * dx + c * dy
+            s_al = np.where(along >= 0.0, s_front, s_rear)
+            cost = self.p['proxemics_amplitude'] * np.exp(-0.5 * ((along / s_al) ** 2 + (across / s_side) ** 2))
+            cost = np.where(cost >= 3.0, np.minimum(cost, 99.0), 0.0).astype(np.int8)
+            if robot is not None:
+                cost[(cx_all[i0:i1, j0:j1] - robot[0]) ** 2 + (cy_all[i0:i1, j0:j1] - robot[1]) ** 2 <= 0.45 ** 2] = 0
+            region = mask[i0:i1, j0:j1]
+            np.maximum(region, cost, out=region)
+
+        for tr in people:
+            personal_space(tr)
 
         steps = int(self.p['horizon'] / self.p['horizon_step'])
         for tr in people:

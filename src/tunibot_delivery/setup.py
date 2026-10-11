@@ -19,6 +19,7 @@ setup(
         ('share/' + package_name + '/web', glob('web/*')),
     ],
     install_requires=['setuptools'],
+    tests_require=['pytest'],
     zip_safe=True,
     maintainer='Ghassen Bani',
     maintainer_email='ghassen.bani@supcom.tn',

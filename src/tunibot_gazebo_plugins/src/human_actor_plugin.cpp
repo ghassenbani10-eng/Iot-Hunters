@@ -18,7 +18,7 @@
 //     deadlock; turning back does not work at the end of a path).
 //
 // SDF parameters (all optional except <waypoint>):
-//   <waypoint>x y</waypoint>        (repeat, world frame, metres)
+//   <waypoint>x y [dwell]</waypoint> (repeat, world frame, metres; optional wait there, s)
 //   <speed>0.9</speed>              walking speed, m/s
 //   <dwell>1.0</dwell>              pause at each waypoint, s
 //   <start_delay>0</start_delay>    s of simulation time before starting to walk
@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <cmath>
 #include <mutex>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -63,9 +64,16 @@ public:
     world_ = actor_->GetWorld();
 
     if (sdf->HasElement("waypoint")) {
+      // "x y" or "x y dwell": an optional per-waypoint waiting time (e.g. a queue, a toilet)
       for (auto e = sdf->GetElement("waypoint"); e; e = e->GetNextElement("waypoint")) {
-        const auto v = e->Get<ignition::math::Vector2d>();
-        waypoints_.emplace_back(v.X(), v.Y());
+        std::istringstream in(e->Get<std::string>());
+        double x = 0.0, y = 0.0, d = -1.0;
+        in >> x >> y;
+        if (!(in >> d)) {
+          d = -1.0;
+        }
+        waypoints_.emplace_back(x, y);
+        dwells_.push_back(d);
       }
     }
     if (waypoints_.size() < 2) {
@@ -119,8 +127,10 @@ private:
     dwell_ = c[1];
     ping_pong_ = c[2] > 0.5;
     waypoints_.clear();
+    dwells_.clear();
     for (size_t i = 4; i + 1 < c.size(); i += 2) {
       waypoints_.emplace_back(c[i], c[i + 1]);
+      dwells_.push_back(-1.0);
     }
     pos_ = waypoints_[0];
     const auto d = waypoints_[1] - waypoints_[0];
@@ -187,8 +197,10 @@ private:
       if (detour_) {
         detour_ = false;          // sidestep done, carry on to the destination
       } else {
+        const double d = (target_ < static_cast<int>(dwells_.size()) && dwells_[target_] >= 0.0) ?
+          dwells_[target_] : dwell_;
         AdvanceTarget();
-        wait_until_ = now + dwell_;
+        wait_until_ = now + d;
       }
       Apply();
       return;
@@ -287,6 +299,7 @@ private:
   bool has_pending_cmd_{false};
 
   std::vector<ignition::math::Vector2d> waypoints_;
+  std::vector<double> dwells_;          // per-waypoint wait (< 0: use dwell_)
   ignition::math::Vector2d pos_;
   double yaw_{0.0};
   int target_{1};

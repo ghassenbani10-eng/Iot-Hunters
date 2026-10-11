@@ -131,6 +131,10 @@ class DeliveryManager(Node):
                                             reliability=ReliabilityPolicy.RELIABLE))
         self.status_pub = self.create_publisher(String, '/delivery/status', 10)
         self.event_pub = self.create_publisher(String, '/delivery/events', 10)
+        # what the robot says (a real robot feeds this to text-to-speech + its screen)
+        self.say_pub = self.create_publisher(String, '/tunibot/say', 10)
+        self.last_say = {}
+        self.speech = None
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
         self.create_timer(0.5, self.publish_status)
         self.initialpose_pub = self.create_publisher(PoseWithCovarianceStamped, '/initialpose', 10)
@@ -159,6 +163,17 @@ class DeliveryManager(Node):
             self.get_logger().warn('[%s] %s' % (kind, text))
         else:
             self.get_logger().info('[%s] %s' % (kind, text))
+
+    def say(self, text, key=None, min_interval=8.0):
+        """Speak to the people around (rate-limited per message kind)."""
+        key = key or text
+        now = self.now()
+        if now - self.last_say.get(key, -1e9) < min_interval:
+            return
+        self.last_say[key] = now
+        self.speech = {'t': round(now, 1), 'text': text}
+        self.say_pub.publish(String(data=text))
+        self.event('hri', 'Robot says: "%s"' % text)
 
     def pose_occupied(self, x, y, radius=0.25):
         """True if the global costmap has an obstacle (lethal or inscribed) within
@@ -314,6 +329,7 @@ class DeliveryManager(Node):
                 'battery': {k: (round(v, 2) if isinstance(v, float) else v) for k, v in self.battery.items()},
                 'energy': self.energy, 'current_order': self.current, 'queue': list(self.queue),
                 'history': list(self.history), 'events': list(self.events)[:25], 'tables': self.tables,
+                'speech': self.speech,
                 'estop': self.estop, 'error': self.error, 'consecutive_failures': self.consecutive_failures,
                 'people': self.people, 'pose': self.robot_pose(), 'sim_time': round(self.now(), 1),
                 'places': {k: v[0] for k, v in self.places.items()},
@@ -466,6 +482,10 @@ class Mission:
                     blocked = True
                     self.mgr.event('nav', 'Blocked on the way to %s (people around: %s) - waiting / replanning'
                                    % (label, self.mgr.people.get('count', 0)))
+                if blocked:
+                    near = self.mgr.people.get('nearest')
+                    if near is not None and near < 1.8:
+                        self.mgr.say('Excuse me, may I pass? Thank you!', key='excuse')
                 if fb is not None:
                     if fb.number_of_recoveries > recoveries:
                         recoveries = fb.number_of_recoveries
@@ -707,6 +727,8 @@ class Mission:
             if not self.go(order['table']):
                 raise Abort('%s unreachable' % order['table'])
             m.set_state(SERVING)
+            m.say('Hello! Your order has arrived%s. Please take it from the tray.'
+                  % (' (%s)' % order['items'] if order.get('items') else ''), key='serve', min_interval=0.0)
             self.wait_checked(m.cfg['serve_time_sec'])
             order['status'] = 'delivered'
             m.consecutive_failures = 0
@@ -794,8 +816,23 @@ class Mission:
         m = self.mgr
         m.set_state(CHARGING, 'to %.0f%%' % target_soc)
         m.event('battery', 'Charging to %.0f%% (%s), now %.0f%%' % (target_soc, reason, m.soc))
+        no_current_since, fault = None, False
         while rclpy.ok() and m.soc < target_soc and not m.estop and not m.cancel_requested:
             m.cmd_pub.publish(Twist())          # parked on the charger: brake
+            # charger fault: on the pad (contacts OK) but no charging current
+            if m.battery.get('on_dock', False) and not m.battery.get('charging', False):
+                no_current_since = no_current_since or m.now()
+                if not fault and m.now() - no_current_since > 10.0:
+                    fault = True
+                    m.set_state(CHARGING, 'CHARGER FAULT - no current')
+                    m.event('error', 'Charger fault: on the pad but no charging current for 10 s - '
+                                     'staff notified, orders wait until it is fixed')
+            else:
+                no_current_since = None
+                if fault and m.battery.get('charging', False):
+                    fault = False
+                    m.set_state(CHARGING, 'to %.0f%%' % target_soc)
+                    m.event('battery', 'Charger OK again, charging resumed (%.0f%%)' % m.soc)
             if not m.battery.get('charging', False) and not m.battery.get('on_dock', False):
                 m.event('error', 'Not receiving charge on the dock - re-docking')
                 with m.lock:

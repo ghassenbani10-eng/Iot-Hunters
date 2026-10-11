@@ -5,6 +5,7 @@
 #   src/tunibot_delivery/scripts/run_tests.sh tc02 tc09       # a selection
 #   GUI=true RESULTS=~/results src/tunibot_delivery/scripts/run_tests.sh tc03
 #   CONTROLLER=rpp src/tunibot_delivery/scripts/run_tests.sh tc05   # rpp | mppi (default)
+#   REPEAT=5 src/tunibot_delivery/scripts/run_tests.sh tc02 tc03     # statistics: $RESULTS/run_1..5/
 #
 # Results: $RESULTS/<scenario>.{json,csv,png} + _events.json, logs in $RESULTS/logs.
 # Then: ros2 run tunibot_delivery make_test_report $RESULTS
@@ -13,7 +14,7 @@ RESULTS="${RESULTS:-$HOME/tunibot_test_results}"
 GUI="${GUI:-false}"
 CONTROLLER="${CONTROLLER:-mppi}"
 SCENARIOS=("$@")
-[ ${#SCENARIOS[@]} -eq 0 ] && SCENARIOS=(tc01 tc02 tc03 tc04 tc05 tc06 tc07 tc08 tc09 tc10 tc11 tc12)
+[ ${#SCENARIOS[@]} -eq 0 ] && SCENARIOS=(tc01 tc02 tc03 tc04 tc05 tc06 tc07 tc08 tc09 tc10 tc11 tc12 tc13 tc14 tc15 tc16)
 mkdir -p "$RESULTS/logs"
 
 source /opt/ros/humble/setup.bash
@@ -35,8 +36,12 @@ stop_stack() {
   sleep 1
 }
 
+REPEAT="${REPEAT:-1}"
+OUT_BASE="$RESULTS"
+for rep in $(seq 1 "$REPEAT"); do
+RESULTS="$OUT_BASE"; [ "$REPEAT" -gt 1 ] && RESULTS="$OUT_BASE/run_$rep" && mkdir -p "$RESULTS/logs"
 for sc in "${SCENARIOS[@]}"; do
-  echo "================ $sc ================"
+  echo "================ $sc (run $rep/$REPEAT) ================"
   stop_stack >/dev/null 2>&1
   ACC=25.0; SOC=100.0
   case "$sc" in
@@ -51,5 +56,7 @@ for sc in "${SCENARIOS[@]}"; do
   timeout 4200 ros2 run tunibot_delivery scenario_runner --ros-args -p use_sim_time:=true \
       -p scenario:=$sc -p out_dir:="$RESULTS" 2>&1 | tee "$L-runner.log" | grep -E 'RESULT|EVENT|CONTACT|passed'
 done
+done
+RESULTS="$OUT_BASE"
 stop_stack >/dev/null 2>&1
 echo "Results in $RESULTS"

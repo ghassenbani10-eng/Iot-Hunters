@@ -39,7 +39,7 @@
   #msg { min-height:1.4em; margin-top:8px; color:var(--muted); }
   canvas { width:100%; height:auto; border-radius:8px; background:#cfd3d8; display:block; }
   .events li { display:block; font-size:13px; } .events .t { color:var(--muted); font-variant-numeric:tabular-nums; margin-right:6px; }
-  .ev-battery { color:var(--warn); } .ev-failure, .ev-error, .ev-estop { color:var(--bad); } .ev-recovery { color:#7c3aed; } .ev-delivery { color:var(--ok); }
+  .ev-battery { color:var(--warn); } .ev-failure, .ev-error, .ev-estop { color:var(--bad); } .ev-recovery { color:#7c3aed; } .ev-delivery { color:var(--ok); } .ev-hri { color:#0891b2; }
   .legend { font-size:12px; color:var(--muted); margin-top:6px; }
   .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin:0 4px 0 10px; vertical-align:middle; }
   details summary { cursor:pointer; color:var(--muted); font-size:13px; margin-top:12px; }
@@ -63,6 +63,7 @@
       <span>State</span><span><span class="state" id="state">-</span> <span class="sub" id="nav"></span></span>
       <span>Order</span><span id="current">-</span>
       <span>People</span><span id="people">-</span>
+      <span>Says</span><span id="speech" class="sub">-</span>
     </div>
     <div class="row">
       <button class="estop" id="estop">EMERGENCY STOP</button>
@@ -86,6 +87,7 @@
       <span>Consumption</span><span id="whm">-</span>
       <span>Energy margin</span><span id="margin">-</span>
     </div>
+    <canvas id="socchart" width="420" height="120" style="width:100%;margin-top:8px" title="state of charge over simulation time"></canvas>
     <details><summary>Test controls</summary>
       <div class="row" style="margin-top:8px">
         <input type="number" id="setsoc" min="0" max="100" value="20" style="margin:0;flex:1">
@@ -172,6 +174,29 @@ function drawMap() {
   }
 }
 
+const socHist = [];
+function drawSoc(th) {
+  const cv = $('socchart'), ctx = cv.getContext('2d'), W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+  ctx.font = '10px sans-serif'; ctx.fillStyle = '#888';
+  if (socHist.length < 2) { ctx.fillText('battery history (collecting…)', 8, 14); return; }
+  const t0 = socHist[0].t, t1 = Math.max(socHist[socHist.length - 1].t, t0 + 1);
+  const X = t => 28 + (W - 34) * (t - t0) / (t1 - t0), Y = v => 6 + (H - 20) * (1 - v / 100);
+  [[th.battery_low || 25, '#d97706'], [th.battery_critical || 10, '#dc2626']].forEach(([v, c]) => {
+    ctx.strokeStyle = c; ctx.setLineDash([4, 3]); ctx.beginPath(); ctx.moveTo(28, Y(v)); ctx.lineTo(W, Y(v)); ctx.stroke();
+  });
+  ctx.setLineDash([]);
+  socHist.forEach((p, i) => {   // charging periods shaded
+    if (p.charging && i) { ctx.fillStyle = 'rgba(22,163,74,0.12)'; ctx.fillRect(X(socHist[i - 1].t), 6, X(p.t) - X(socHist[i - 1].t), H - 20); }
+  });
+  ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2; ctx.beginPath();
+  socHist.forEach((p, i) => i ? ctx.lineTo(X(p.t), Y(p.soc)) : ctx.moveTo(X(p.t), Y(p.soc)));
+  ctx.stroke(); ctx.lineWidth = 1;
+  ctx.fillStyle = '#888';
+  ctx.fillText('100', 2, Y(100) + 8); ctx.fillText('0 %', 2, Y(0));
+  ctx.fillText(`${fmt(t0, 0)} s`, 28, H - 2); ctx.fillText(`${fmt(t1, 0)} s (sim)`, W - 70, H - 2);
+}
+
 async function refresh() {
   try {
     status = await (await fetch('/api/status')).json();
@@ -196,6 +221,14 @@ async function refresh() {
     $('charging').textContent = b.charging ? '⚡ charging' : (b.on_dock ? 'on dock' : '');
     $('socbar').style.width = (soc || 0) + '%';
     $('socbar').style.background = soc < (th.battery_critical || 10) ? 'var(--bad)' : soc < (th.battery_low || 25) ? 'var(--warn)' : 'var(--ok)';
+    if (soc != null && status.sim_time != null) {
+      if (socHist.length && status.sim_time < socHist[socHist.length - 1].t) socHist.length = 0;   // sim restarted
+      socHist.push({t: status.sim_time, soc, charging: !!b.charging});
+      if (socHist.length > 1800) socHist.shift();
+    }
+    drawSoc(th);
+    const sp = status.speech;
+    $('speech').textContent = sp && status.sim_time - sp.t < 15 ? `🔊 “${sp.text}”` : '-';
     $('lowmark').style.left = (th.battery_low || 25) + '%'; $('critmark').style.left = (th.battery_critical || 10) + '%';
     $('pack').textContent = `${fmt(b.voltage, 2)} V · ${fmt(b.current, 2)} A · ${fmt(b.capacity_wh, 0)} Wh`;
     $('power').textContent = `${fmt(b.power_w)} W (avg ${fmt(b.power_avg_w)} W)` + (b.time_acceleration ? ` · energy ×${fmt(b.time_acceleration, 0)} (demo)` : '');

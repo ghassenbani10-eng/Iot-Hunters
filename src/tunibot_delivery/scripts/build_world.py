@@ -43,19 +43,22 @@ Y_PART = 3.0                       # partition wall centre line
 DOCK_STATION = (-9.75, 2.2)
 ROBOT_DOCK = (-9.0, 2.2)
 
-# Serving windows in the kitchen/dining partition: centre x, width; sill and top heights
-WINDOWS = [(-6.5, 1.0), (-4.5, 1.0)]
-SILL_Z, TOP_Z = 0.95, 1.75
+# Openings in the kitchen/dining partition: (name, centre x, width, sill z, top z).
+#  - two serving windows for the robot (trays at 0.95 m)
+#  - the takeaway door: a half door with a counter (1.0 m), where takeaway customers
+#    queue and collect their meal; for the robot it is a wall (it never enters the kitchen)
+OPENINGS = [('window_1', -6.5, 1.0, 0.95, 1.75), ('window_2', -5.0, 1.0, 0.95, 1.75),
+            ('takeaway', -3.3, 1.2, 1.0, 2.1)]
+WINDOWS = [(cx, w) for n, cx, w, _, _ in OPENINGS if n.startswith('window')]
 
 # Full-height wall segments: (x1, y1, x2, y2[, extend_start, extend_end]), centre
 # lines, world frame. Ends are extended by half the thickness to close corners,
 # except at door edges (extend flag False) so that doors keep their nominal width.
 WALLS = [
-    # partition, kitchen part (with the serving windows) is generated from WINDOWS;
-    # customer part: door D2 [7.25, 8.15] (0.9 m) into the service corridor
+    # partition, customer part: door D2 [7.25, 8.15] (0.9 m) into the service corridor
     (-2.5, Y_PART, 7.25, Y_PART, True, False),
     (8.15, Y_PART, X_MAX, Y_PART, False, True),
-    # kitchen east wall, staff door [9.1, 10.0] onto the west corridor
+    # kitchen east wall, staff door [9.1, 10.0] onto the back corridor
     (-2.5, Y_PART, -2.5, 9.1, True, False),
     (-2.5, 10.0, -2.5, Y_MAX, False, True),
     # service corridor: west wall (lounge side) and east wall (storage side), 1.05 m clear.
@@ -65,11 +68,16 @@ WALLS = [
     (8.3, Y_PART, 8.3, 4.4, True, False),
     (8.3, 5.2, 8.3, 7.1, False, False),
     (8.3, 8.3, 8.3, Y_MAX, False, True),
-    # lounge north wall = south side of the west corridor, doorway D3 [1.0, 1.9] (0.9 m)
-    (-2.5, 8.9, 1.0, 8.9, True, False),
-    (1.9, 8.9, 7.1, 8.9, False, True),
-    # close the exterior door of the south wall
-    (7.55, -9.686, 8.6, -9.686),
+    # south side of the back corridor: WC (women) door [-1.95, -1.15], WC (men) door
+    # [0.05, 0.85], lounge door D3 [2.4, 3.3]
+    (-2.5, 8.9, -1.95, 8.9, True, False),
+    (-1.15, 8.9, 0.05, 8.9, False, False),
+    (0.85, 8.9, 2.4, 8.9, False, False),
+    (3.3, 8.9, 7.1, 8.9, False, True),
+    # toilet block: south wall, east wall, wall between the two toilets
+    (-2.5, 5.3, 1.4, 5.3),
+    (1.4, 5.3, 1.4, 8.9),
+    (-0.55, 5.3, -0.55, 8.9),
 ]
 
 # Backs of the corridor niches: (x, y_from, y_to), 0.15 m behind the corridor wall.
@@ -77,34 +85,101 @@ WALLS = [
 # features make a corridor look the same at two places (perceptual aliasing).
 NICHES = [(8.45, 4.4, 5.2), (8.45, 7.1, 8.3)]
 
-# Static furniture: (name, cx, cy, sx, sy, sz, material)
+# Static furniture with collision: (name, cx, cy, sx, sy, sz, material)
 FURNITURE = [
-    ('pass_counter_1', -6.5, 3.35, 1.4, 0.55, 0.95, 'Gazebo/Wood'),   # kitchen side of the windows
-    ('pass_counter_2', -4.5, 3.35, 1.4, 0.55, 0.95, 'Gazebo/Wood'),
-    ('stove_island', -7.0, 6.5, 3.6, 1.0, 0.95, 'Gazebo/Grey'),
-    ('prep_table', -4.0, 6.5, 1.6, 0.8, 0.95, 'Gazebo/Wood'),
-    ('fridge_1', -10.05, 4.6, 0.7, 0.8, 2.0, 'Gazebo/White'),
-    ('fridge_2', -10.05, 5.5, 0.7, 0.8, 2.0, 'Gazebo/White'),
-    ('kitchen_shelf', -6.5, 9.95, 6.0, 0.6, 1.8, 'Gazebo/DarkGrey'),
+    # kitchen: pass counters behind the serving windows and the takeaway door
+    ('pass_counter_1', -6.5, 3.35, 1.4, 0.55, 0.95, 'Gazebo/Wood'),
+    ('pass_counter_2', -5.0, 3.35, 1.3, 0.55, 0.95, 'Gazebo/Wood'),
+    ('takeaway_counter', -3.3, 3.4, 1.5, 0.6, 1.0, 'Gazebo/Wood'),
+    # cooking line along the north wall (under the extraction hood)
+    ('range_1', -9.4, 9.95, 0.9, 0.75, 0.9, 'Gazebo/DarkGrey'),
+    ('range_2', -8.45, 9.95, 0.9, 0.75, 0.9, 'Gazebo/DarkGrey'),
+    ('fryer', -7.6, 9.95, 0.7, 0.75, 0.9, 'Gazebo/Black'),
+    ('griddle', -6.8, 9.95, 0.8, 0.75, 0.9, 'Gazebo/DarkGrey'),
+    ('oven', -5.85, 9.95, 1.0, 0.75, 1.5, 'Gazebo/Black'),
+    ('salamander_counter', -4.6, 9.95, 1.4, 0.75, 0.9, 'Gazebo/Grey'),
+    # cold room + fridges + dry storage on the west wall
+    ('cold_room', -9.75, 4.3, 1.3, 2.3, 2.3, 'Gazebo/White'),
+    ('fridge_1', -10.05, 6.1, 0.7, 0.8, 2.0, 'Gazebo/White'),
+    ('fridge_2', -10.05, 7.0, 0.7, 0.8, 2.0, 'Gazebo/White'),
+    ('dry_storage', -10.1, 8.4, 0.6, 1.6, 1.8, 'Gazebo/Wood'),
+    # stainless prep tables (island)
+    ('prep_table_1', -7.4, 6.9, 2.4, 0.9, 0.9, 'Gazebo/Grey'),
+    ('prep_table_2', -4.8, 6.9, 1.8, 0.9, 0.9, 'Gazebo/Grey'),
+    # dish area on the east wall
+    ('dish_sink', -2.95, 5.6, 0.75, 1.3, 0.9, 'Gazebo/Grey'),
+    ('dishwasher', -2.95, 6.7, 0.75, 0.75, 0.9, 'Gazebo/White'),
+    ('plate_rack', -2.95, 7.7, 0.75, 1.0, 1.6, 'Gazebo/DarkGrey'),
+    # toilets (women, west / men, east)
+    ('wc_w_toilet', -2.05, 5.75, 0.4, 0.65, 0.45, 'Gazebo/White'),
+    ('wc_w_sink', -2.2, 8.2, 0.45, 0.5, 0.85, 'Gazebo/White'),
+    ('wc_m_toilet', 0.95, 5.75, 0.4, 0.65, 0.45, 'Gazebo/White'),
+    ('wc_m_urinal', 1.15, 7.0, 0.35, 0.4, 0.6, 'Gazebo/White'),
+    ('wc_m_sink', 1.1, 8.2, 0.45, 0.5, 0.85, 'Gazebo/White'),
+    # VIP lounge sofa (in the west part of the lounge)
+    ('lounge_sofa', -0.4, 3.45, 2.6, 0.7, 0.8, 'Gazebo/Red'),
+    # storage room behind the service corridor
     ('storage_rack', 8.9, 6.5, 1.0, 5.0, 1.8, 'Gazebo/DarkGrey'),
-    ('lounge_sofa', 3.0, 3.45, 3.0, 0.7, 0.8, 'Gazebo/Red'),
+    # main entrance (south-east): closed glass door
+    ('entrance_door', 8.075, -9.686, 1.05, 0.06, 2.2, 'Gazebo/BlueTransparent'),
 ]
 
-# VIP lounge tables (cafe_table copies; the keepout mask picks every cafe_table up)
-VIP_TABLES = [('cafe_table_vip_1', 0.5, 6.0), ('cafe_table_vip_2', 4.5, 6.0)]
+# Queue for the takeaway door: stanchion posts (lidar-visible) with ropes (visual only).
+# The posts mark the queue lane x in [-4.0, 1.0], y in [1.8, 2.9] - a keepout zone for the robot.
+STANCHIONS = [(x, 1.8) for x in (-4.0, -3.0, -2.0, -1.0, 0.0, 1.0)]   # queue entrance: east end
+QUEUE_ZONE = (-4.0, 1.0, 1.8, 2.92)
 
-# Walking people: name, waypoints (world frame), speed, dwell, start delay.
-# Each one also listens on /<name>/cmd (std_msgs/Float64MultiArray) to be given a
-# new walk at runtime. human_extra_1/2 wait, parked in the closed storage room,
-# until a test scenario or a demo sends them somewhere.
+# Robot lanes painted on the floor (centre lines, world frame). Nav2 prefers them
+# (graded cost elsewhere in the dining room, see make_keepout_mask.py).
+LANES = [
+    ((-8.6, 1.0), (7.7, 1.0)),      # service lane: dock -> serving windows -> service door D2
+    ((7.7, 1.0), (7.7, 2.9)),       # into door D2
+    ((-4.4, 1.0), (-4.4, -8.6)),    # west aisle
+    ((5.8, 1.0), (5.8, -8.6)),      # east aisle
+    ((-8.6, -4.4), (6.4, -4.4)),    # middle aisle between the single tables and the groups
+    ((-8.6, -8.6), (6.4, -8.6)),    # south aisle
+]
+LANE_HALF_WIDTH = 0.4
+
+# VIP lounge tables (cafe_table copies; the keepout mask picks every cafe_table up)
+VIP_TABLES = [('cafe_table_vip_1', 3.4, 6.6), ('cafe_table_vip_2', 5.6, 5.0)]
+
+# Walking people: name, waypoints (world frame, (x, y) or (x, y, dwell)), speed,
+# default dwell, start delay. Each one also listens on /<name>/cmd
+# (std_msgs/Float64MultiArray) to be given a new walk at runtime. human_extra_1/2 wait,
+# parked in the closed storage room, until a test scenario or a demo sends them.
 HUMANS = [
-    ('human_waiter', [(-7.5, 0.9), (6.0, 0.9)], 0.75, 3.0, 5.0),
-    ('human_guest', [(2.4, -4.2), (2.4, 1.8)], 0.6, 4.0, 12.0),
-    ('human_cook', [(-8.6, 4.3), (-3.6, 4.3)], 0.5, 5.0, 3.0),
-    ('human_vip', [(6.3, 4.1), (6.3, 8.2), (2.8, 8.2)], 0.55, 6.0, 20.0),
+    # staff
+    ('human_waiter', [(-7.5, 0.2), (6.0, 0.2)], 0.75, 3.0, 5.0),
+    ('human_cook', [(-8.6, 8.9), (-4.6, 8.9)], 0.5, 6.0, 3.0),
+    ('human_cook_2', [(-8.4, 4.3), (-3.9, 4.3)], 0.5, 5.0, 8.0),
+    # customers
+    ('human_guest', [(2.4, -4.2), (2.4, 0.6)], 0.6, 4.0, 12.0),
+    ('human_vip', [(6.5, 4.0), (6.5, 8.2), (4.3, 8.2)], 0.55, 6.0, 20.0),
+    # a guest going to the toilet through door D2 and the corridors (60 s inside)
+    ('human_wc', [(4.0, -1.0, 60.0), (7.7, 1.6), (7.7, 9.65), (-1.55, 9.65), (-1.55, 7.4, 60.0)], 0.7, 1.0, 40.0),
+    # takeaway queue: three people waiting (shuffling), one walking in from the entrance
+    # along the east wall to the end of the queue and back out with the meal
+    ('human_queue_1', [(-3.3, 2.35, 25.0), (-3.0, 2.35, 25.0)], 0.3, 25.0, 0.0),
+    ('human_queue_2', [(-2.4, 2.35, 30.0), (-2.1, 2.35, 30.0)], 0.3, 30.0, 6.0),
+    ('human_queue_3', [(-1.5, 2.35, 35.0), (-1.2, 2.35, 35.0)], 0.3, 35.0, 11.0),
+    ('human_takeaway', [(7.9, -8.9, 10.0), (7.0, -7.8), (7.0, 0.4), (1.6, 2.35), (-0.3, 2.35, 30.0)],
+     0.75, 1.0, 15.0),
+    # parked for scripted test scenarios
     ('human_extra_1', [(8.95, 9.7), (8.95, 9.72)], 0.5, 1000.0, 0.0),
     ('human_extra_2', [(8.95, 3.55), (8.95, 3.57)], 0.5, 1000.0, 0.0),
 ]
+
+
+def visual_link(name, cx, cy, cz, sx, sy, sz, yaw, material):
+    geo = '<geometry><box><size>%.3f %.3f %.3f</size></box></geometry>' % (sx, sy, sz)
+    return f"""
+      <link name='{name}'>
+        <pose>{cx:.3f} {cy:.3f} {cz:.3f} 0 0 {yaw:.4f}</pose>
+        <visual name='{name}_visual'>{geo}
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>{material}</name></script></material>
+        </visual>
+      </link>"""
 
 
 def box_link(name, cx, cy, cz, sx, sy, sz, yaw, material):
@@ -134,44 +209,68 @@ def layout_model():
                               math.hypot(x2 - x1, y2 - y1), T, H, yaw, 'Gazebo/Grey'))
     for i, (x, y0, y1) in enumerate(NICHES):
         links.append(box_link('niche_%d' % i, x, (y0 + y1) / 2, H / 2, T, y1 - y0 + T, H, 0.0, 'Gazebo/Wood'))
-    # kitchen/dining partition with serving windows: below the sill and above the
-    # opening the wall is continuous; between the windows it is full height
+    # kitchen/dining partition: below the sill and above each opening the wall is
+    # continuous; between the openings it is full height
     x = X_MIN
-    for i, (wx, ww) in enumerate(sorted(WINDOWS) + [(-2.5 + 0.5, 1.0)]):
+    for i, (name, wx, ww, sill, top) in enumerate(sorted(OPENINGS, key=lambda o: o[1]) + [('end', -2.0, 1.0, 0, 0)]):
         x0, x1 = wx - ww / 2, wx + ww / 2
         if x0 > x:   # full-height pier
             links.append(box_link('partition_pier_%d' % i, (x + x0) / 2, Y_PART, H / 2,
                                   x0 - x + T / 2, T, H, 0.0, 'Gazebo/Grey'))
-        if i < len(WINDOWS):
-            links.append(box_link('window_%d_sill' % i, wx, Y_PART, SILL_Z / 2, ww, T, SILL_Z, 0.0, 'Gazebo/Grey'))
-            links.append(box_link('window_%d_lintel' % i, wx, Y_PART, (TOP_Z + H) / 2, ww, T, H - TOP_Z,
-                                  0.0, 'Gazebo/Grey'))
+        if name != 'end':
+            links.append(box_link('%s_sill' % name, wx, Y_PART, sill / 2, ww, T, sill, 0.0, 'Gazebo/Grey'))
+            links.append(box_link('%s_lintel' % name, wx, Y_PART, (top + H) / 2, ww, T, H - top, 0.0, 'Gazebo/Grey'))
             # pass-through ledge on the kitchen side only (flush with the dining-room
             # face): nothing sticks out at counter height where a 2D lidar is blind
-            links.append(box_link('window_%d_ledge' % i, wx, Y_PART + T / 2, SILL_Z + 0.015, ww, T + 0.15, 0.03,
+            links.append(box_link('%s_ledge' % name, wx, Y_PART + T / 2, sill + 0.015, ww, T + 0.15, 0.03,
                                   0.0, 'Gazebo/Wood'))
         x = x1
     for name, cx, cy, sx, sy, sz, mat in FURNITURE:
         links.append(box_link(name, cx, cy, sz / 2, sx, sy, sz, 0.0, mat))
-    # visual-only floor markings: charging pad, pickup spot, doorways
-    marks = [('mark_dock', ROBOT_DOCK[0], ROBOT_DOCK[1], 0.7, 0.7, 'Gazebo/Green')]
-    marks += [('mark_window_%d' % i, wx, Y_PART - 0.55, 0.6, 0.6, 'Gazebo/Yellow') for i, (wx, _) in enumerate(WINDOWS)]
-    for name, cx, cy, sx, sy, mat in marks:
+    # queue stanchions: posts (collision) + ropes (visual)
+    for i, (px, py) in enumerate(STANCHIONS):
         links.append(f"""
-      <link name='{name}'>
-        <pose>{cx} {cy} 0.002 0 0 0</pose>
-        <visual name='{name}_visual'><geometry><box><size>{sx} {sy} 0.004</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>{mat}</name></script></material>
+      <link name='stanchion_{i}'>
+        <pose>{px} {py} 0.5 0 0 0</pose>
+        <collision name='stanchion_{i}_collision'><geometry><cylinder><radius>0.03</radius><length>1.0</length></cylinder></geometry></collision>
+        <visual name='stanchion_{i}_visual'><geometry><cylinder><radius>0.03</radius><length>1.0</length></cylinder></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Gold</name></script></material>
         </visual>
       </link>""")
+    for i, ((ax, ay), (bx, by)) in enumerate(zip(STANCHIONS, STANCHIONS[1:])):
+        if abs(ax - bx) > 1.5 or abs(ay - by) > 1.5:
+            continue
+        links.append(visual_link('rope_%d' % i, (ax + bx) / 2, (ay + by) / 2, 0.9, math.hypot(bx - ax, by - ay), 0.03,
+                                 0.03, math.atan2(by - ay, bx - ax), 'Gazebo/Red'))
+    # extraction hood above the cooking line, signs (visual only)
+    links.append(visual_link('hood', -7.2, 9.95, 2.1, 5.2, 0.9, 0.35, 0.0, 'Gazebo/Grey'))
+    links.append(visual_link('sign_takeaway', -3.3, Y_PART - 0.09, 2.3, 1.2, 0.02, 0.25, 0.0, 'Gazebo/Orange'))
+    links.append(visual_link('sign_wc_w', -1.55, 8.9 + 0.09, 2.0, 0.3, 0.02, 0.3, 0.0, 'Gazebo/Purple'))
+    links.append(visual_link('sign_wc_m', 0.45, 8.9 + 0.09, 2.0, 0.3, 0.02, 0.3, 0.0, 'Gazebo/Blue'))
+    links.append(visual_link('sign_vip', 2.85, 8.9 + 0.09, 2.3, 0.9, 0.02, 0.2, 0.0, 'Gazebo/Gold'))
+    # floor markings: charging pad, window stops, entrance mat, robot lanes (two edge lines)
+    marks = [('mark_dock', ROBOT_DOCK[0], ROBOT_DOCK[1], 0.7, 0.7, 0.0, 'Gazebo/Green'),
+             ('mark_entrance', 8.075, -9.1, 1.4, 0.9, 0.0, 'Gazebo/DarkGrey')]
+    marks += [('mark_%s' % n, cx, Y_PART - 0.55, 0.6, 0.6, 0.0, 'Gazebo/Yellow') for n, cx, _, _, _ in OPENINGS
+              if n.startswith('window')]
+    for i, ((ax, ay), (bx, by)) in enumerate(LANES):
+        yaw = math.atan2(by - ay, bx - ax)
+        length = math.hypot(bx - ax, by - ay)
+        nx, ny = -math.sin(yaw), math.cos(yaw)
+        for side in (-1, 1):
+            marks.append(('lane_%d_%s' % (i, 'l' if side < 0 else 'r'),
+                          (ax + bx) / 2 + side * LANE_HALF_WIDTH * nx, (ay + by) / 2 + side * LANE_HALF_WIDTH * ny,
+                          length, 0.05, yaw, 'Gazebo/Yellow'))
+    for name, cx, cy, sx, sy, yaw, mat in marks:
+        links.append(visual_link(name, cx, cy, 0.002, sx, sy, 0.004, yaw, mat))
     return "\n    <model name='tunibot_layout'>\n      <static>1</static>%s\n    </model>" % ''.join(links)
 
 
 def human_models():
     out = []
     for name, wps, speed, dwell, delay in HUMANS:
-        x0, y0 = wps[0]
-        wp_xml = ''.join('\n          <waypoint>%.2f %.2f</waypoint>' % w for w in wps)
+        x0, y0 = wps[0][:2]
+        wp_xml = ''.join('\n          <waypoint>%s</waypoint>' % ' '.join('%.2f' % v for v in w) for w in wps)
         # Invisible collision body (lidar + bumper), moved by the actor plugin.
         out.append(f"""
     <model name='{name}'>

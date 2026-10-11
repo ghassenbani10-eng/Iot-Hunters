@@ -16,9 +16,9 @@ run out of battery.
 | Phase 2 — Integration & testing | How | Details |
 |---|---|---|
 | **Dynamic obstacle avoidance** | walking people in Gazebo (`tunibot_gazebo_plugins`), `people_tracker` (lidar detection + Kalman tracking + 2 s motion prediction → cost mask), social speed governor, Nav2 `collision_monitor`, 2 Hz replanning, wait-first recovery | [docs/PHASE2.md §2](docs/PHASE2.md) |
-| **Complex layout handling** | 3 doorways of 0.9 m, a 1.05 m corridor with an L-turn, VIP lounge; reachability pre-check, alternate approach poses, BLOCKED detection, custom behavior tree, staged window approach, failure handling | [§3](docs/PHASE2.md) |
+| **Complex layout handling** | realistic restaurant: kitchen with serving windows + takeaway counter and customer queue, toilets, robot lanes; doorways of 0.9 m, a 1.05 m corridor with an L-turn, VIP lounge; reachability pre-check, alternate approach poses, BLOCKED detection, custom behavior tree, staged window approach, failure handling | [§3](docs/PHASE2.md) |
 | **Battery & state simulation** | `battery_simulator` (power model, Li-ion voltage curve, CC-CV charging on dock contact, learned Wh/m); energy-aware decisions from Nav2 path lengths; return to the dock *before* the energy runs out | [§4](docs/PHASE2.md) |
-| Test cases | `scenario_runner`: 12 automated scenarios measured against Gazebo ground truth (person clearance, bumper contacts, SoC) | [docs/TEST_CASES.md](docs/TEST_CASES.md) |
+| Test cases | `scenario_runner`: 16 automated scenarios measured against Gazebo ground truth (person clearance, bumper contacts, SoC, social-navigation metrics: time-to-collision, time in personal space); unit tests + GitHub Actions CI | [docs/TEST_CASES.md](docs/TEST_CASES.md) |
 
 ## Demo video (Phase 2 — dynamic obstacles)
 
@@ -40,17 +40,28 @@ in front of the robot on its way from the serving window to table 4; the robot y
 
 ### The restaurant
 
+Two parts, as in a real restaurant: the **kitchen** (staff only) and the **dining room**.
+The robot never enters the kitchen; it is served through two **serving windows**. The third
+opening is the **takeaway counter**: customers who do not sit queue along stanchions to get
+their meal and leave. The robot follows **painted robot lanes** (Nav2 prefers them through a
+graded keepout-filter cost) and stays out of the takeaway queue, the kitchen and the toilets.
+
 ```
- north ┌──────────────────────────┬──────┬──────────────────┬──┐
-       │ KITCHEN (staff only)     │ west corridor (1.36 m) ┐ │  │
-       │  stove   prep   shelves  │──────┴──[D3]───────────┤ │st│
-       │ cook ↔ pass counters     │  VIP LOUNGE            │c│or│
-       │                          │  table 8     table 9   │o│ag│
-       ├──[window 1]──[window 2]──┤        sofa            │r│e │
-       │▣ dock                    └───────────────────[D2]─┘ │  │
-       │   waiter ↔                                           │
-       │   7 tables + 3 table groups (Phase 1 dining room)     │
- south └──────────────────────────────────────────────────────┘
+ north ┌───────────────────────────────┬───────────────────────────┬──┬────┐
+       │ KITCHEN (staff only)          │ back corridor  [WC][WC] [D3]  │    │
+       │ ranges fryer griddle oven ··· │╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│s │stor│
+       │ (hood)    prep tables         │ toilets W | M │ VIP LOUNGE │e │age │
+       │ cold room   dish  cook ↔ cook │───────────────┘ VIP1  VIP2 │r │    │
+       │ fridges  pass counters        │  sofa                      │v │    │
+       ├──[window 1]─[window 2]─[TAKEAWAY]──────────────────────[D2]┘  │    │
+       │▣ dock      ▲ robot stops  ┊ ● ● ● ← queue (stanchions)        │    │
+       │ ════════ robot lane ═══════════════════════════════════════╗ ║    │
+       │   ║ waiter ↔                                                ║      │
+       │   ║  tables 7  4  5  6 (singles)                            ║      │
+       │ ══╬═══════════════ middle lane ═══════════════════════════╬      │
+       │   ║  table groups 1  2  3                                  ║      │
+       │ ══╩═══════════════ south lane ════════════════════════════╝      │
+ south └────────────────────────────────────────────────── [entrance] ────┘
 ```
 
 ### Delivery state machine

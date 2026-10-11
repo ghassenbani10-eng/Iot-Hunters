@@ -88,6 +88,73 @@ CASES = {
 }
 
 
+CASES.update({
+    'tc13': ('Dynamic obstacles',
+             'Full world + two scripted people walking side by side (0.7 m apart) 5 m ahead of the robot, '
+             'head-on at 0.8 m/s.',
+             'Order table_6. When the robot has left the serving window by 1.5 m, the pair starts walking '
+             'towards it.',
+             'The robot treats the pair as a group: it slows down and passes around it (never between the two '
+             'people), no contact.'),
+    'tc14': ('Dynamic obstacles',
+             'Full world + a scripted person who cuts in 1.8 m in front of the robot at 1.1 m/s and stops dead '
+             'on its path for 12 s, then walks away.',
+             'Order table_5. The person cuts in once the robot has left the serving window.',
+             'Collision monitor / controller brake, no contact; the robot waits or goes around; when blocked '
+             'with a person close it says "Excuse me, may I pass?"; then it delivers.'),
+    'tc15': ('Battery & state',
+             'Battery forced to 18 %, charger switched off (fault injection) while the robot is on the dock.',
+             'Order table_7. After the fault is reported, wait 10 s, then switch the charger back on.',
+             'The robot does not leave with too little energy; it detects "on the pad but no current" within '
+             '~10 s and reports a charger fault; when the charger works again it charges and delivers.'),
+    'tc16': ('Complex layout',
+             'A trolley is left on the staging area of serving window 1; the takeaway queue (3 customers + one '
+             'arriving) stands next to window 2.',
+             'Order table_4.',
+             'Approach 1 of the pickup is unreachable → the robot uses window 2 (between window 1 and the '
+             'takeaway queue), never entering the queue zone; delivers.'),
+})
+
+
+def mean_sd(xs):
+    xs = [x for x in xs if isinstance(x, (int, float))]
+    if not xs:
+        return '-'
+    m = sum(xs) / len(xs)
+    sd = (sum((x - m) ** 2 for x in xs) / (len(xs) - 1)) ** 0.5 if len(xs) > 1 else 0.0
+    return '%.1f ± %.1f' % (m, sd)
+
+
+def stats_section(res_dir):
+    """Repeated runs (scripts/run_tests.sh with REPEAT=N writes run_1/, run_2/, ...)."""
+    runs = sorted(glob.glob(os.path.join(res_dir, 'run_*')))
+    if not runs:
+        return []
+    per = {}
+    for d in runs:
+        for p in glob.glob(os.path.join(d, 'tc*.json')):
+            if not p.endswith('_events.json'):
+                with open(p) as f:
+                    r = json.load(f)
+                per.setdefault(r['scenario'], []).append(r)
+    lines = ['## Repeated runs (statistics)', '',
+             '%d independent runs of every scenario, each on a fresh simulation stack (people start at different '
+             'phases of their walks, Nav2/DDS timing differs): success rate and spread of the metrics.' % len(runs),
+             '', '| ID | Success | Duration (s) | Min clearance (m), worst | Min TTC (s), worst | '
+             'Time in intimate space (s) | Contacts |', '|---|---|---|---|---|---|---|']
+    for sid in sorted(per):
+        rs = per[sid]
+        ok = sum(1 for r in rs if r.get('passed'))
+        clear = [r.get('min_clearance_m') for r in rs if r.get('min_clearance_m') is not None]
+        ttc = [r.get('social', {}).get('min_ttc_s') for r in rs if r.get('social')]
+        lines.append('| %s | %d/%d (%.0f %%) | %s | %s | %s | %s | %d |' % (
+            sid.upper(), ok, len(rs), 100.0 * ok / len(rs), mean_sd([r.get('duration_s') for r in rs]),
+            fmt(min(clear)) if clear else '-', fmt(min(ttc)) if ttc else '-',
+            mean_sd([r.get('social', {}).get('intimate_s') for r in rs]),
+            sum(len(r.get('contacts', [])) for r in rs)))
+    return lines + ['']
+
+
 def fmt(v, digits=2):
     if v is None:
         return '-'
@@ -128,17 +195,25 @@ def main():
         'A test fails if its functional criterion fails, if there is any contact, or if the minimum clearance '
         'to a person is below its threshold.', '',
         '## Summary', '',
-        '| ID | Criterion | Scenario | Result | Duration (s) | Min clearance to people (m) | Contacts | Min SoC (%) |',
-        '|---|---|---|---|---|---|---|---|']
+        '| ID | Criterion | Scenario | Result | Duration (s) | Min clearance to people (m) | Min TTC (s) | '
+        'Intimate / personal space (s) | Contacts | Min SoC (%) |',
+        '|---|---|---|---|---|---|---|---|---|---|']
     for r in results:
         case = CASES.get(r['scenario'], ('', '', '', ''))
-        lines.append('| %s | %s | %s | %s | %s | %s | %d | %s |' % (
+        soc_m = r.get('social') or {}
+        lines.append('| %s | %s | %s | %s | %s | %s | %s | %s | %d | %s |' % (
             r['scenario'].upper(), case[0], r.get('title', ''), '✅ PASS' if r.get('passed') else '❌ FAIL',
-            fmt(r.get('duration_s'), 0), fmt(r.get('min_clearance_m')), len(r.get('contacts', [])),
-            fmt(r.get('min_soc'), 1)))
+            fmt(r.get('duration_s'), 0), fmt(r.get('min_clearance_m')), fmt(soc_m.get('min_ttc_s')),
+            '%s / %s' % (fmt(soc_m.get('intimate_s'), 1), fmt(soc_m.get('personal_s'), 1)) if soc_m else '-',
+            len(r.get('contacts', [])), fmt(r.get('min_soc'), 1)))
     lines += ['', '**%d / %d test cases passed.**' % (passed, len(results)), '',
               'Reproduce: `src/tunibot_delivery/scripts/run_tests.sh` then '
-              '`ros2 run tunibot_delivery make_test_report ~/tunibot_test_results`.', '']
+              '`ros2 run tunibot_delivery make_test_report ~/tunibot_test_results`.', '',
+              '**Social-navigation metrics** (definitions after SocNavBench / Arena-Rosnav): *min TTC* = smallest '
+              'time-to-collision between the robot and a person who is closing in (constant velocities, '
+              'capped at 10 s); *intimate / personal space* = time the moving robot spent closer than 0.45 m / '
+              '1.2 m to a person (Hall\'s proxemic zones).', '']
+    lines += stats_section(res_dir)
     for r in results:
         sid = r['scenario']
         case = CASES.get(sid, ('', '', r.get('description', ''), ''))
