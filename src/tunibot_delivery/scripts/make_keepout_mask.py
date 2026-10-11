@@ -31,7 +31,7 @@ TABLE_SIZE = 0.913    # cafe_table top edge length (m)
 MARGIN = 0.12         # extra clearance around the tabletop (m): footprint discretization + overhang
 # staff-only rectangles, world frame: (xmin, xmax, ymin, ymax)
 STAFF_ONLY = [(-10.5, -2.4, 3.05, 10.5),    # kitchen
-              (-2.6, 1.5, 5.2, 9.0),       # toilets
+              (8.35, 9.6, 3.05, 5.6),      # customer toilet
               (QUEUE_ZONE[0] - 0.05, QUEUE_ZONE[1] + 0.05, QUEUE_ZONE[2] - 0.05, 3.05)]   # takeaway queue
 OFF_LANE_PIXEL = 205  # off-lane cost: occupancy (255 - 205) / 255 = 0.2 -> cost ~50 of 254
 DINING = (-10.5, 9.6, -10.5, Y_PART)       # where the lane preference applies

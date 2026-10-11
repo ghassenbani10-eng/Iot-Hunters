@@ -40,7 +40,9 @@ cross the dining room's robot traffic. The restaurant is **divided in two** by a
   windows, the west and east aisles and two cross aisles. The keepout mask gives every dining-room cell
   off the lanes a small, non-lethal cost (`make_keepout_mask.py`, `scale` mode), so the planner uses the
   lanes whenever it can and leaves them only for the last metres to a table.
-* **Toilets** (women / men, customer side) off the back corridor; keepout for the robot.
+* **Customer toilet** east of the service corridor, entered straight from the dining room through its
+  own door next to D2: customers never walk in the robot's 1.05 m corridor (a person and the robot
+  cannot pass each other there). Keepout for the robot. North of it: the closed storage room.
 * **Main entrance** (glass door, south-east), where takeaway customers come in.
 * **VIP lounge** (north-east, customer side, sofa + 2 tables) — the "complex layout" part, reached through:
 
@@ -80,7 +82,7 @@ The plugin solves it:
 
 Ten people live in the world: a waiter crossing the dining room, a guest walking between the table
 rows, two cooks in the kitchen, a guest in the VIP lounge, a guest who goes to the toilet (through
-door D2 and the corridors, 60 s inside), three customers waiting in the takeaway queue (shuffling
+its own door next to D2, 60 s inside), three customers waiting in the takeaway queue (shuffling
 forward) and a takeaway customer who walks in from the entrance, waits at the end of the queue and
 leaves. Waypoints can carry their own pause (`<waypoint>x y dwell</waypoint>`). Test scenarios send
 two more people (head-on, crossing, a group, a sudden stop, standing in a doorway).

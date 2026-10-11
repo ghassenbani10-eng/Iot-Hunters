@@ -22,9 +22,9 @@ delivery_manager:
     table_5:   [9.40, -5.97, 1.5708, 9.40, -3.40, -1.5708]
     table_6:   [13.41, -6.01, 1.5708, 13.41, -3.40, -1.5708]
     table_7:   [2.44, -6.01, 1.5708, 2.44, -3.40, -1.5708]
-    # VIP lounge: door D2 -> 1.05 m service corridor -> L-turn -> back corridor -> door D3
-    table_8:   [12.40, 5.40, -1.5708, 13.40, 4.40, 3.1416]   # VIP 1 (world 3.4, 6.6): north / east side
-    table_9:   [14.60, 3.80, -1.5708, 13.60, 2.80, 0.0]      # VIP 2 (world 5.6, 5.0): north / west side
+    # VIP lounge (Phase 2): door D2 -> 1.05 m corridor -> L-turn -> 1.36 m corridor -> door D3
+    table_8:   [9.50, 5.10, -1.5708, 9.50, 2.50, 1.5708]    # VIP 1 (world 0.5, 6.0)
+    table_9:   [13.50, 5.10, -1.5708, 13.50, 2.50, 1.5708]   # VIP 2 (world 4.5, 6.0)
     tables: ["table_1", "table_2", "table_3", "table_4", "table_5", "table_6", "table_7", "table_8", "table_9"]
     load_time_sec: 5.0            # waiting at the serving window while the cook loads the trays
     pickup_depart_yaw: -1.5708    # after loading: back out to the staging pose, turn to face the dining room

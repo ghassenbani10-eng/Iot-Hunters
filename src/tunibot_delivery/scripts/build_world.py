@@ -11,6 +11,9 @@ The restaurant is divided in two by a partition wall at y = 3.0:
   * north-east (customer side): a VIP lounge reached from the dining room
     through door D2 (0.9 m), a 1.05 m service corridor, an L-turn into a
     1.36 m corridor and door D3 (0.9 m) - the tight-passage part of Phase 2.
+  * east, behind the service corridor: the customer TOILET, entered straight
+    from the dining room through its own door next to D2 (customers never
+    use the robot's corridor), and a closed storage room.
 
 Also generated (idempotent: re-running replaces the block between the
 GENERATED markers): kitchen furniture, VIP tables, walking people (Gazebo
@@ -51,13 +54,20 @@ OPENINGS = [('window_1', -6.5, 1.0, 0.95, 1.75), ('window_2', -5.0, 1.0, 0.95, 1
             ('takeaway', -3.3, 1.2, 1.0, 2.1)]
 WINDOWS = [(cx, w) for n, cx, w, _, _ in OPENINGS if n.startswith('window')]
 
+# Customer toilet, entered from the dining room through the partition (world frame)
+TOILET_DOOR = (9.0, 0.9)            # centre x, width
+TOILET_Y_MAX = 5.6                  # centre line of its north wall
+
 # Full-height wall segments: (x1, y1, x2, y2[, extend_start, extend_end]), centre
 # lines, world frame. Ends are extended by half the thickness to close corners,
 # except at door edges (extend flag False) so that doors keep their nominal width.
 WALLS = [
-    # partition, customer part: door D2 [7.25, 8.15] (0.9 m) into the service corridor
+    # partition, customer part: door D2 [7.25, 8.15] (0.9 m) into the service corridor,
+    # toilet door [8.55, 9.45] (customers go straight from the dining room to the toilet,
+    # never through the robot's corridor)
     (-2.5, Y_PART, 7.25, Y_PART, True, False),
-    (8.15, Y_PART, X_MAX, Y_PART, False, True),
+    (8.15, Y_PART, 8.55, Y_PART, False, False),
+    (9.45, Y_PART, X_MAX, Y_PART, False, True),
     # kitchen east wall, staff door [9.1, 10.0] onto the back corridor
     (-2.5, Y_PART, -2.5, 9.1, True, False),
     (-2.5, 10.0, -2.5, Y_MAX, False, True),
@@ -68,16 +78,12 @@ WALLS = [
     (8.3, Y_PART, 8.3, 4.4, True, False),
     (8.3, 5.2, 8.3, 7.1, False, False),
     (8.3, 8.3, 8.3, Y_MAX, False, True),
-    # south side of the back corridor: WC (women) door [-1.95, -1.15], WC (men) door
-    # [0.05, 0.85], lounge door D3 [2.4, 3.3]
-    (-2.5, 8.9, -1.95, 8.9, True, False),
-    (-1.15, 8.9, 0.05, 8.9, False, False),
-    (0.85, 8.9, 2.4, 8.9, False, False),
-    (3.3, 8.9, 7.1, 8.9, False, True),
-    # toilet block: south wall, east wall, wall between the two toilets
-    (-2.5, 5.3, 1.4, 5.3),
-    (1.4, 5.3, 1.4, 8.9),
-    (-0.55, 5.3, -0.55, 8.9),
+    # lounge north wall = south side of the back corridor, doorway D3 [1.0, 1.9] (0.9 m)
+    (-2.5, 8.9, 1.0, 8.9, True, False),
+    (1.9, 8.9, 7.1, 8.9, False, True),
+    # customer toilet (south end of the former storage room, east of the service
+    # corridor): north wall; the storage room behind it stays closed
+    (8.3, TOILET_Y_MAX, X_MAX, TOILET_Y_MAX),
 ]
 
 # Backs of the corridor niches: (x, y_from, y_to), 0.15 m behind the corridor wall.
@@ -110,16 +116,13 @@ FURNITURE = [
     ('dish_sink', -2.95, 5.6, 0.75, 1.3, 0.9, 'Gazebo/Grey'),
     ('dishwasher', -2.95, 6.7, 0.75, 0.75, 0.9, 'Gazebo/White'),
     ('plate_rack', -2.95, 7.7, 0.75, 1.0, 1.6, 'Gazebo/DarkGrey'),
-    # toilets (women, west / men, east)
-    ('wc_w_toilet', -2.05, 5.75, 0.4, 0.65, 0.45, 'Gazebo/White'),
-    ('wc_w_sink', -2.2, 8.2, 0.45, 0.5, 0.85, 'Gazebo/White'),
-    ('wc_m_toilet', 0.95, 5.75, 0.4, 0.65, 0.45, 'Gazebo/White'),
-    ('wc_m_urinal', 1.15, 7.0, 0.35, 0.4, 0.6, 'Gazebo/White'),
-    ('wc_m_sink', 1.1, 8.2, 0.45, 0.5, 0.85, 'Gazebo/White'),
-    # VIP lounge sofa (in the west part of the lounge)
-    ('lounge_sofa', -0.4, 3.45, 2.6, 0.7, 0.8, 'Gazebo/Red'),
-    # storage room behind the service corridor
-    ('storage_rack', 8.9, 6.5, 1.0, 5.0, 1.8, 'Gazebo/DarkGrey'),
+    # customer toilet: WC against the north wall, wash basin on the east wall
+    ('wc_toilet', 9.15, 5.15, 0.4, 0.65, 0.45, 'Gazebo/White'),
+    ('wc_sink', 9.3, 3.9, 0.45, 0.5, 0.85, 'Gazebo/White'),
+    # VIP lounge sofa
+    ('lounge_sofa', 3.0, 3.45, 3.0, 0.7, 0.8, 'Gazebo/Red'),
+    # storage room behind the service corridor (north of the toilet)
+    ('storage_rack', 8.9, 7.7, 1.0, 2.8, 1.8, 'Gazebo/DarkGrey'),
     # main entrance (south-east): closed glass door
     ('entrance_door', 8.075, -9.686, 1.05, 0.06, 2.2, 'Gazebo/BlueTransparent'),
 ]
@@ -142,7 +145,7 @@ LANES = [
 LANE_HALF_WIDTH = 0.4
 
 # VIP lounge tables (cafe_table copies; the keepout mask picks every cafe_table up)
-VIP_TABLES = [('cafe_table_vip_1', 3.4, 6.6), ('cafe_table_vip_2', 5.6, 5.0)]
+VIP_TABLES = [('cafe_table_vip_1', 0.5, 6.0), ('cafe_table_vip_2', 4.5, 6.0)]
 
 # Walking people: name, waypoints (world frame, (x, y) or (x, y, dwell)), speed,
 # default dwell, start delay. Each one also listens on /<name>/cmd
@@ -155,9 +158,9 @@ HUMANS = [
     ('human_cook_2', [(-8.4, 4.3), (-3.9, 4.3)], 0.5, 5.0, 8.0),
     # customers
     ('human_guest', [(2.4, -4.2), (2.4, 0.6)], 0.6, 4.0, 12.0),
-    ('human_vip', [(6.5, 4.0), (6.5, 8.2), (4.3, 8.2)], 0.55, 6.0, 20.0),
-    # a guest going to the toilet through door D2 and the corridors (60 s inside)
-    ('human_wc', [(4.0, -1.0, 60.0), (7.7, 1.6), (7.7, 9.65), (-1.55, 9.65), (-1.55, 7.4, 60.0)], 0.7, 1.0, 40.0),
+    ('human_vip', [(6.3, 4.1), (6.3, 8.2), (2.8, 8.2)], 0.55, 6.0, 20.0),
+    # a guest going to the toilet (60 s inside) through its own door, next to door D2
+    ('human_wc', [(4.0, -1.0, 60.0), (8.95, 1.7), (9.0, 2.7), (8.85, 4.4, 60.0)], 0.7, 1.0, 40.0),
     # takeaway queue: three people waiting (shuffling), one walking in from the entrance
     # along the east wall to the end of the queue and back out with the meal
     ('human_queue_1', [(-3.3, 2.35, 25.0), (-3.0, 2.35, 25.0)], 0.3, 25.0, 0.0),
@@ -167,7 +170,7 @@ HUMANS = [
      0.75, 1.0, 15.0),
     # parked for scripted test scenarios
     ('human_extra_1', [(8.95, 9.7), (8.95, 9.72)], 0.5, 1000.0, 0.0),
-    ('human_extra_2', [(8.95, 3.55), (8.95, 3.57)], 0.5, 1000.0, 0.0),
+    ('human_extra_2', [(8.95, 5.95), (8.95, 5.97)], 0.5, 1000.0, 0.0),
 ]
 
 
@@ -245,9 +248,8 @@ def layout_model():
     # extraction hood above the cooking line, signs (visual only)
     links.append(visual_link('hood', -7.2, 9.95, 2.1, 5.2, 0.9, 0.35, 0.0, 'Gazebo/Grey'))
     links.append(visual_link('sign_takeaway', -3.3, Y_PART - 0.09, 2.3, 1.2, 0.02, 0.25, 0.0, 'Gazebo/Orange'))
-    links.append(visual_link('sign_wc_w', -1.55, 8.9 + 0.09, 2.0, 0.3, 0.02, 0.3, 0.0, 'Gazebo/Purple'))
-    links.append(visual_link('sign_wc_m', 0.45, 8.9 + 0.09, 2.0, 0.3, 0.02, 0.3, 0.0, 'Gazebo/Blue'))
-    links.append(visual_link('sign_vip', 2.85, 8.9 + 0.09, 2.3, 0.9, 0.02, 0.2, 0.0, 'Gazebo/Gold'))
+    links.append(visual_link('sign_wc', TOILET_DOOR[0], Y_PART - 0.09, 2.2, 0.3, 0.02, 0.3, 0.0, 'Gazebo/Blue'))
+    links.append(visual_link('sign_vip', 1.45, 8.9 + 0.09, 2.3, 0.9, 0.02, 0.2, 0.0, 'Gazebo/Gold'))
     # floor markings: charging pad, window stops, entrance mat, robot lanes (two edge lines)
     marks = [('mark_dock', ROBOT_DOCK[0], ROBOT_DOCK[1], 0.7, 0.7, 0.0, 'Gazebo/Green'),
              ('mark_entrance', 8.075, -9.1, 1.4, 0.9, 0.0, 'Gazebo/DarkGrey')]

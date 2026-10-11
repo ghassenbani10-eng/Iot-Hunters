@@ -121,12 +121,23 @@ def gap_along(x_or_y, axis_value, lo, hi):
 
 
 def test_doors_keep_nominal_width():
-    # door D2 (service), WC doors and lounge door D3 must stay at least 0.8 m wide
-    d2 = [g for g in gap_along('y', bw.Y_PART + 0.05, 6.0, 9.0) if g[0] <= 7.7 <= g[1]]
-    assert d2 and d2[0][1] - d2[0][0] >= 0.85
-    for door_x in (-1.55, 0.45, 2.85):
-        g = [g for g in gap_along('y', 8.9, -2.4, 7.0) if g[0] <= door_x <= g[1]]
-        assert g and g[0][1] - g[0][0] >= 0.8 - 1e-6, 'door at x=%.2f' % door_x
+    # door D2 (service) and the toilet door in the partition, lounge door D3: >= 0.85 m
+    for door_x in (7.7, bw.TOILET_DOOR[0]):
+        g = [g for g in gap_along('y', bw.Y_PART, 6.0, bw.X_MAX) if g[0] <= door_x <= g[1]]
+        assert g and g[0][1] - g[0][0] >= 0.85, 'door at x=%.2f' % door_x
+    d3 = [g for g in gap_along('y', 8.9, -2.4, 7.0) if g[0] <= 1.45 <= g[1]]
+    assert d3 and d3[0][1] - d3[0][0] >= 0.85
+
+
+def test_toilet_is_separate_from_the_robot_corridor():
+    # customers reach the toilet from the dining room: the toilet door is not the
+    # corridor door D2, and the corridor east wall separates the two all the way
+    d2 = [g for g in gap_along('y', bw.Y_PART, 6.0, bw.X_MAX) if g[0] <= 7.7 <= g[1]][0]
+    door = [g for g in gap_along('y', bw.Y_PART, 6.0, bw.X_MAX) if g[0] <= bw.TOILET_DOOR[0] <= g[1]][0]
+    assert d2 != door
+    for a, b in gap_along('x', 8.3, bw.Y_PART + 0.1, bw.TOILET_Y_MAX - 0.1):
+        # the only openings in that wall are the storage niches, closed at the back
+        assert any(y0 - 0.01 <= a and b <= y1 + 0.01 for _, y0, y1 in bw.NICHES), (a, b)
 
 
 def test_serving_windows_reachable_from_lane():

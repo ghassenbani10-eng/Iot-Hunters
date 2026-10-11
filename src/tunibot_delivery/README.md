@@ -48,12 +48,12 @@ graded keepout-filter cost) and stays out of the takeaway queue, the kitchen and
 
 ```
  north ┌───────────────────────────────┬───────────────────────────┬──┬────┐
-       │ KITCHEN (staff only)          │ back corridor  [WC][WC] [D3]  │    │
+       │ KITCHEN (staff only)          │ back corridor   [D3]           │    │
        │ ranges fryer griddle oven ··· │╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌╌│s │stor│
-       │ (hood)    prep tables         │ toilets W | M │ VIP LOUNGE │e │age │
-       │ cold room   dish  cook ↔ cook │───────────────┘ VIP1  VIP2 │r │    │
-       │ fridges  pass counters        │  sofa                      │v │    │
-       ├──[window 1]─[window 2]─[TAKEAWAY]──────────────────────[D2]┘  │    │
+       │ (hood)    prep tables         │    VIP1    VIP LOUNGE    VIP2 │e │age │
+       │ cold room   dish  cook ↔ cook │                            │r │────│
+       │ fridges  pass counters        │          sofa              │v │ WC │
+       ├──[window 1]─[window 2]─[TAKEAWAY]──────────────────────[D2]┘  └[WC]┤
        │▣ dock      ▲ robot stops  ┊ ● ● ● ← queue (stanchions)        │    │
        │ ════════ robot lane ═══════════════════════════════════════╗ ║    │
        │   ║ waiter ↔                                                ║      │
