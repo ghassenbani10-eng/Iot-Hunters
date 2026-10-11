@@ -173,7 +173,7 @@ private:
         // Waited long enough: walk around the robot - a 1 m sidestep away from it,
         // then on to the destination - without re-checking the robot meanwhile.
         StartDetour();
-        ignore_robot_until_ = now + 5.0;
+        ignore_robot_until_ = now + 6.0;
         yield_start_ = -1.0;
       }
     } else {
@@ -217,8 +217,14 @@ private:
       const double cross = std::cos(yaw_) * (rp.Y() - pos_.Y()) - std::sin(yaw_) * (rp.X() - pos_.X());
       side = cross > 0.0 ? -1.0 : 1.0;   // robot on our left -> step right
     }
+    // ... and far enough forward to pass the robot completely before rejoining the path
+    double ahead = 0.3;
+    if (robot_) {
+      const auto rp = robot_->WorldPose().Pos();
+      ahead = std::max(0.3, std::cos(yaw_) * (rp.X() - pos_.X()) + std::sin(yaw_) * (rp.Y() - pos_.Y()) + 0.9);
+    }
     detour_point_ = pos_ + ignition::math::Vector2d(-std::sin(yaw_), std::cos(yaw_)) * side +
-      ignition::math::Vector2d(std::cos(yaw_), std::sin(yaw_)) * 0.3;
+      ignition::math::Vector2d(std::cos(yaw_), std::sin(yaw_)) * ahead;
     detour_ = true;
   }
 

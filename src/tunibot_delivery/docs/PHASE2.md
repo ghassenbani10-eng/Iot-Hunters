@@ -264,3 +264,23 @@ metrics from **Gazebo ground truth** — not from the robot's own estimate:
 * delivery outcomes, durations, path length, minimum battery level, the full event log.
 
 Results, plots and pass criteria: [TEST_CASES.md](TEST_CASES.md).
+
+---
+
+## 6. Known limitations (honest list)
+
+* **Intermittent stale TF inside a Nav2 process.** Rarely (a few runs out of many hours of tests),
+  the controller server's TF buffer stops receiving `map → odom` while the delivery manager still
+  receives it; the controller then rejects every plan ("transform too old", "plan has 0 poses") until
+  restarted. It could not be reproduced on demand. Mitigations in place: lighter AMCL/MPPI load,
+  0.5 s controller TF tolerance, per-goal timeouts, the order is reported failed (never a silent
+  deadlock), the lifecycle and localization watchdogs. A CycloneDDS installation (not available on
+  the test machine, no sudo) would be the next thing to try.
+* **Simulated people are scripted**, not reactive crowds: they follow waypoints, stop for the robot
+  and walk around it after 6 s. Good enough to test reactions (crossing, head-on, blocking a door),
+  not a model of crowd behaviour.
+* **2D lidar only**: anything that does not reach 18 cm above the floor at the scan height
+  (table tops, counters) must be in the keepout mask. The rear 70° is blind (the robot's own column):
+  the robot only backs up short, known-free distances, after checking the tracked people.
+* **Battery time acceleration** (×25 by default) is a demo choice; every value shown in the UI and in
+  the reports is the accelerated one, and the factor is displayed.
