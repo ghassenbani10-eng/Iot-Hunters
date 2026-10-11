@@ -16,7 +16,9 @@ with Nav2. Phase 2 additions:
     costmap clearing, BLOCKED detection from Nav2 feedback, failed orders are
     reported without stalling the queue, ERROR state after repeated failures.
   * robust docking: Nav2 to the pre-dock pose, heading alignment, straight
-    reverse until the charging contacts report power, retry if missed.
+    reverse until the charging contacts report power, retry if missed. The final
+    distance to the pad is measured with the lidar (wall behind the robot, reference
+    learned at start-up on the pad), not with AMCL.
   * localization watchdog, emergency stop / resume, VIP priority, event log.
 
 Interfaces
@@ -25,6 +27,7 @@ Interfaces
   sub  /battery_state     sensor_msgs/BatteryState  (from battery_simulator)
   sub  /battery/info      std_msgs/String  JSON (learned Wh/m, idle power, ...)
   sub  /people            std_msgs/String  JSON (people_tracker, optional)
+  sub  /scan              sensor_msgs/LaserScan  (final docking distance)
   pub  /delivery/status   std_msgs/String  JSON snapshot for the UI
   pub  /delivery/events   std_msgs/String  JSON, one message per event
 """
@@ -39,11 +42,11 @@ import rclpy
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from nav_msgs.msg import OccupancyGrid, Odometry
-from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.time import Time
-from sensor_msgs.msg import BatteryState
+from sensor_msgs.msg import BatteryState, LaserScan
 from std_msgs.msg import String
 from tf2_ros import Buffer, TransformException, TransformListener
 
@@ -63,6 +66,43 @@ class Abort(Exception):
 
 def yaw_of(q):
     return math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z))
+
+
+def rear_wall_distance(ranges, angle_min, angle_inc, range_min, range_max, lo=-2.54, hi=-2.18):
+    """Perpendicular distance (m) from the lidar to the wall behind the robot, seen by the
+    rear-right beams (the lidar is blind in a +-35 deg cone straight behind).
+
+    A line x = m y + c is fitted to the hits in the lidar frame: points within 15 cm of
+    their median depth first (a chair leg or a bag is far off it), least squares, then
+    once more without points > 4 cm off the line. The fitted line, not a projection of
+    the ranges, gives the distance, so a small heading error does not bias it. None
+    (caller falls back to AMCL) if fewer than 8 beams or less than 75 % of them lie on
+    that line - e.g. a person right behind."""
+    pts = []
+    for i, r in enumerate(ranges):
+        a = angle_min + i * angle_inc
+        if lo <= a <= hi and range_min < r < range_max and math.isfinite(r):
+            pts.append((r * math.cos(a), r * math.sin(a)))
+    total = len(pts)
+    if total < 8:
+        return None
+    x_med = sorted(p[0] for p in pts)[total // 2]
+    pts = [p for p in pts if abs(p[0] - x_med) < 0.15]
+    for _ in range(2):
+        if len(pts) < 8 or len(pts) < 0.75 * total:
+            return None
+        n = len(pts)
+        my = sum(p[1] for p in pts) / n
+        mx = sum(p[0] for p in pts) / n
+        syy = sum((p[1] - my) ** 2 for p in pts)
+        if syy < 1e-6:
+            return None
+        m = sum((p[1] - my) * (p[0] - mx) for p in pts) / syy
+        c = mx - m * my
+        pts = [p for p in pts if abs(p[0] - (m * p[1] + c)) / math.sqrt(1 + m * m) < 0.04]
+    if len(pts) < 0.75 * total or c >= 0.0:
+        return None                     # not behind the robot
+    return -c / math.sqrt(1.0 + m * m)
 
 
 class DeliveryManager(Node):
@@ -115,6 +155,12 @@ class DeliveryManager(Node):
                         'wh_per_m': 1.1, 'idle_wh_per_s': 0.2, 'depleted': False}
         self.people = {'count': 0, 'nearest': None}
         self.odom = None
+        # lidar docking reference: distance to the wall behind the robot, learned at start-up
+        # while the robot still stands exactly on the charging pad where it was installed
+        self.scan = None
+        self.dock_ref = None
+        self.dock_ref_samples = []
+        self.left_dock_once = False
 
         self.tf = Buffer()
         TransformListener(self.tf, self)
@@ -124,6 +170,7 @@ class DeliveryManager(Node):
         self.create_subscription(BatteryState, '/battery_state', self.on_battery_state, 10)
         self.create_subscription(String, '/battery/info', self.on_battery_info, 10)
         self.create_subscription(String, '/people', self.on_people, 10)
+        self.create_subscription(LaserScan, '/scan', self.on_scan, qos_profile_sensor_data)
         self.global_costmap = None
         self.create_subscription(OccupancyGrid, '/global_costmap/costmap',
                                  lambda m: setattr(self, 'global_costmap', m),
@@ -190,6 +237,24 @@ class DeliveryManager(Node):
                 if (i - ci) ** 2 + (j - cj) ** 2 <= r * r and m.data[i * w + j] >= 99:
                     return True
         return False
+
+    def rear_wall(self):
+        s = self.scan
+        if s is None:
+            return None
+        return rear_wall_distance(s.ranges, s.angle_min, s.angle_increment, s.range_min, s.range_max)
+
+    def on_scan(self, msg):
+        self.scan = msg
+        if self.dock_ref is None and not self.left_dock_once and self.docked:
+            d = self.rear_wall()
+            if d is not None:
+                self.dock_ref_samples.append(d)
+            if len(self.dock_ref_samples) >= 20:
+                v = sorted(self.dock_ref_samples)
+                self.dock_ref = v[len(v) // 2]
+                self.event('dock', 'Docking reference learned from the lidar: wall %.3f m behind the lidar'
+                           % self.dock_ref)
 
     def robot_pose(self):
         try:
@@ -604,6 +669,7 @@ class Mission:
         m = self.mgr
         if m.docked:
             m.set_state(UNDOCKING)
+            m.left_dock_once = True
             self.drive(0.6, 0.15)
             with m.lock:
                 m.docked = False
@@ -652,6 +718,13 @@ class Mission:
                 break                   # odometry cap: never drive into the station
             along = (pose[0] - dx) * c + (pose[1] - dy) * s       # > 0: still in front of the pad
             lateral = -(pose[0] - dx) * s + (pose[1] - dy) * c
+            # along the dock axis the lidar beats AMCL: the wall behind is in the lidar's
+            # blind cone for AMCL too, so the localized pose can be several cm off here
+            # (only when both agree within 12 cm: a person or a chair in the rear beams can
+            # look like a wall right behind the robot)
+            wall = m.rear_wall() if m.dock_ref is not None else None
+            if wall is not None and abs((wall - m.dock_ref) - along) < 0.12:
+                along = wall - m.dock_ref
             if along < 0.015:
                 break
             # reversing: a small positive yaw moves the robot to its right, so the
@@ -694,8 +767,14 @@ class Mission:
                     m.dock_requested = False
                 m.set_state(DOCKED)
                 pose = m.robot_pose() or (dx, dy, dyaw)
-                m.event('dock', 'Docked, charging contacts OK (%.0f%%), pad offset %.1f cm' % (
-                    m.soc, 100 * math.hypot(pose[0] - dx, pose[1] - dy)))
+                wall = m.rear_wall() if m.dock_ref is not None else None
+                lat = -(pose[0] - dx) * math.sin(dyaw) + (pose[1] - dy) * math.cos(dyaw)
+                along = (pose[0] - dx) * math.cos(dyaw) + (pose[1] - dy) * math.sin(dyaw)
+                lidar = wall is not None and abs((wall - m.dock_ref) - along) < 0.12
+                if lidar:
+                    along = wall - m.dock_ref
+                m.event('dock', 'Docked, charging contacts OK (%.0f%%), pad offset %.1f cm (%s)' % (
+                    m.soc, 100 * math.hypot(along, lat), 'lidar' if lidar else 'AMCL'))
                 return True
             m.event('failure', 'Docking attempt %d: no charging contact, retrying' % (attempt + 1))
             self.drive(0.6, 0.12)
