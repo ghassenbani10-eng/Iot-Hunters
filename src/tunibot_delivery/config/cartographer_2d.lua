@@ -41,14 +41,26 @@ TRAJECTORY_BUILDER_2D.min_range = 0.15
 TRAJECTORY_BUILDER_2D.max_range = 12.0
 TRAJECTORY_BUILDER_2D.missing_data_ray_length = 5.0
 TRAJECTORY_BUILDER_2D.use_imu_data = false
+-- Phase 2: long corridors are degenerate for scan matching (two parallel walls give
+-- no constraint along the corridor axis): the correlative matcher slid 2 m along the
+-- 6 m service corridor. The wheel odometry is good, so moves away from the odometry
+-- prediction are penalised (delta cost weights, defaults 0.1) inside a small window.
 TRAJECTORY_BUILDER_2D.use_online_correlative_scan_matching = true
-TRAJECTORY_BUILDER_2D.real_time_correlative_scan_matcher.linear_search_window = 0.15
-TRAJECTORY_BUILDER_2D.real_time_correlative_scan_matcher.angular_search_window = math.rad(20.)
+TRAJECTORY_BUILDER_2D.real_time_correlative_scan_matcher.linear_search_window = 0.1
+TRAJECTORY_BUILDER_2D.real_time_correlative_scan_matcher.angular_search_window = math.rad(10.)
+TRAJECTORY_BUILDER_2D.real_time_correlative_scan_matcher.translation_delta_cost_weight = 10.
+TRAJECTORY_BUILDER_2D.real_time_correlative_scan_matcher.rotation_delta_cost_weight = 1.
+TRAJECTORY_BUILDER_2D.ceres_scan_matcher.translation_weight = 20.
 TRAJECTORY_BUILDER_2D.motion_filter.max_angle_radians = math.rad(0.1)
 TRAJECTORY_BUILDER_2D.submaps.num_range_data = 60
 
 POSE_GRAPH.optimize_every_n_nodes = 30
-POSE_GRAPH.constraint_builder.min_score = 0.65
+-- Loop closures may only correct small drift: with the default 15 m / 7 m search,
+-- the top of the service corridor was matched to its bottom (similar-looking walls)
+-- and the pose jumped 4 m back. Good wheel odometry keeps real drift at centimetres.
+POSE_GRAPH.constraint_builder.max_constraint_distance = 2.0
+POSE_GRAPH.constraint_builder.fast_correlative_scan_matcher.linear_search_window = 1.0
+POSE_GRAPH.constraint_builder.min_score = 0.70
 POSE_GRAPH.constraint_builder.global_localization_min_score = 0.7
 
 return options

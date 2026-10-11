@@ -37,6 +37,7 @@
   <joint name="wheel_left_joint" type="continuous">
     <parent link="base_link"/>
     <child link="wheel_left_link"/>
+    <dynamics damping="0.2" friction="0.5"/>
     <origin xyz="0 0.22 -0.02" rpy="-1.5708 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
@@ -49,6 +50,7 @@
   <joint name="wheel_right_joint" type="continuous">
     <parent link="base_link"/>
     <child link="wheel_right_link"/>
+    <dynamics damping="0.2" friction="0.5"/>
     <origin xyz="0 -0.22 -0.02" rpy="-1.5708 0 0"/>
     <axis xyz="0 0 1"/>
   </joint>
@@ -74,10 +76,10 @@
   <gazebo reference="caster_front_link"><mu1>0.0</mu1><mu2>0.0</mu2></gazebo>
   <gazebo reference="caster_back_link"><mu1>0.0</mu1><mu2>0.0</mu2></gazebo>
   <gazebo reference="wheel_left_link">
-    <mu1>1.0</mu1><mu2>1.0</mu2><kp>1000000.0</kp><kd>100.0</kd><minDepth>0.001</minDepth><maxVel>0.1</maxVel><fdir1>1 0 0</fdir1>
+    <mu1>1.0</mu1><mu2>1.0</mu2><kp>1000000.0</kp><kd>100.0</kd><minDepth>0.0</minDepth><maxVel>0.1</maxVel><fdir1>1 0 0</fdir1>
   </gazebo>
   <gazebo reference="wheel_right_link">
-    <mu1>1.0</mu1><mu2>1.0</mu2><kp>1000000.0</kp><kd>100.0</kd><minDepth>0.001</minDepth><maxVel>0.1</maxVel><fdir1>1 0 0</fdir1>
+    <mu1>1.0</mu1><mu2>1.0</mu2><kp>1000000.0</kp><kd>100.0</kd><minDepth>0.0</minDepth><maxVel>0.1</maxVel><fdir1>1 0 0</fdir1>
   </gazebo>
 
   <!-- Support LiDAR -->
@@ -130,7 +132,7 @@
       <wheel_separation>0.44</wheel_separation>
       <wheel_diameter>0.16</wheel_diameter>
       <max_wheel_torque>20</max_wheel_torque>
-      <max_wheel_acceleration>1.0</max_wheel_acceleration>
+      <max_wheel_acceleration>0.0</max_wheel_acceleration>
       <command_topic>cmd_vel</command_topic>
       <publish_odom>true</publish_odom>
       <publish_odom_tf>true</publish_odom_tf>
@@ -139,6 +141,25 @@
       <odometry_frame>odom</odometry_frame>
       <robot_base_frame>base_footprint</robot_base_frame>
     </plugin>
+  </gazebo>
+
+  <!-- Bumper (contact sensor) on the body, spine and lidar housing: ground truth for the
+       collision metrics of the Phase 2 tests (/bumper). Fixed joints are lumped into
+       base_footprint by the URDF->SDF conversion, hence the collision names. -->
+  <gazebo reference="base_footprint">
+    <sensor name="bumper" type="contact">
+      <always_on>true</always_on>
+      <update_rate>20</update_rate>
+      <contact>
+        <collision>base_footprint_fixed_joint_lump__base_link_collision</collision>
+        <collision>base_footprint_fixed_joint_lump__back_spine_link_collision_1</collision>
+        <collision>base_footprint_fixed_joint_lump__base_scan_collision_4</collision>
+      </contact>
+      <plugin name="bumper_plugin" filename="libgazebo_ros_bumper.so">
+        <ros><remapping>bumper_states:=bumper</remapping></ros>
+        <frame_name>base_footprint</frame_name>
+      </plugin>
+    </sensor>
   </gazebo>
 
   <!-- Plugin Gazebo LiDAR (Ray Sensor) -->

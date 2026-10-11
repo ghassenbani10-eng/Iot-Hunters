@@ -1,23 +1,52 @@
 # Named locations in the SLAM map frame.
-# The robot is spawned on the dock at Gazebo world (-9.0, 0.0, yaw 0), and
-# Cartographer starts the map there, so:  map = world + (9.0, 0.0).
-# Each entry: [x, y, yaw]  (metres, metres, radians)
+# The robot is spawned on the dock at Gazebo world (-9.0, 2.2, yaw 0) - north-west
+# corner of the dining room - and Cartographer starts the map there, so:
+#     map = world + (9.0, -2.2)
+#
+# Each place is a flat list of one or more approach poses [x, y, yaw, x2, y2, yaw2, ...]
+# (metres, metres, radians). The delivery manager tries them in order: if the
+# first approach is blocked (people, chairs moved...), it uses the next one.
 delivery_manager:
   ros__parameters:
-    dock:      [0.0, 0.0, 0.0]     # on the charging pad (world -9.0, 0.0)
+    dock:      [0.0, 0.0, 0.0]     # on the charging pad (world -9.0, 2.2)
     pre_dock:  [1.2, 0.0, 0.0]     # 1.2 m in front of the dock, final approach is a straight reverse
-    pickup:    [3.0, -1.0, 0.0]  # open floor between the dock and the dining area; far from every wall/obstacle for a short, reliable approach
-    table_1:   [2.83, -8.00, 1.5708]  # table group A, standoff south of its south row (world -6.17, -8.00)
-    table_2:   [7.82, -7.98, 1.5708]  # table group B, standoff south of its south row (world -1.18, -7.98)
-    table_3:   [11.82, -8.02, 1.5708] # table group C, standoff south of its south row (world  2.82, -8.02)
-    table_4:   [6.40, -3.82, 1.5708]  # single table   (world -2.60, -2.52), standoff 1.3m south
-    table_5:   [9.40, -3.77, 1.5708]  # single table   (world  0.40, -2.47), standoff 1.3m south
-    table_6:   [13.41, -3.81, 1.5708] # single table   (world  4.41, -2.51), standoff 1.3m south
-    table_7:   [2.44, -3.81, 1.5708]  # single table   (world -6.56, -2.52), standoff 1.3m south -- previously unserved
-    tables: ["table_1", "table_2", "table_3", "table_4", "table_5", "table_6", "table_7"]
-    load_time_sec: 5.0        # waiting at the bar while staff load the tray
-    serve_time_sec: 8.0       # waiting at the table while the customer takes the order
-    idle_dock_timeout_sec: 15.0   # return to dock when idle for this long
-    battery_drain_per_sec: 0.15   # % per second while undocked (simulated)
-    battery_charge_per_sec: 1.0   # % per second while docked
-    battery_low_threshold: 25.0   # go charge before taking a new order below this
+    # serving windows of the kitchen (the robot faces the window, trays towards the cook);
+    # window 2 is used automatically when window 1 is blocked
+    pickup:    [2.5, 0.2, 1.5708,  4.5, 0.2, 1.5708]   # world (-6.5, 2.4) / (-4.5, 2.4): 25 cm from the counter
+    # dining room (Phase 1 tables) - second pose = the other side of the table group
+    table_1:   [2.83, -10.20, 1.5708, 2.83, -6.50, -1.5708]
+    table_2:   [7.82, -10.18, 1.5708, 7.82, -6.50, -1.5708]
+    table_3:   [11.82, -10.22, 1.5708, 11.82, -6.50, -1.5708]
+    table_4:   [6.40, -6.02, 1.5708, 6.40, -3.40, -1.5708]
+    table_5:   [9.40, -5.97, 1.5708, 9.40, -3.40, -1.5708]
+    table_6:   [13.41, -6.01, 1.5708, 13.41, -3.40, -1.5708]
+    table_7:   [2.44, -6.01, 1.5708, 2.44, -3.40, -1.5708]
+    # VIP lounge (Phase 2): door D2 -> 1.05 m corridor -> L-turn -> 1.36 m corridor -> door D3
+    table_8:   [9.50, 5.10, -1.5708, 9.50, 2.50, 1.5708]    # VIP 1 (world 0.5, 6.0)
+    table_9:   [13.50, 5.10, -1.5708, 13.50, 2.50, 1.5708]   # VIP 2 (world 4.5, 6.0)
+    tables: ["table_1", "table_2", "table_3", "table_4", "table_5", "table_6", "table_7", "table_8", "table_9"]
+    load_time_sec: 5.0            # waiting at the serving window while the cook loads the trays
+    pickup_depart_yaw: -1.5708    # after loading: back out to the staging pose, turn to face the dining room
+    pickup_staging_dist: 0.6      # Nav2 stops 0.6 m before a window, the last 0.6 m is a straight creep
+    serve_time_sec: 8.0           # waiting at the table while the customer takes the order
+    idle_dock_timeout_sec: 20.0   # return to dock when idle for this long
+    battery_critical: 10.0        # %: abort everything, go to the dock now (safety net)
+    battery_low: 25.0             # %: never leave with an order below this
+    battery_resume: 60.0          # %: charging target when no order is waiting
+    energy_reserve: 12.0          # % of capacity that must still be there once docked
+    energy_safety_factor: 1.3     # margin on the path-length based energy estimate
+
+battery_simulator:
+  ros__parameters:
+    capacity_ah: 10.0             # 7S Li-ion, 25.9 V nominal -> 259 Wh
+    cells_in_series: 7
+    initial_soc: 100.0
+    time_acceleration: 25.0       # energy flows x25 so a full cycle fits in a demo
+    idle_power_w: 28.0            # computer + lidar + screen + motor drivers idle
+    drive_power_w: 12.0
+    mass_kg: 40.0
+    payload_kg: 4.0               # loaded trays
+    charge_power_w: 240.0         # charger (CC phase), CV taper above 80 %
+    dock_x: 0.0
+    dock_y: 0.0
+    dock_tolerance: 0.15

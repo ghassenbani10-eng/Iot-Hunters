@@ -5,28 +5,44 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TuniBot Delivery</title>
 <style>
-  :root { --bg:#f5f6f8; --card:#fff; --ink:#1d2330; --muted:#6b7280; --accent:#2563eb; --ok:#16a34a; --warn:#d97706; --bad:#dc2626; }
+  :root { --bg:#f5f6f8; --card:#fff; --ink:#1d2330; --muted:#6b7280; --accent:#2563eb; --ok:#16a34a; --warn:#d97706; --bad:#dc2626; --line:#e5e7eb; }
   * { box-sizing: border-box; }
   body { margin:0; font:15px/1.45 system-ui, sans-serif; background:var(--bg); color:var(--ink); }
-  header { padding:16px 20px; background:var(--ink); color:#fff; display:flex; justify-content:space-between; align-items:center; }
+  header { padding:14px 20px; background:var(--ink); color:#fff; display:flex; justify-content:space-between; align-items:center; gap:12px; }
   header h1 { margin:0; font-size:18px; }
-  main { max-width:1000px; margin:0 auto; padding:16px; display:grid; gap:16px; grid-template-columns:1fr 1fr; }
-  @media (max-width:760px) { main { grid-template-columns:1fr; } }
-  section { background:var(--card); border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,.08); }
-  h2 { margin:0 0 12px; font-size:15px; text-transform:uppercase; letter-spacing:.04em; color:var(--muted); }
+  #conn { font-size:13px; opacity:.85; }
+  main { max-width:1180px; margin:0 auto; padding:16px; display:grid; gap:16px; grid-template-columns:1fr 1fr 1fr; }
+  @media (max-width:1000px) { main { grid-template-columns:1fr 1fr; } }
+  @media (max-width:680px) { main { grid-template-columns:1fr; padding:12px; } }
+  section { background:var(--card); border-radius:10px; padding:16px; box-shadow:0 1px 3px rgba(0,0,0,.08); min-width:0; }
+  section.wide { grid-column:span 2; } @media (max-width:680px) { section.wide { grid-column:auto; } }
+  h2 { margin:0 0 12px; font-size:13px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .tables { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
-  .tables button { padding:14px 0; border:2px solid #d1d5db; background:#fff; border-radius:8px; font-weight:600; cursor:pointer; }
+  .tables button { padding:12px 0; border:2px solid #d1d5db; background:#fff; border-radius:8px; font-weight:600; cursor:pointer; }
+  .tables button.vip { border-style:dashed; }
   .tables button.sel { border-color:var(--accent); background:#eff6ff; }
-  input { width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px; margin-bottom:12px; font:inherit; }
+  input[type=text], input[type=number] { width:100%; padding:10px; border:1px solid #d1d5db; border-radius:8px; margin-bottom:10px; font:inherit; }
+  label.chk { display:flex; align-items:center; gap:8px; margin-bottom:12px; color:var(--muted); }
   .primary { width:100%; padding:12px; border:0; border-radius:8px; background:var(--accent); color:#fff; font-weight:600; cursor:pointer; }
-  .row { display:flex; gap:8px; } .row button { flex:1; padding:10px; border:1px solid #d1d5db; border-radius:8px; background:#fff; cursor:pointer; }
-  .kv { display:grid; grid-template-columns:auto 1fr; gap:6px 12px; margin-bottom:12px; }
-  .kv span:nth-child(odd) { color:var(--muted); }
-  .state { font-weight:700; }
-  .bar { height:10px; background:#e5e7eb; border-radius:5px; overflow:hidden; } .bar div { height:100%; background:var(--ok); transition:width .4s; }
-  ul { list-style:none; padding:0; margin:0; } li { padding:6px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; }
+  .row { display:flex; gap:8px; flex-wrap:wrap; } .row button { flex:1; min-width:110px; padding:10px; border:1px solid #d1d5db; border-radius:8px; background:#fff; cursor:pointer; }
+  .row button.estop { background:var(--bad); color:#fff; border-color:var(--bad); font-weight:700; }
+  .kv { display:grid; grid-template-columns:auto 1fr; gap:6px 12px; margin-bottom:12px; font-size:14px; }
+  .kv > span:nth-child(odd) { color:var(--muted); }
+  .state { font-weight:700; } .sub { color:var(--muted); font-weight:400; font-size:13px; }
+  .bar { height:12px; background:var(--line); border-radius:6px; overflow:hidden; position:relative; margin-top:3px; }
+  .bar div { height:100%; background:var(--ok); transition:width .4s; }
+  .bar i { position:absolute; top:0; bottom:0; width:2px; background:#111a; }
+  ul { list-style:none; padding:0; margin:0; } li { padding:6px 0; border-bottom:1px solid #eee; display:flex; justify-content:space-between; gap:8px; font-size:14px; }
   .delivered { color:var(--ok); } .failed, .cancelled { color:var(--bad); } .queued, .in_progress { color:var(--warn); }
+  .badge { display:inline-block; padding:1px 7px; border-radius:9px; font-size:12px; background:#eef2ff; color:#3730a3; }
+  .badge.vip { background:#fef3c7; color:#92400e; }
   #msg { min-height:1.4em; margin-top:8px; color:var(--muted); }
+  canvas { width:100%; height:auto; border-radius:8px; background:#cfd3d8; display:block; }
+  .events li { display:block; font-size:13px; } .events .t { color:var(--muted); font-variant-numeric:tabular-nums; margin-right:6px; }
+  .ev-battery { color:var(--warn); } .ev-failure, .ev-error, .ev-estop { color:var(--bad); } .ev-recovery { color:#7c3aed; } .ev-delivery { color:var(--ok); }
+  .legend { font-size:12px; color:var(--muted); margin-top:6px; }
+  .dot { display:inline-block; width:9px; height:9px; border-radius:50%; margin:0 4px 0 10px; vertical-align:middle; }
+  details summary { cursor:pointer; color:var(--muted); font-size:13px; margin-top:12px; }
 </style>
 </head>
 <body>
@@ -35,63 +51,179 @@
   <section>
     <h2>New order</h2>
     <div class="tables" id="tables"></div>
-    <input id="items" placeholder="Items (e.g. 2 coffees, 1 orange juice)">
+    <input type="text" id="items" placeholder="Items (e.g. 2 coffees, 1 orange juice)">
+    <label class="chk"><input type="checkbox" id="vip"> VIP priority (served first)</label>
     <button class="primary" id="send">Send robot</button>
     <div id="msg"></div>
   </section>
+
   <section>
-    <h2>Robot (admin)</h2>
+    <h2>Robot</h2>
     <div class="kv">
-      <span>State</span><span class="state" id="state">-</span>
-      <span>Battery</span><span><span id="batt">-</span><div class="bar"><div id="battbar" style="width:0"></div></div></span>
-      <span>Current</span><span id="current">-</span>
+      <span>State</span><span><span class="state" id="state">-</span> <span class="sub" id="nav"></span></span>
+      <span>Order</span><span id="current">-</span>
+      <span>People</span><span id="people">-</span>
     </div>
     <div class="row">
+      <button class="estop" id="estop">EMERGENCY STOP</button>
+      <button data-cmd="resume">Resume</button>
+    </div>
+    <div class="row" style="margin-top:8px">
       <button data-cmd="dock">Return to dock</button>
       <button data-cmd="cancel">Cancel current</button>
       <button data-cmd="clear">Clear queue</button>
     </div>
   </section>
+
+  <section>
+    <h2>Battery &amp; energy</h2>
+    <div class="kv">
+      <span>Charge</span><span><b id="soc">-</b> <span class="sub" id="charging"></span>
+        <div class="bar"><div id="socbar" style="width:0"></div><i id="lowmark"></i><i id="critmark"></i></div></span>
+      <span>Pack</span><span id="pack">-</span>
+      <span>Power</span><span id="power">-</span>
+      <span>Autonomy</span><span id="tte">-</span>
+      <span>Consumption</span><span id="whm">-</span>
+      <span>Energy margin</span><span id="margin">-</span>
+    </div>
+    <details><summary>Test controls</summary>
+      <div class="row" style="margin-top:8px">
+        <input type="number" id="setsoc" min="0" max="100" value="20" style="margin:0;flex:1">
+        <button id="applysoc">Set charge %</button>
+      </div>
+      <div class="row" style="margin-top:8px">
+        <button id="chargeroff">Charger off</button><button id="chargeron">Charger on</button>
+      </div>
+    </details>
+  </section>
+
+  <section class="wide">
+    <h2>Live map</h2>
+    <canvas id="map" width="900" height="560"></canvas>
+    <div class="legend"><span class="dot" style="background:#2563eb"></span>robot
+      <span class="dot" style="background:#ea580c"></span>person (tracked, arrow = predicted 2 s)
+      <span class="dot" style="background:#16a34a"></span>dock / kitchen window <span class="dot" style="background:#7c3aed"></span>tables</div>
+  </section>
+
+  <section>
+    <h2>Events</h2>
+    <ul class="events" id="events"></ul>
+  </section>
+
   <section><h2>Queue</h2><ul id="queue"></ul></section>
   <section><h2>History</h2><ul id="history"></ul></section>
 </main>
 <script>
-let selected = null, known = '';
+let selected = null, known = '', mapImg = null, mapMeta = null, status = {}, people = {};
 const $ = id => document.getElementById(id);
-const label = t => t.replace('table_', 'Table ');
+const label = t => ({table_8: 'VIP 1', table_9: 'VIP 2'}[t] || t.replace('table_', 'Table '));
+const fmt = (v, d = 1) => (v == null || isNaN(v)) ? '-' : Number(v).toFixed(d);
 async function post(path, body) {
   const r = await fetch(path, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)});
   return r.json();
 }
-function li(o) { return `<li><span>#${o.id} ${label(o.table)} ${o.items ? '· ' + o.items : ''}</span><span class="${o.status}">${o.status}</span></li>`; }
+function li(o) {
+  const vip = o.priority === 'vip' ? ' <span class="badge vip">VIP</span>' : '';
+  const note = o.notes && o.notes.length ? ` <span class="sub">(${o.notes[o.notes.length - 1]})</span>` : '';
+  return `<li><span>#${o.id} ${label(o.table)}${vip} ${o.items ? '· ' + o.items : ''}${note}</span><span class="${o.status}">${o.status}</span></li>`;
+}
+
+async function loadMap() {
+  try {
+    const m = await (await fetch('/api/map')).json();
+    const px = Uint8ClampedArray.from(atob(m.pixels), c => c.charCodeAt(0));
+    const c = document.createElement('canvas'); c.width = m.width; c.height = m.height;
+    const ctx = c.getContext('2d'), img = ctx.createImageData(m.width, m.height);
+    for (let i = 0; i < px.length; i++) { const v = px[i] === 205 ? 215 : px[i]; img.data.set([v, v, v, 255], i * 4); }
+    ctx.putImageData(img, 0, 0); mapImg = c; mapMeta = m;
+  } catch (e) { mapImg = null; }
+}
+function drawMap() {
+  const cv = $('map'), ctx = cv.getContext('2d');
+  ctx.clearRect(0, 0, cv.width, cv.height);
+  if (!mapImg) return;
+  const m = mapMeta, s = Math.min(cv.width / m.width, cv.height / m.height);
+  const ox = (cv.width - m.width * s) / 2, oy = (cv.height - m.height * s) / 2;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(mapImg, ox, oy, m.width * s, m.height * s);
+  const P = (x, y) => [ox + (x - m.origin[0]) / m.resolution * s, oy + (m.height - (y - m.origin[1]) / m.resolution) * s];
+  const k = s / m.resolution;  // px per metre
+  for (const [name, p] of Object.entries(status.places || {})) {
+    if (name === 'pre_dock') continue;
+    const [x, y] = P(p[0], p[1]);
+    ctx.fillStyle = name.startsWith('table') ? '#7c3aed' : '#16a34a';
+    ctx.beginPath(); ctx.arc(x, y, 4, 0, 7); ctx.fill();
+    ctx.font = '11px system-ui'; ctx.fillText(name.startsWith('table') ? label(name) : ({pickup: 'kitchen window', dock: 'dock'}[name] || name), x + 6, y - 4);
+  }
+  for (const t of (people.tracks || [])) {
+    const [x, y] = P(t.x, t.y);
+    ctx.fillStyle = '#ea580c'; ctx.beginPath(); ctx.arc(x, y, 0.25 * k, 0, 7); ctx.fill();
+    if (t.speed > 0.15) {
+      const [x2, y2] = P(t.x + 2 * t.vx, t.y + 2 * t.vy);
+      ctx.strokeStyle = '#ea580c'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x2, y2); ctx.stroke();
+    }
+  }
+  if (status.pose) {
+    const [rx, ry, yaw] = status.pose, [x, y] = P(rx, ry);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(-yaw);
+    ctx.fillStyle = '#2563eb'; ctx.fillRect(-0.27 * k, -0.25 * k, 0.54 * k, 0.5 * k);
+    ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.moveTo(0.25 * k, 0); ctx.lineTo(0, -0.15 * k); ctx.lineTo(0, 0.15 * k); ctx.fill();
+    ctx.restore();
+  }
+}
+
 async function refresh() {
   try {
-    const s = await (await fetch('/api/status')).json();
-    $('conn').textContent = s.state === 'UNKNOWN' ? 'waiting for robot…' : 'online';
-    if ((s.tables || []).join() !== known) {
-      known = (s.tables || []).join();
-      $('tables').innerHTML = s.tables.map(t => `<button data-t="${t}">${label(t)}</button>`).join('');
+    status = await (await fetch('/api/status')).json();
+    people = await (await fetch('/api/people')).json();
+    $('conn').textContent = status.state === 'UNKNOWN' ? 'waiting for robot…' : 'online · sim t=' + fmt(status.sim_time, 0) + ' s';
+    if ((status.tables || []).join() !== known) {
+      known = (status.tables || []).join();
+      $('tables').innerHTML = status.tables.map(t => `<button data-t="${t}" class="${t === 'table_8' || t === 'table_9' ? 'vip' : ''}">${label(t)}</button>`).join('');
       $('tables').querySelectorAll('button').forEach(b => b.onclick = () => {
         selected = b.dataset.t; $('tables').querySelectorAll('button').forEach(x => x.classList.toggle('sel', x === b));
       });
     }
-    $('state').textContent = (s.state || '-').replaceAll('_', ' ');
-    $('batt').textContent = s.battery != null ? s.battery + ' %' + (s.docked ? ' (charging)' : '') : '-';
-    $('battbar').style.width = (s.battery || 0) + '%';
-    $('battbar').style.background = s.battery < 25 ? 'var(--bad)' : 'var(--ok)';
-    $('current').textContent = s.current_order ? `#${s.current_order.id} → ${label(s.current_order.table)}` : 'none';
-    $('queue').innerHTML = (s.queue || []).map(li).join('') || '<li>empty</li>';
-    $('history').innerHTML = (s.history || []).map(li).join('') || '<li>no deliveries yet</li>';
-  } catch (e) { $('conn').textContent = 'offline'; }
+    $('state').textContent = (status.state || '-').replaceAll('_', ' ');
+    $('state').style.color = status.estop || status.state === 'ERROR' ? 'var(--bad)' : '';
+    $('nav').textContent = status.nav_status || '';
+    const c = status.current_order;
+    $('current').innerHTML = c ? `#${c.id} → ${label(c.table)}${c.priority === 'vip' ? ' <span class="badge vip">VIP</span>' : ''}` : 'none';
+    $('people').textContent = people.count ? `${people.count} tracked, nearest ${fmt(people.nearest)} m` : 'none nearby';
+
+    const b = status.battery || {}, th = status.thresholds || {}, soc = b.soc;
+    $('soc').textContent = fmt(soc) + ' %';
+    $('charging').textContent = b.charging ? '⚡ charging' : (b.on_dock ? 'on dock' : '');
+    $('socbar').style.width = (soc || 0) + '%';
+    $('socbar').style.background = soc < (th.battery_critical || 10) ? 'var(--bad)' : soc < (th.battery_low || 25) ? 'var(--warn)' : 'var(--ok)';
+    $('lowmark').style.left = (th.battery_low || 25) + '%'; $('critmark').style.left = (th.battery_critical || 10) + '%';
+    $('pack').textContent = `${fmt(b.voltage, 2)} V · ${fmt(b.current, 2)} A · ${fmt(b.capacity_wh, 0)} Wh`;
+    $('power').textContent = `${fmt(b.power_w)} W (avg ${fmt(b.power_avg_w)} W)` + (b.time_acceleration ? ` · energy ×${fmt(b.time_acceleration, 0)} (demo)` : '');
+    $('tte').textContent = b.time_to_empty_min != null ? `${fmt(b.time_to_empty_min)} min at current pace` : '-';
+    $('whm').textContent = b.wh_per_m != null ? `${fmt(b.wh_per_m, 3)} Wh/m (learned)` : '-';
+    const e = status.energy || {};
+    $('margin').textContent = e.margin_wh != null ? `${fmt(e.margin_wh)} Wh above reserve to reach the dock (${fmt(e.return_path_m)} m)`
+      : e.need_soc != null ? `next order needs ${fmt(e.need_soc)} % (${fmt(e.order_path_m)} m)` : '-';
+
+    $('queue').innerHTML = (status.queue || []).map(li).join('') || '<li>empty</li>';
+    $('history').innerHTML = (status.history || []).map(li).join('') || '<li>no deliveries yet</li>';
+    $('events').innerHTML = (status.events || []).slice(0, 14).map(ev =>
+      `<li class="ev-${ev.kind}"><span class="t">${fmt(ev.t, 0)}s</span>${ev.text}</li>`).join('') || '<li>-</li>';
+    drawMap();
+  } catch (err) { $('conn').textContent = 'offline'; }
 }
 $('send').onclick = async () => {
   if (!selected) { $('msg').textContent = 'Pick a table first.'; return; }
-  const r = await post('/api/orders', {table: selected, items: $('items').value});
+  const r = await post('/api/orders', {table: selected, items: $('items').value, priority: $('vip').checked ? 'vip' : 'normal'});
   $('msg').textContent = r.accepted ? `Order sent to ${label(selected)}.` : r.error;
-  $('items').value = '';
+  $('items').value = ''; $('vip').checked = false;
 };
+$('estop').onclick = () => post('/api/command', {command: 'estop'});
 document.querySelectorAll('[data-cmd]').forEach(b => b.onclick = () => post('/api/command', {command: b.dataset.cmd}));
-refresh(); setInterval(refresh, 1000);
+$('applysoc').onclick = () => post('/api/battery', {soc: Number($('setsoc').value)});
+$('chargeroff').onclick = () => post('/api/battery', {charger: false});
+$('chargeron').onclick = () => post('/api/battery', {charger: true});
+loadMap().then(refresh); setInterval(refresh, 1000);
 </script>
 </body>
 </html>

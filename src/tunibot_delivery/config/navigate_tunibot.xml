@@ -1,0 +1,54 @@
+<!--
+  TuniBot NavigateToPose behavior tree (Phase 2).
+
+  Based on Nav2's navigate_to_pose_w_replanning_and_recovery.xml, tuned for a
+  restaurant with people walking around and narrow passages:
+    * global replanning at 2 Hz so the path follows the predicted-people costs;
+    * the first recovery is to WAIT: in a restaurant an obstacle is usually a
+      person who will move away, so the robot waits politely before doing
+      anything else;
+    * then: clear the costmaps (ghost obstacles), back up 20 cm (get out of a
+      dead end / let a person pass in a corridor), longer wait. No Spin: turning a
+      rectangular robot in place inside the 1.05 m corridor scraped the walls;
+    * up to 6 recovery rounds before the action fails; the delivery manager
+      then tries the next approach pose and finally reports the failure.
+-->
+<root main_tree_to_execute="MainTree">
+  <BehaviorTree ID="MainTree">
+    <RecoveryNode number_of_retries="6" name="NavigateRecovery">
+      <PipelineSequence name="NavigateWithReplanning">
+        <RateController hz="2.0">
+          <RecoveryNode number_of_retries="1" name="ComputePathToPose">
+            <ComputePathToPose goal="{goal}" path="{path}" planner_id="GridBased"/>
+            <ReactiveFallback name="ComputePathToPoseRecoveryFallback">
+              <GoalUpdated/>
+              <ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap"/>
+            </ReactiveFallback>
+          </RecoveryNode>
+        </RateController>
+        <RecoveryNode number_of_retries="1" name="FollowPath">
+          <FollowPath path="{path}" controller_id="FollowPath"/>
+          <ReactiveFallback name="FollowPathRecoveryFallback">
+            <GoalUpdated/>
+            <ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/>
+          </ReactiveFallback>
+        </RecoveryNode>
+      </PipelineSequence>
+      <ReactiveFallback name="RecoveryFallback">
+        <GoalUpdated/>
+        <RoundRobin name="RecoveryActions">
+          <Sequence name="WaitForPeopleToPass">
+            <Wait wait_duration="3"/>
+            <ClearEntireCostmap name="ClearLocalCostmap-Wait" service_name="local_costmap/clear_entirely_local_costmap"/>
+          </Sequence>
+          <Sequence name="ClearingActions">
+            <ClearEntireCostmap name="ClearLocalCostmap-Subtree" service_name="local_costmap/clear_entirely_local_costmap"/>
+            <ClearEntireCostmap name="ClearGlobalCostmap-Subtree" service_name="global_costmap/clear_entirely_global_costmap"/>
+          </Sequence>
+          <BackUp backup_dist="0.20" backup_speed="0.08"/>
+          <Wait wait_duration="5"/>
+        </RoundRobin>
+      </ReactiveFallback>
+    </RecoveryNode>
+  </BehaviorTree>
+</root>
