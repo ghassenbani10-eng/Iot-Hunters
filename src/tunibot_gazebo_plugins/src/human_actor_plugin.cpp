@@ -12,9 +12,10 @@
 //   - walks waypoint to waypoint, turning smoothly, pausing `dwell` s at each one;
 //   - if the robot is right in front of it (closer than `yield_distance`, inside a
 //     +-50 deg cone), it stops and waits like a polite pedestrian;
-//   - if it has been waiting more than `max_yield_time` s, it turns around and
-//     walks back to the previous waypoint, ignoring the robot for 4 s while it
-//     does so (two polite agents waiting for each other would deadlock).
+//   - if it has been waiting more than `max_yield_time` s, it walks around the
+//     robot: a 1 m sidestep away from it, then on to its destination, ignoring
+//     the robot for 5 s meanwhile (two polite agents waiting for each other would
+//     deadlock; turning back does not work at the end of a path).
 //
 // SDF parameters (all optional except <waypoint>):
 //   <waypoint>x y</waypoint>        (repeat, world frame, metres)
@@ -128,6 +129,7 @@ private:
     previous_ = 0;
     direction_ = 1;
     wait_until_ = now + c[3];
+    detour_ = false;
     yield_start_ = -1.0;
     ignore_robot_until_ = 0.0;
   }
@@ -168,23 +170,26 @@ private:
       if (now - yield_start_ < max_yield_time_) {
         yielding = true;
       } else {
-        // Waited long enough: give way by walking back to the previous waypoint,
-        // without re-checking the robot while turning around and leaving.
-        std::swap(target_, previous_);
-        direction_ = -direction_;
-        ignore_robot_until_ = now + 4.0;
+        // Waited long enough: walk around the robot - a 1 m sidestep away from it,
+        // then on to the destination - without re-checking the robot meanwhile.
+        StartDetour();
+        ignore_robot_until_ = now + 5.0;
         yield_start_ = -1.0;
       }
     } else {
       yield_start_ = -1.0;
     }
 
-    const auto goal = waypoints_[target_];
+    const auto goal = detour_ ? detour_point_ : waypoints_[target_];
     auto to_goal = goal - pos_;
     const double dist = to_goal.Length();
     if (dist < 0.05) {
-      AdvanceTarget();
-      wait_until_ = now + dwell_;
+      if (detour_) {
+        detour_ = false;          // sidestep done, carry on to the destination
+      } else {
+        AdvanceTarget();
+        wait_until_ = now + dwell_;
+      }
       Apply();
       return;
     }
@@ -201,6 +206,20 @@ private:
     }
     actor_->SetScriptTime(actor_->ScriptTime() + (step > 0.0 ? step * animation_factor_ : 0.4 * dt));
     Apply();
+  }
+
+  void StartDetour()
+  {
+    // sidestep perpendicular to our heading, on the side away from the robot
+    double side = 1.0;
+    if (robot_) {
+      const auto rp = robot_->WorldPose().Pos();
+      const double cross = std::cos(yaw_) * (rp.Y() - pos_.Y()) - std::sin(yaw_) * (rp.X() - pos_.X());
+      side = cross > 0.0 ? -1.0 : 1.0;   // robot on our left -> step right
+    }
+    detour_point_ = pos_ + ignition::math::Vector2d(-std::sin(yaw_), std::cos(yaw_)) * side +
+      ignition::math::Vector2d(std::cos(yaw_), std::sin(yaw_)) * 0.3;
+    detour_ = true;
   }
 
   void AdvanceTarget()
@@ -279,6 +298,8 @@ private:
   double yield_start_{-1.0};
   double ignore_robot_until_{0.0};
   double last_ahead_{-1.0};
+  bool detour_{false};
+  ignition::math::Vector2d detour_point_;
   std::string body_name_;
   std::string robot_name_;
 };

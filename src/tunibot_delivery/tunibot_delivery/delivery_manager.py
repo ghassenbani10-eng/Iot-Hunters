@@ -491,7 +491,8 @@ class Mission:
         while True:
             self.check_interrupts(away)
             length, ok = self.path_length(None, pose)
-            ok = ok and not m.pose_occupied(pose[0], pose[1])
+            goal_blocked = m.pose_occupied(pose[0], pose[1])
+            ok = ok and not goal_blocked
             if ok:
                 self.last_path_length = length
                 if announced:
@@ -504,11 +505,11 @@ class Mission:
                 m.set_state(m.state, 'waiting: route blocked')
             if m.now() > deadline:
                 return False
-            # Every 10 s: forget the costmap and let the lidar re-mark what is really still
-            # there (1.5 s). A person who left the doorway is gone from the map; a trolley
-            # or a wall in view is back after one scan. (Clearing on every check would
-            # also erase real blockages out of view and send the robot into a dead end.)
-            if m.now() - last_clear > 10.0:
+            # Route blocked (e.g. a person in a doorway): every 10 s forget the costmap and
+            # let the lidar re-mark what is really still there (1.5 s) - a person who left
+            # is gone, a wall in view is back after one scan. Goal itself occupied (e.g. a
+            # trolley on the approach pose): keep the memory, the alternate approach is next.
+            if not goal_blocked and m.now() - last_clear > 10.0:
                 last_clear = m.now()
                 self.nav.clearAllCostmaps()
                 self.hold(1.5)
