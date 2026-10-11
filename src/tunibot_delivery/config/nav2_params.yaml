@@ -237,9 +237,12 @@ collision_monitor:
     # of the controller (RPP, along the path to the carrot) prevents driving into
     # obstacles; the "approach" model was tested and removed: near walls it toggled
     # approach/continue every 100-200 ms and made the robot stutter.
+    # Both zones start OUTSIDE the footprint (front face at x = 0.27): lidar returns
+    # inside the footprint can only be the robot itself (seen intermittently on the
+    # base edge when the robot pitches while braking) and froze the robot for good.
     PolygonStop:     # something within 7 cm of the bumper, in front: immediate stop
       type: polygon
-      points: [0.34, 0.22, 0.34, -0.22, 0.2, -0.22, 0.2, 0.22]
+      points: [0.34, 0.22, 0.34, -0.22, 0.28, -0.22, 0.28, 0.22]
       action_type: stop
       max_points: 3
       visualize: true
@@ -247,7 +250,7 @@ collision_monitor:
       enabled: true
     PolygonSlow:     # something within 45 cm ahead: 50 % speed
       type: polygon
-      points: [0.72, 0.30, 0.72, -0.30, 0.2, -0.30, 0.2, 0.30]
+      points: [0.72, 0.30, 0.72, -0.30, 0.28, -0.30, 0.28, 0.30]
       action_type: slowdown
       max_points: 3
       slowdown_ratio: 0.5
