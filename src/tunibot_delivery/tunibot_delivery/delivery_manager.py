@@ -806,6 +806,23 @@ class Mission:
         m.cancel_requested = False
         m.set_state(DOCKED)
 
+    def wait_node_active(self, node):
+        """Wait until a lifecycle node is ACTIVE. Unlike BasicNavigator.waitUntilNav2Active
+        (one service call without timeout - hangs forever if the FastDDS response is lost),
+        every query uses a fresh client and a 3 s timeout."""
+        from lifecycle_msgs.srv import GetState
+        while rclpy.ok():
+            cli = self.nav.create_client(GetState, '/%s/get_state' % node)
+            try:
+                if cli.wait_for_service(timeout_sec=3.0):
+                    fut = cli.call_async(GetState.Request())
+                    rclpy.spin_until_future_complete(self.nav, fut, timeout_sec=3.0)
+                    if fut.done() and fut.result() is not None and fut.result().current_state.label == 'active':
+                        return
+            finally:
+                self.nav.destroy_client(cli)
+            time.sleep(1.0)
+
     # ------------------------------------------------------------ main loop
     def run(self):
         m = self.mgr
@@ -813,8 +830,8 @@ class Mission:
         # Publishing another initial pose here raced with TF at startup ("Failed to
         # transform initial pose in time") and BasicNavigator then waited forever
         # for /amcl_pose: wait for the navigator and for the localized TF instead.
-        self.nav.waitUntilNav2Active(localizer='bt_navigator')
-        self.planner.waitUntilNav2Active(localizer='bt_navigator')
+        self.wait_node_active('bt_navigator')
+        self.wait_node_active('planner_server')
         while rclpy.ok() and m.robot_pose() is None:
             time.sleep(0.5)
         m.set_state(DOCKED)
