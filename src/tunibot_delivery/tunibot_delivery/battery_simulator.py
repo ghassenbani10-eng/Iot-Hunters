@@ -60,6 +60,11 @@ def ocv_cell(soc):
     return OCV_TABLE[-1][1]
 
 
+def state_of_health(cycles, cycles_to_80pct):
+    """Linear cycle ageing: 100 % new, 80 % after `cycles_to_80pct` equivalent full cycles."""
+    return max(0.0, 100.0 - 20.0 * cycles / cycles_to_80pct)
+
+
 class BatterySimulator(Node):
 
     def __init__(self):
@@ -70,6 +75,8 @@ class BatterySimulator(Node):
             'idle_power_w': 28.0, 'drive_power_w': 12.0, 'mass_kg': 40.0, 'payload_kg': 4.0,
             'rolling_resistance': 0.03, 'drivetrain_efficiency': 0.65, 'turn_power_w_per_rad_s': 18.0,
             'charge_power_w': 240.0, 'cv_start_soc': 80.0,
+            # ageing: NMC cells are typically rated ~1000 equivalent full cycles to 80 % capacity
+            'initial_cycles': 0.0, 'cycles_to_80pct': 1000.0,
             'dock_x': 0.0, 'dock_y': 0.0, 'dock_tolerance': 0.15,
             'global_frame': 'map', 'base_frame': 'base_footprint', 'rate_hz': 10.0,
         }
@@ -110,6 +117,10 @@ class BatterySimulator(Node):
         self.wh_per_m_effective = self.wh_per_m * 1.8
         self.depleted = False
         self.last = None
+        # equivalent full cycles = charge throughput / (2 x capacity); state of health from a
+        # linear cycle-ageing model (reported, not fed back into the capacity: tests stay comparable)
+        self.cycles = float(g('initial_cycles'))
+        self.cycles_to_80 = float(g('cycles_to_80pct'))
 
         self.tf = Buffer()
         TransformListener(self.tf, self)
@@ -182,7 +193,9 @@ class BatterySimulator(Node):
         self.power = p
         self.power_avg += (p - self.power_avg) * min(1.0, dt / 10.0)
         e_wh = p * dt / 3600.0 * self.accel
-        self.soc = min(1.0, max(0.0, self.soc - e_wh / self.capacity_wh))
+        new_soc = min(1.0, max(0.0, self.soc - e_wh / self.capacity_wh))
+        self.cycles += abs(new_soc - self.soc) / 2.0
+        self.soc = new_soc
         if e_wh > 0:
             self.energy_used_wh += e_wh
         # Learn Wh/m while cruising (ignore near-standstill samples).
@@ -246,6 +259,8 @@ class BatterySimulator(Node):
             'charger_on': self.charger_on, 'payload': self.payload, 'depleted': self.depleted,
             'distance_m': round(self.distance_m, 1), 'energy_used_wh': round(self.energy_used_wh, 2),
             'time_acceleration': self.accel,
+            'cycles': round(self.cycles, 3),
+            'soh': round(state_of_health(self.cycles, self.cycles_to_80), 2),
         }
         self.info_pub.publish(String(data=json.dumps(info)))
 

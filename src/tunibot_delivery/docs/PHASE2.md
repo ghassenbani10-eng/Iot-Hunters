@@ -251,6 +251,7 @@ larger of the two learned consumptions (driving / effective):
 * **Hard safety net**: SoC ≤ 10 % → abort everything and dock.
 * **Idle**: below 25 % or after 20 s without orders → dock.
 * While parked on the charger, loading or serving, the robot actively brakes (zero velocity).
+* **Battery health**: equivalent full cycles (charge throughput / 2 × capacity) and a state-of-health estimate (linear cycle ageing, 80 % after 1000 cycles, typical NMC rating) are reported to the UI. Charging to 60 % when no order waits (instead of 100 %) also limits ageing: Li-ion cells age faster when held at high charge.
 * **Charger fault detection**: on the pad (contacts OK) but no charging current for 10 s → the state shows "CHARGER FAULT", an error event alerts the staff, and orders wait (the robot never leaves without the energy for the whole order); when current flows again, charging resumes automatically (TC15).
 
 ### 4.3 States

@@ -42,6 +42,7 @@ digraph TuniBotArchitecture {
         <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9" COLOR="#c62828">• alternate approach poses · BLOCKED detection</FONT></TD></TR>
         <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9" COLOR="#c62828">• failure handling · ERROR · E-STOP · watchdog</FONT></TD></TR>
         <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9">• docking: align + reverse + contact check</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9" COLOR="#c62828">• charger fault detection · "Excuse me" (/tunibot/say)</FONT></TD></TR>
       </TABLE>>];
     BATT [label=<
       <TABLE BORDER="1" CELLBORDER="0" CELLSPACING="3" BGCOLOR="#ffcdd2" COLOR="#c62828" STYLE="ROUNDED">
@@ -57,6 +58,7 @@ digraph TuniBotArchitecture {
         <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9">scan − static map → clusters</FONT></TD></TR>
         <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9">Kalman CV tracking</FONT></TD></TR>
         <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9">2 s motion prediction → cost mask</FONT></TD></TR>
+        <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9">personal space (asymmetric Gaussian)</FONT></TD></TR>
         <TR><TD ALIGN="LEFT"><FONT POINT-SIZE="9">social speed governor</FONT></TD></TR>
       </TABLE>>];
     API -> DM [dir=both, label="/delivery/order\l/delivery/command\l/delivery/status\l"];
@@ -69,7 +71,7 @@ digraph TuniBotArchitecture {
     label=<<B>Nav2 — Navigation Stack (navigation.launch.py)</B>>;
     fontsize=15; style="rounded,filled"; color="#2e7d32"; fillcolor="#e8f5e9"; margin=14;
     BT [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="3" BGCOLOR="#c8e6c9" COLOR="#2e7d32" STYLE="ROUNDED"><TR><TD><B>bt_navigator</B></TD></TR><TR><TD><FONT POINT-SIZE="9" COLOR="#c62828">navigate_tunibot.xml: replan 2 Hz,</FONT></TD></TR><TR><TD><FONT POINT-SIZE="9" COLOR="#c62828">wait → clear → backup → spin</FONT></TD></TR></TABLE>>];
-    PLAN [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="3" BGCOLOR="#c8e6c9" COLOR="#2e7d32" STYLE="ROUNDED"><TR><TD><B>planner_server</B></TD></TR><TR><TD><FONT POINT-SIZE="9">NavFn A*, global costmap</FONT></TD></TR><TR><TD><FONT POINT-SIZE="9">keepout + <FONT COLOR="#c62828">people filters</FONT></FONT></TD></TR></TABLE>>];
+    PLAN [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="3" BGCOLOR="#c8e6c9" COLOR="#2e7d32" STYLE="ROUNDED"><TR><TD><B>planner_server</B></TD></TR><TR><TD><FONT POINT-SIZE="9">NavFn A*, global costmap</FONT></TD></TR><TR><TD><FONT POINT-SIZE="9">keepout + robot lanes + <FONT COLOR="#c62828">people filters</FONT></FONT></TD></TR></TABLE>>];
     CTRL [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="3" BGCOLOR="#c8e6c9" COLOR="#2e7d32" STYLE="ROUNDED"><TR><TD><B>controller_server</B></TD></TR><TR><TD><FONT POINT-SIZE="9" COLOR="#c62828">MPPI (default) | RotationShim + RPP</FONT></TD></TR><TR><TD><FONT POINT-SIZE="9">local costmap 10 Hz</FONT></TD></TR></TABLE>>];
     BEH [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="3" BGCOLOR="#c8e6c9" COLOR="#2e7d32" STYLE="ROUNDED"><TR><TD><B>behavior_server</B></TD></TR><TR><TD><FONT POINT-SIZE="9">wait · backup · spin</FONT></TD></TR></TABLE>>];
     SMOOTH [label=<<TABLE BORDER="1" CELLBORDER="0" CELLSPACING="3" BGCOLOR="#c8e6c9" COLOR="#2e7d32" STYLE="ROUNDED"><TR><TD><B>velocity_smoother</B></TD></TR></TABLE>>];

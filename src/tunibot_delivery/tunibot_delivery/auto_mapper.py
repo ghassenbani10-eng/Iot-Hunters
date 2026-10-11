@@ -28,9 +28,11 @@ TOUR_WORLD = [
     # door D2, service corridor, L-turn, west corridor
     (7.7, 1.8), (7.7, 4.5), (7.7, 7.6), (7.7, 9.0), (7.2, 9.65), (4.0, 9.65),
     # look into the lounge through door D3 before entering it; the toilets on the
-    # west side of D3 are customer-only and are only seen through their doors
+    # west side of D3 are customer-only and are only seen through their doors.
+    # No stop south-east of VIP table 2: that pocket is a dead end in the costmap
+    # (table keepout + wall inflation) where the controller got trapped.
     (2.85, 9.65), (2.85, 8.3), (2.1, 7.6), (2.1, 4.5), (-1.5, 4.5), (2.0, 4.3), (4.3, 4.0),
-    (6.4, 4.0), (6.4, 7.6), (4.3, 8.2), (2.85, 8.3), (2.85, 9.65),
+    (6.4, 7.6), (4.3, 8.2), (2.85, 8.3), (2.85, 9.65),
     # back through the corridors (the dead end west of D3 only leads to the kitchen
     # staff door: the robot never goes there, and that 4 m of featureless corridor
     # is a degenerate case for scan matching)

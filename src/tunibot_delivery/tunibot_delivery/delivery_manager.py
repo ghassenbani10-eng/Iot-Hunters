@@ -305,7 +305,7 @@ class DeliveryManager(Node):
             self.battery.update({k: info[k] for k in (
                 'capacity_wh', 'wh_per_m', 'wh_per_m_effective', 'idle_wh_per_s', 'power_w', 'power_avg_w', 'on_dock',
                 'time_to_empty_min', 'time_acceleration', 'energy_used_wh', 'distance_m',
-                'charger_on') if k in info})
+                'charger_on', 'cycles', 'soh') if k in info})
 
     def on_people(self, msg):
         try:
