@@ -361,12 +361,12 @@ def tc04(r):
     """A person stands in the service-corridor door D2 for 25 s, then walks away."""
     r.order('table_8', 'TC04: VIP order, doorway blocked')
     r.wait_state('TO_TABLE', 300)
-    # a person stands in door D2 (world (7.7, 3.0)); once the robot is 3.5 m away the
+    # a person stands in door D2 (world (7.7, 3.0)); once the robot is 5 m away the
     # person stays 20 s more, then walks away into the dining room
     door, away = (16.7, 0.8), (13.0, -1.5)
     r.walk_person('human_extra_1', [door, away], speed=0.7, start_delay=9999.0)
     r.wait_until(lambda: r.robot_map() is not None and
-                 math.hypot(r.robot_map()[0] - door[0], r.robot_map()[1] - door[1]) < 3.5, 300)
+                 math.hypot(r.robot_map()[0] - door[0], r.robot_map()[1] - door[1]) < 5.0, 300)
     r.walk_person('human_extra_1', [door, away], speed=0.7, start_delay=20.0)
     blocked = r.wait_until(lambda: any('blocked' in e['text'].lower() or e['kind'] == 'recovery'
                                        for e in r.events), 150)

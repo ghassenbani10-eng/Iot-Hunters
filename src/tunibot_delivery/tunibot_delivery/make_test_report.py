@@ -38,7 +38,7 @@ CASES = {
              'The predicted trajectory of the person enters the costmap; the robot yields (slows/stops/replans '
              'behind the person) and continues. No contact.'),
     'tc04': ('Dynamic obstacles / recovery',
-             'Full world + a person standing still in the 0.9 m service door D2; once the robot is 3.5 m away '
+             'Full world + a person standing still in the 0.9 m service door D2; once the robot is 5 m away '
              'the person stays 20 s more, then walks away.',
              'VIP order table_8: the only route goes through door D2.',
              'The route is blocked: the robot detects it (no path / BLOCKED), waits instead of forcing, and goes '
