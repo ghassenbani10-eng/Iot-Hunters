@@ -19,7 +19,7 @@ import xml.etree.ElementTree as ET
 
 RES = 0.05            # m/pixel
 TABLE_SIZE = 0.913    # cafe_table top edge length (m)
-MARGIN = 0.05         # extra clearance around the tabletop (m)
+MARGIN = 0.12         # extra clearance around the tabletop (m): footprint discretization + overhang
 # staff-only rectangles, world frame: (xmin, xmax, ymin, ymax)
 STAFF_ONLY = [(-10.5, -2.4, 3.05, 10.5)]   # kitchen
 

@@ -4145,7 +4145,7 @@
       </plugin>
     </actor>
     <model name='human_vip'>
-      <pose>-1.5 7.6 0 0 0 0</pose>
+      <pose>6.3 4.1 0 0 0 0</pose>
       <link name='body'>
         <gravity>0</gravity>
         <kinematic>1</kinematic>
@@ -4157,13 +4157,14 @@
       </link>
     </model>
     <actor name='human_vip_actor'>
-      <pose>-1.5 7.6 1.0 1.5708 0 0</pose>
+      <pose>6.3 4.1 1.0 1.5708 0 0</pose>
       <skin><filename>walk.dae</filename><scale>1.0</scale></skin>
       <animation name='walking'><filename>walk.dae</filename><scale>1.0</scale><interpolate_x>true</interpolate_x></animation>
       <plugin name='human_vip_walker' filename='libtunibot_human_actor.so'>
           <ros><namespace>/human_vip</namespace></ros>
-          <waypoint>-1.50 7.60</waypoint>
-          <waypoint>6.20 7.60</waypoint>
+          <waypoint>6.30 4.10</waypoint>
+          <waypoint>6.30 8.20</waypoint>
+          <waypoint>2.80 8.20</waypoint>
           <speed>0.55</speed>
           <dwell>6.0</dwell>
           <start_delay>20.0</start_delay>
