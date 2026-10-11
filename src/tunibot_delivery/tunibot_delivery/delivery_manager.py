@@ -616,6 +616,7 @@ class Mission:
                 if not self.wait_for_path((sx, sy, yaw), label, away):
                     self.mgr.event('failure', 'Approach %d/%d of %s unreachable' % (i + 1, len(poses), label))
                     break
+                self.face_route((sx, sy, yaw))
                 if self.navigate(sx, sy, yaw, label, away):
                     self.rotate_to(yaw, tol=0.05)   # face the window / table
                     if staging:
@@ -629,6 +630,35 @@ class Mission:
                 # a short pause lets people walking around move on)
                 self.hold(3.0)
         return False
+
+    def face_route(self, goal, lookahead=0.8, min_turn=1.0):
+        """Before leaving a place, turn in place towards the first metre of the planned route.
+
+        After serving, the robot faces the table; the way out is often behind it. MPPI
+        sometimes does not settle into a 180 deg turn next to a table and oscillates on the
+        spot (moving, so never 'blocked'). Turning first removes that. Only with room to
+        turn: nothing lethal / inscribed within 45 cm (never inside the narrow corridor)."""
+        m = self.mgr
+        pose = m.robot_pose()
+        if pose is None or m.pose_occupied(pose[0], pose[1], radius=0.45):
+            return
+        try:
+            path = self.planner.getPath(self.pose_msg(*goal), self.pose_msg(*goal), use_start=False)
+        except Exception:  # noqa: BLE001 - planner unavailable: let Nav2 handle the turn
+            return
+        if path is None or len(path.poses) < 2:
+            return
+        x0, y0 = path.poses[0].pose.position.x, path.poses[0].pose.position.y
+        target = None
+        for p in path.poses:
+            if math.hypot(p.pose.position.x - x0, p.pose.position.y - y0) >= lookahead:
+                target = (p.pose.position.x, p.pose.position.y)
+                break
+        if target is None:
+            return
+        yaw = math.atan2(target[1] - pose[1], target[0] - pose[0])
+        if abs(math.remainder(yaw - pose[2], 2 * math.pi)) > min_turn:
+            self.rotate_to(yaw, tol=0.15)
 
     def drive(self, distance, speed, until=None, timeout=None):
         """Odometry closed-loop straight motion (negative = reverse). Stops early if until()."""

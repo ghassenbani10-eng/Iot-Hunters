@@ -212,7 +212,17 @@ RPP remains available (`controller:=rpp`).
 * **Robust docking**: Nav2 to a pre-dock pose → closed-loop go-to-point onto the exact pre-dock pose
   → rotate to the dock axis → check lateral offset → reverse along the axis with heading + lateral
   correction until the pad is reached → the battery must report charging contact, otherwise drive
-  out and retry (3 attempts, then a latched ERROR). Measured: 0.7–2.5 cm from the pad centre.
+  out and retry (3 attempts, then a latched ERROR).
+* **Lidar-measured final approach**: the wall behind the dock is in the lidar's blind cone (±35° at
+  the back), so AMCL's position *along* the dock axis can be several cm off (measured up to 8.6 cm
+  short of the pad). The last metre is therefore measured directly: the rear-right beams
+  (−145°…−125°) see the wall obliquely; a line is fitted to their hits (median pre-filter, least
+  squares, a second fit without points > 4 cm off, ≥ 75 % of the beams must agree), and the
+  perpendicular distance to that line - insensitive to a small heading error - is compared with a
+  reference learned at start-up while the robot stands on the pad where it was installed. The lidar
+  value is used only when it agrees with AMCL within 12 cm (a person or a chair in those beams can
+  look like a wall). TC12 ground truth: **1.1–1.3 cm** from the pad centre over 3 dockings
+  (`test/test_docking.py` covers heading error, a chair leg and a person hiding the wall).
 * **Hold position**: while loading/serving the robot actively holds zero velocity (the simulated base,
   like many real ones without a watchdog, keeps executing the last velocity command it received).
 
