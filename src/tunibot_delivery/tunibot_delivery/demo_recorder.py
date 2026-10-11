@@ -117,12 +117,12 @@ class DemoRecorder(Node):
         if rp is None or not self.set_cli.service_is_ready():
             return
         x, y, yaw = rp
-        back, up = 3.2, 2.6                       # behind and above the robot, looking at it
+        back, up = 1.8, 4.2                       # behind and above the walls (2.5 m), looking down at the robot
         cx, cy = x - back * math.cos(yaw), y - back * math.sin(yaw)
         st = EntityState()
         st.name = 'demo_cam_chase'
         st.pose.position.x, st.pose.position.y, st.pose.position.z = cx, cy, up
-        q = quat(0.0, math.atan2(up - 0.6, back), yaw)
+        q = quat(0.0, math.atan2(up - 0.5, back + 1.2), yaw)
         st.pose.orientation.x, st.pose.orientation.y, st.pose.orientation.z, st.pose.orientation.w = q
         st.reference_frame = 'world'
         self.set_cli.call_async(SetEntityState.Request(state=st))

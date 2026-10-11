@@ -20,6 +20,18 @@ run out of battery.
 | **Battery & state simulation** | `battery_simulator` (power model, Li-ion voltage curve, CC-CV charging on dock contact, learned Wh/m); energy-aware decisions from Nav2 path lengths; return to the dock *before* the energy runs out | [§4](docs/PHASE2.md) |
 | Test cases | `scenario_runner`: 12 automated scenarios measured against Gazebo ground truth (person clearance, bumper contacts, SoC) | [docs/TEST_CASES.md](docs/TEST_CASES.md) |
 
+## Demo video (Phase 2 — dynamic obstacles)
+
+[![demo](docs/media/demo_frame.png)](docs/media/tunibot_demo_dynamic_obstacles.mp4)
+
+[docs/media/tunibot_demo_dynamic_obstacles.mp4](docs/media/tunibot_demo_dynamic_obstacles.mp4) — recorded
+automatically from the simulation (`demo_recorder`): chase camera, overhead camera, live map with the
+tracked people and their 2 s predicted motion, robot state and battery. Scenario TC03: people cross
+in front of the robot on its way from the serving window to table 4; the robot yields and delivers,
+0 contacts (ground truth).
+
+**Test results: 12/12 scenarios pass** — [docs/TEST_CASES.md](docs/TEST_CASES.md).
+
 ## Architecture
 
 ![TuniBot high-level software architecture](docs/architecture.png)

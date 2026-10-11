@@ -9,8 +9,10 @@ Challenge CSTAM-TUNIBOT, Phase 2 (30 pts):
 | Battery & state simulation — accurate drain, return to dock before the battery dies | 10 | `battery_simulator` (physics-based power model, Li-ion voltage curve, CC-CV charging on dock contact, learned Wh/m), energy-aware `delivery_manager` |
 
 Deliverables: the complete Gazebo package (`tunibot_delivery` + `tunibot_gazebo_plugins`),
-the test-case documentation ([TEST_CASES.md](TEST_CASES.md), generated from automated runs) and the
-screen recording of dynamic obstacle handling (`demo.launch.py scenario:=tc03`, see the README).
+the test-case documentation ([TEST_CASES.md](TEST_CASES.md), generated from automated runs — 12/12
+pass) and the recording of dynamic obstacle handling
+([media/tunibot_demo_dynamic_obstacles.mp4](media/tunibot_demo_dynamic_obstacles.mp4), recorded by
+`demo_recorder` while scenario TC03 runs).
 
 ![architecture](architecture.png)
 
