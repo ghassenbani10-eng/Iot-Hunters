@@ -16,7 +16,7 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, TimerAction
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration, PythonExpression
 from launch_ros.actions import Node
@@ -53,7 +53,8 @@ def generate_launch_description():
         Node(package='nav2_lifecycle_manager', executable='lifecycle_manager',
              name='lifecycle_manager_localization', output='screen',
              parameters=[{'use_sim_time': use_sim_time, 'autostart': True,
-                          'node_names': ['map_server', 'amcl']}]),
+                          'node_names': ['map_server', 'amcl', 'filter_mask_server',
+                                         'costmap_filter_info_server']}]),
     ]
     navigation = [
         nav_node('nav2_controller', 'controller_server', remaps=[('cmd_vel', 'cmd_vel_nav')], extra=[mppi]),
@@ -74,10 +75,6 @@ def generate_launch_description():
              parameters=[params, {'yaml_filename': LaunchConfiguration('keepout_mask')}], output='screen'),
         Node(package='nav2_map_server', executable='costmap_filter_info_server',
              name='costmap_filter_info_server', parameters=[params], output='screen'),
-        Node(package='nav2_lifecycle_manager', executable='lifecycle_manager',
-             name='lifecycle_manager_costmap_filters', output='screen',
-             parameters=[{'use_sim_time': use_sim_time, 'autostart': True,
-                          'node_names': ['filter_mask_server', 'costmap_filter_info_server']}]),
         Node(package='tunibot_delivery', executable='people_tracker', name='people_tracker',
              parameters=[params], output='screen'),
     ]
@@ -95,5 +92,19 @@ def generate_launch_description():
         DeclareLaunchArgument('map', default_value=os.path.join(pkg, 'maps', 'restaurant_map.yaml')),
         DeclareLaunchArgument('keepout_mask', default_value=os.path.join(pkg, 'maps', 'keepout_mask.yaml')),
         DeclareLaunchArgument('params_file', default_value=os.path.join(pkg, 'config', 'nav2_params.yaml')),
-        *localization, *navigation, *filters, rviz,
+        # Lifecycle managers start 4 s after the servers: with FastDDS a change_state
+        # request sent before discovery has completed can lose its response, and the
+        # Humble lifecycle manager then waits forever ("failed to send response").
+        *[n for n in localization + navigation + filters if not _is_manager(n)],
+        TimerAction(period=4.0, actions=[n for n in localization + navigation + filters if _is_manager(n)]),
+        # safety net for the same race: drives any node left behind to ACTIVE
+        Node(package='tunibot_delivery', executable='lifecycle_watchdog', output='screen',
+             parameters=[{'use_sim_time': use_sim_time, 'start_delay': 25.0,
+                          'node_names': ['map_server', 'amcl', 'filter_mask_server', 'costmap_filter_info_server']
+                          + LIFECYCLE_NAV}]),
+        rviz,
     ])
+
+
+def _is_manager(node):
+    return 'lifecycle_manager' in str(getattr(node, '_Node__node_executable', ''))

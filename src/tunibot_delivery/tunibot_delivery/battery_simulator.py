@@ -19,10 +19,12 @@ following a CC-CV profile: constant power up to 80 % SoC, then tapering.
 demo (default 25x: a full charge lasts ~20 min of driving instead of ~8 h).
 It is reported in every message and in the UI so nothing is hidden.
 
-The node also learns the robot's real consumption per metre while driving
-(exponential moving average of measured energy / travelled distance). The
-delivery manager uses it to decide, from Nav2 path lengths, whether there is
-enough energy to finish a task and still reach the dock.
+The node also learns the robot's real consumption: per metre while driving
+(exponential moving average), and the *effective* consumption per metre over
+whole missions away from the dock, which also includes every stop (people,
+recoveries, loading, serving). The delivery manager uses the larger one with
+Nav2 path lengths to decide whether there is enough energy to finish a task
+and still reach the dock.
 
 Interfaces
   sub  /odom                   nav_msgs/Odometry       velocity, distance
@@ -102,6 +104,10 @@ class BatterySimulator(Node):
         # idle + drive power at 0.35 m/s plus traction.
         self.wh_per_m = (self.p_idle + self.p_drive + self._traction(0.35, 0.0) + 8.0) \
             / 0.35 / 3600.0 * self.accel
+        # effective consumption over whole missions away from the dock (driving AND the
+        # stops: people, recoveries, loading, serving), Wh per metre driven
+        self.away_wh, self.away_m = 0.0, 0.0
+        self.wh_per_m_effective = self.wh_per_m * 1.8
         self.depleted = False
         self.last = None
 
@@ -185,6 +191,16 @@ class BatterySimulator(Node):
         if abs(self.v) > 0.1 and not charging:
             sample = e_wh / ds
             self.wh_per_m += (sample - self.wh_per_m) * min(1.0, ds / 5.0)
+        if self.on_dock:
+            if self.away_m > 5.0:   # a mission just ended: blend it into the effective figure
+                mission = self.away_wh / self.away_m
+                self.wh_per_m_effective += (mission - self.wh_per_m_effective) * 0.5
+            self.away_wh, self.away_m = 0.0, 0.0
+        elif e_wh > 0:
+            self.away_wh += e_wh
+            self.away_m += ds
+            if self.away_m > 10.0:  # live estimate during a long mission (never below the prior)
+                self.wh_per_m_effective = max(self.wh_per_m_effective, self.away_wh / self.away_m)
         if self.soc <= 0.0 and not self.depleted:
             self.depleted = True
             self.get_logger().error('BATTERY DEPLETED: the robot would stop here.')
@@ -221,7 +237,8 @@ class BatterySimulator(Node):
             'soc': round(self.soc * 100, 2), 'voltage': round(voltage, 2), 'current': round(current, 2),
             'power_w': round(self.power, 1), 'power_avg_w': round(self.power_avg, 1),
             'capacity_wh': round(self.capacity_wh, 1), 'energy_left_wh': round(self.soc * self.capacity_wh, 2),
-            'wh_per_m': round(self.wh_per_m, 4), 'idle_wh_per_s': round(self.p_idle * self.accel / 3600, 5),
+            'wh_per_m': round(self.wh_per_m, 4), 'wh_per_m_effective': round(self.wh_per_m_effective, 4),
+            'idle_wh_per_s': round(self.p_idle * self.accel / 3600, 5),
             'time_to_empty_min': round(self.soc * self.capacity_wh / drain_w * 60, 1) if self.power_avg > 0 else None,
             'on_dock': self.on_dock, 'charging': self.on_dock and self.charger_on and self.soc < 1.0,
             'charger_on': self.charger_on, 'payload': self.payload, 'depleted': self.depleted,

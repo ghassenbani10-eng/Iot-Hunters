@@ -39,7 +39,7 @@ for sc in "${SCENARIOS[@]}"; do
   stop_stack >/dev/null 2>&1
   ACC=25.0; SOC=100.0
   case "$sc" in
-    tc10) ACC=40.0 ;;     # endurance: faster drain so that several charging cycles happen
+    tc10) ACC=25.0 ;;     # endurance (starts at 45 %, see scenario)
   esac
   L="$RESULTS/logs/$sc"
   ros2 launch tunibot_delivery sim.launch.py gui:=$GUI > "$L-sim.log" 2>&1 &

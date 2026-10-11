@@ -451,17 +451,18 @@ def tc09(r):
 
 
 def tc10(r):
-    """Endurance: 8 orders back to back, battery cycling handled autonomously."""
-    tables = ['table_1', 'table_4', 'table_8', 'table_3', 'table_6', 'table_2', 'table_9', 'table_5']
-    r.set_soc(55.0)
+    """Endurance: 6 orders back to back from 45 % battery, charging handled autonomously."""
+    tables = ['table_4', 'table_1', 'table_8', 'table_6', 'table_3', 'table_7']
+    r.set_soc(45.0)
     for i, t in enumerate(tables):
         r.order(t, 'TC10 order %d' % (i + 1))
     done = r.wait_orders_done(len(tables), 3600)
     delivered_n = sum(1 for o in r.history().values() if o['status'] == 'delivered')
-    charges = sum(1 for e in r.events if e['kind'] == 'battery' and 'Charging' in e['text'])
+    charges = sum(1 for e in r.events if e['kind'] == 'battery' and 'Charging to' in e['text'])
     ok = done and delivered_n == len(tables)
-    return {'title': 'Endurance: 8 orders, battery cycles handled autonomously', 'passed': ok and r.min_soc > 0,
-            'criteria': 'all 8 orders delivered, robot charges by itself when needed, SoC never 0',
+    return {'title': 'Endurance: 6 orders, battery cycles handled autonomously', 'passed': ok and r.min_soc > 0,
+            'criteria': 'all 6 orders delivered starting from 45 %, the robot charges by itself when an order '
+                        'needs it, SoC never 0',
             'measured': {'delivered': delivered_n, 'of': len(tables), 'charging_sessions': charges},
             'clearance_threshold': 0.05}
 

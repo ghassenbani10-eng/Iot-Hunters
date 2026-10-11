@@ -194,22 +194,29 @@ P = P_idle                                  28 W  (computer, lidar, screen, driv
   dock and stopped) — the docking manoeuvre must actually succeed.
 * `time_acceleration` (default ×25, shown in the UI) multiplies the energy flows so a battery cycle
   fits in a demo: ~12 min of driving or ~22 min idle per charge instead of ~6–9 h.
-* The node **learns the real consumption per metre** (moving average of measured energy / distance)
-  — it includes the turning, accelerations, payload and the idle power while driving.
+* The node **learns the real consumption**: per metre while driving (moving average of measured
+  energy / distance), and the **effective consumption per metre over whole missions** away from the
+  dock — which also includes every stop (waiting for people, recoveries, loading, serving). The
+  first version only used the driving figure and the endurance test showed why that is not enough:
+  a return trip slowed down by people and recoveries cost more than the path length predicted.
 * Test hooks: `/battery/set_soc`, `/battery/charger` (also in the web UI).
 
 ### 4.2 Energy-aware decisions (`delivery_manager`)
 
-All estimates use **real Nav2 path lengths** (`ComputePathToPose`), not straight lines:
+All estimates use **real Nav2 path lengths** (`ComputePathToPose`), not straight lines, and the
+larger of the two learned consumptions (driving / effective):
 
-* **Before leaving with an order**: E = (robot → pickup → table → dock) × Wh/m × 1.3 + idle energy
-  during loading and serving. The robot leaves only if SoC ≥ E + reserve (8 %) and ≥ 25 %. Otherwise it
-  charges — *only as long as needed* for that order (+5 %), not to 100 %.
+* **Before leaving with an order**: E = (robot → serving window → table → dock) × Wh/m × 1.3 + idle
+  energy during loading and serving. The robot leaves only if SoC ≥ E + reserve (12 %) and ≥ 25 %.
+  Otherwise it charges — *only as long as needed* for that order (1.15 × need + 5 %), not to 100 %.
+  An order that would need more than a full battery is rejected with that reason (no endless
+  charging).
 * **While away from the dock** (every 3 s): E_return = path(robot → dock) × Wh/m × 1.3. As soon as
   `energy left − E_return < reserve`, the mission is interrupted, the order is **re-queued at the
   front** (not lost), the robot docks, charges and resumes.
 * **Hard safety net**: SoC ≤ 10 % → abort everything and dock.
 * **Idle**: below 25 % or after 20 s without orders → dock.
+* While parked on the charger, loading or serving, the robot actively brakes (zero velocity).
 
 ### 4.3 States
 

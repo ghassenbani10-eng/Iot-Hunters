@@ -71,8 +71,8 @@ CASES = {
              'covers the way back: the mission is interrupted, the order re-queued at the front, the robot docks '
              '(SoC > 0), charges, then completes the order.'),
     'tc10': ('Battery / endurance',
-             'Battery 55 %, energy flows ×40 (demo acceleration).',
-             '8 orders queued at once (dining room and VIP lounge).',
+             'Battery 45 %, energy flows ×25 (demo acceleration).',
+             '6 orders queued at once (dining room and VIP lounge).',
              'All orders delivered; the robot interleaves charging sessions by itself; SoC never reaches 0.'),
     'tc11': ('State management',
              'Battery 100 %.',

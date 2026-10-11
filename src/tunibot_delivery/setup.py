@@ -34,6 +34,7 @@ setup(
             'scenario_runner = tunibot_delivery.scenario_runner:main',
             'make_test_report = tunibot_delivery.make_test_report:main',
             'demo_recorder = tunibot_delivery.demo_recorder:main',
+            'lifecycle_watchdog = tunibot_delivery.lifecycle_watchdog:main',
         ],
     },
 )

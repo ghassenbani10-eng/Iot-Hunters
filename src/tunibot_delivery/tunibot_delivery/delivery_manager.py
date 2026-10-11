@@ -38,7 +38,8 @@ from collections import deque
 import rclpy
 from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import OccupancyGrid, Odometry
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.time import Time
@@ -80,7 +81,7 @@ class DeliveryManager(Node):
             'battery_critical': 10.0,      # % : abort everything and go to the dock
             'battery_low': 25.0,           # % : no new order below this
             'battery_resume': 60.0,        # % : charging target when no order waits
-            'energy_reserve': 8.0,         # % of capacity that must remain at the dock
+            'energy_reserve': 12.0,        # % of capacity that must remain at the dock
             'energy_safety_factor': 1.3,   # margin on the path-length energy estimate
             'energy_check_period_sec': 3.0,
             'nav_attempts_per_pose': 2,
@@ -123,6 +124,11 @@ class DeliveryManager(Node):
         self.create_subscription(BatteryState, '/battery_state', self.on_battery_state, 10)
         self.create_subscription(String, '/battery/info', self.on_battery_info, 10)
         self.create_subscription(String, '/people', self.on_people, 10)
+        self.global_costmap = None
+        self.create_subscription(OccupancyGrid, '/global_costmap/costmap',
+                                 lambda m: setattr(self, 'global_costmap', m),
+                                 QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL,
+                                            reliability=ReliabilityPolicy.RELIABLE))
         self.status_pub = self.create_publisher(String, '/delivery/status', 10)
         self.event_pub = self.create_publisher(String, '/delivery/events', 10)
         self.cmd_pub = self.create_publisher(Twist, '/cmd_vel', 10)
@@ -150,6 +156,22 @@ class DeliveryManager(Node):
             self.get_logger().warn('[%s] %s' % (kind, text))
         else:
             self.get_logger().info('[%s] %s' % (kind, text))
+
+    def pose_occupied(self, x, y, radius=0.25):
+        """True if the global costmap has an obstacle (lethal or inscribed) within
+        `radius` of (x, y): the goal itself is blocked (trolley, chairs, a standing person)."""
+        m = self.global_costmap
+        if m is None:
+            return False
+        res, w, h = m.info.resolution, m.info.width, m.info.height
+        ox, oy = m.info.origin.position.x, m.info.origin.position.y
+        r = int(radius / res) + 1
+        ci, cj = int((y - oy) / res), int((x - ox) / res)
+        for i in range(max(0, ci - r), min(h, ci + r + 1)):
+            for j in range(max(0, cj - r), min(w, cj + r + 1)):
+                if (i - ci) ** 2 + (j - cj) ** 2 <= r * r and m.data[i * w + j] >= 99:
+                    return True
+        return False
 
     def robot_pose(self):
         try:
@@ -230,7 +252,7 @@ class DeliveryManager(Node):
             return
         with self.lock:
             self.battery.update({k: info[k] for k in (
-                'capacity_wh', 'wh_per_m', 'idle_wh_per_s', 'power_w', 'power_avg_w', 'on_dock',
+                'capacity_wh', 'wh_per_m', 'wh_per_m_effective', 'idle_wh_per_s', 'power_w', 'power_avg_w', 'on_dock',
                 'time_to_empty_min', 'time_acceleration', 'energy_used_wh', 'distance_m',
                 'charger_on') if k in info})
 
@@ -305,9 +327,12 @@ class Mission:
     def energy_for(self, length_m, extra_wait_s=0.0):
         """Wh needed for a path of length_m (+ waiting time), with the safety factor."""
         b, c = self.mgr.battery, self.mgr.cfg
-        drive = length_m * float(b.get('wh_per_m', 1.1))
+        # effective Wh/m learned over whole missions (stops included), never below the
+        # pure driving figure
+        per_m = max(float(b.get('wh_per_m', 1.1)), float(b.get('wh_per_m_effective', 0.0)))
+        drive = length_m * per_m
         wait = extra_wait_s * float(b.get('idle_wh_per_s', 0.2))
-        dock_manoeuvre = 1.5 * float(b.get('wh_per_m', 1.1))
+        dock_manoeuvre = 1.5 * per_m
         return (drive + wait + dock_manoeuvre) * c['energy_safety_factor']
 
     def reserve_wh(self):
@@ -400,6 +425,8 @@ class Mission:
     def navigate(self, x, y, yaw, label, away=True):
         """One Nav2 NavigateToPose with monitoring. Returns True on success."""
         self.nav.goToPose(self.pose_msg(x, y, yaw))
+        # give up on this goal if it takes far longer than the planned path justifies
+        deadline = self.mgr.now() + 60.0 + 4.0 * getattr(self, 'last_path_length', 20.0)
         blocked, recoveries = False, 0
         anchor, anchor_t = self.mgr.robot_pose(), self.mgr.now()
         base_state = self.mgr.state
@@ -407,6 +434,12 @@ class Mission:
             while not self.nav.isTaskComplete():
                 self.check_interrupts(away)
                 self.localization_watchdog()
+                if self.mgr.now() > deadline:
+                    self.mgr.event('failure', 'Giving up on %s: no arrival within %.0f s' % (
+                        label, 60.0 + 4.0 * getattr(self, 'last_path_length', 20.0)))
+                    self.nav.cancelTask()
+                    self.stop()
+                    return False
                 fb = self.nav.getFeedback()
                 # blocked = the robot has not really moved (10 cm or 30 deg) for a while
                 pose = self.mgr.robot_pose()
@@ -446,13 +479,15 @@ class Mission:
         announced = False
         while True:
             self.check_interrupts(away)
-            _, ok = self.path_length(None, pose)
+            length, ok = self.path_length(None, pose)
+            ok = ok and not m.pose_occupied(pose[0], pose[1])
             if ok:
+                self.last_path_length = length
                 if announced:
                     m.event('nav', 'Route to %s is free again' % label)
                 return True
             if not announced:
-                m.event('nav', 'No route to %s right now (blocked?) - re-checking for %.0f s'
+                m.event('nav', 'No route to %s right now (route or goal blocked) - re-checking for %.0f s'
                         % (label, m.cfg['path_wait_sec']))
                 announced = True
                 m.set_state(m.state, 'waiting: route blocked')
@@ -486,7 +521,8 @@ class Mission:
                     return True
                 self.mgr.event('failure', 'Navigation to %s failed (approach %d/%d, attempt %d)' % (
                     label, i + 1, len(poses), attempt + 1))
-                self.nav.clearAllCostmaps()
+                # (no costmap clearing: what the robot just saw - e.g. a trolley parked on
+                # the approach pose - is exactly what the next reachability check needs)
                 self.hold(1.0)
         return False
 
@@ -565,17 +601,24 @@ class Mission:
         end = m.now() + timeout
         cmd = Twist()
         c, s = math.cos(dyaw), math.sin(dyaw)
+        p0 = m.robot_pose()
+        max_travel = (0.0 if p0 is None else (p0[0] - dx) * c + (p0[1] - dy) * s) + 0.15
+        start = m.odom.pose.pose.position
         while m.now() < end and not m.estop:
             pose = m.robot_pose()
             if pose is None:
                 break
+            cur = m.odom.pose.pose.position
+            if math.hypot(cur.x - start.x, cur.y - start.y) > max_travel:
+                break                   # odometry cap: never drive into the station
             along = (pose[0] - dx) * c + (pose[1] - dy) * s       # > 0: still in front of the pad
             lateral = -(pose[0] - dx) * s + (pose[1] - dy) * c
             if along < 0.015:
                 break
             # reversing: a small positive yaw moves the robot to its right, so the
             # desired heading leans towards the axis by an amount ~ lateral offset
-            desired = dyaw + max(-0.2, min(0.2, 1.2 * lateral))
+            # (the lean fades out over the last 30 cm so the robot arrives straight)
+            desired = dyaw + max(-0.2, min(0.2, 1.2 * lateral)) * min(1.0, along / 0.3)
             heading_err = math.remainder(desired - pose[2], 2 * math.pi)
             cmd.linear.x = -min(speed, max(0.03, along))
             cmd.angular.z = max(-0.3, min(0.3, 2.0 * heading_err))
@@ -604,6 +647,7 @@ class Mission:
                 self.drive(0.3, 0.1)
                 continue
             self.reverse_onto_dock(dx, dy, dyaw)
+            self.rotate_to(dyaw, tol=0.03)  # final heading touch-up on the pad
             self.hold(1.5)              # charger contact check, robot braked
             if m.battery.get('on_dock', False) or m.battery.get('charging', False):
                 with m.lock:
@@ -800,9 +844,22 @@ class Mission:
             return m.now()
         if order is not None:
             ok, need_soc = self.can_start(order)
+            if not ok and need_soc > 100.0 and docked and m.soc >= 98.0:
+                # even a full battery is not enough: reject instead of charging forever
+                with m.lock:
+                    if m.queue and m.queue[0] is order:
+                        m.queue.popleft()
+                    order['status'] = 'failed'
+                    order['notes'].append('beyond battery range (needs %.0f%%)' % need_soc)
+                    order['finished'] = time.time()
+                    m.history.appendleft(order)
+                m.event('failure', 'Order #%d rejected: needs %.0f%% of the battery, more than a full charge'
+                        % (order['id'], need_soc), order_id=order['id'])
+                return m.now()
             if not ok:
                 if docked:
-                    self.charge_until(need_soc + 5.0, 'order #%d needs %.0f%%' % (order['id'], need_soc))
+                    self.charge_until(min(100.0, need_soc * 1.15 + 5.0),
+                                      'order #%d needs %.0f%%' % (order['id'], need_soc))
                 else:
                     raise Abort('energy: order #%d needs %.0f%%, battery %.0f%%' % (order['id'], need_soc, m.soc))
                 return m.now()
