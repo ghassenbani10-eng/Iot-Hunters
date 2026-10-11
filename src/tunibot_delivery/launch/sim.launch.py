@@ -3,7 +3,8 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, LaunchConfiguration
 from launch_ros.actions import Node
@@ -23,11 +24,15 @@ def generate_launch_description():
 
     gazebo = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(os.path.join(
-            get_package_share_directory('gazebo_ros'), 'launch', 'gazebo.launch.py')),
+            get_package_share_directory('gazebo_ros'), 'launch', 'gzserver.launch.py')),
         launch_arguments={'world': LaunchConfiguration('world'),
-                          'gui': LaunchConfiguration('gui'),
                           'params_file': os.path.join(pkg, 'config', 'gazebo_params.yaml')}.items(),
     )
+    # The Gazebo window runs at low CPU priority: without a GPU driver it renders in
+    # software and can take 3-5 cores, which starved AMCL/Nav2 during live demos.
+    gui = ExecuteProcess(
+        cmd=['nice', '-n', '15', 'gzclient', '--gui-client-plugin=libgazebo_ros_eol_gui.so'],
+        output='screen', condition=IfCondition(LaunchConfiguration('gui')))
 
     robot_state_publisher = Node(
         package='robot_state_publisher',
@@ -43,7 +48,8 @@ def generate_launch_description():
         package='gazebo_ros',
         executable='spawn_entity.py',
         arguments=['-entity', 'waiter_robot', '-topic', 'robot_description',
-                   '-x', DOCK_X, '-y', DOCK_Y, '-z', '0.01', '-Y', DOCK_YAW],
+                   '-x', DOCK_X, '-y', DOCK_Y, '-z', '0.01', '-Y', DOCK_YAW,
+                   '-timeout', '120'],   # gzserver starts slowly when the GUI is also starting
         output='screen',
     )
 
@@ -52,6 +58,7 @@ def generate_launch_description():
         DeclareLaunchArgument('gui', default_value='true', description='Start gzclient'),
         DeclareLaunchArgument('world', default_value=world),
         gazebo,
+        gui,
         robot_state_publisher,
         spawn,
     ])

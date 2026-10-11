@@ -19,7 +19,8 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
-    launch_dir = os.path.join(get_package_share_directory('tunibot_delivery'), 'launch')
+    pkg = get_package_share_directory('tunibot_delivery')
+    launch_dir = os.path.join(pkg, 'launch')
 
     def include(name, **args):
         return IncludeLaunchDescription(PythonLaunchDescriptionSource(os.path.join(launch_dir, name)),
@@ -39,8 +40,15 @@ def generate_launch_description():
         DeclareLaunchArgument('out_dir', default_value=os.path.expanduser('~/tunibot_test_results')),
         DeclareLaunchArgument('time_acceleration', default_value='25.0'),
         include('sim.launch.py', gui=LaunchConfiguration('gui')),
-        TimerAction(period=12.0, actions=[include('navigation.launch.py', rviz=LaunchConfiguration('rviz'))]),
-        TimerAction(period=24.0, actions=[include('delivery.launch.py',
+        # explicit paths: inside a TimerAction the included file's own defaults were not
+        # applied to the rewritten parameters (map_server: 'yaml_filename' not initialized)
+        TimerAction(period=15.0, actions=[include(
+            'navigation.launch.py', rviz=LaunchConfiguration('rviz'),
+            map=os.path.join(pkg, 'maps', 'restaurant_map.yaml'),
+            keepout_mask=os.path.join(pkg, 'maps', 'keepout_mask.yaml'),
+            params_file=os.path.join(pkg, 'config', 'nav2_params.yaml'),
+            controller='mppi', use_sim_time='true', log_level='info')]),
+        TimerAction(period=35.0, actions=[include('delivery.launch.py',
                                                   time_acceleration=LaunchConfiguration('time_acceleration'))]),
-        TimerAction(period=30.0, actions=[runner]),
+        TimerAction(period=45.0, actions=[runner]),
     ])

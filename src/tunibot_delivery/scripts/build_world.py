@@ -235,6 +235,9 @@ def generate(base, humans=True):
     text = re.sub(r'\n\s*' + re.escape(BEGIN) + '.*?' + re.escape(END), '', base, flags=re.S)
     text = re.sub(r"(<camera name='user_camera'>\s*<pose>)[^<]*(</pose>)",
                   r'\g<1>%s\g<2>' % GUI_CAMERA_POSE, text)
+    # no shadows: on machines without a GPU driver gzclient renders in software and
+    # shadows alone cost several CPU cores (starving AMCL/Nav2 during live demos)
+    text = re.sub(r'<shadows>1</shadows>', '<shadows>0</shadows>', text)
     text = re.sub(r'(<model name="docking_station">\s*<static>1</static>\s*<pose>)[^<]*(</pose>)',
                   r'\g<1>%s %s 0 0 0 0\g<2>' % DOCK_STATION, text)
     text = remove_old_partition(text)
