@@ -17,7 +17,8 @@
 //     the robot for 5 s meanwhile (two polite agents waiting for each other would
 //     deadlock; turning back does not work at the end of a path);
 //   - whatever it does, it never steps closer than `min_robot_distance` to the
-//     robot centre (it stops instead): people do not walk into a robot.
+//     robot centre: such a step slides around the robot instead (people neither
+//     walk into a robot nor freeze next to one standing in their way).
 //
 // SDF parameters (all optional except <waypoint>):
 //   <waypoint>x y [dwell]</waypoint> (repeat, world frame, metres; optional wait there, s)
@@ -218,15 +219,13 @@ private:
     double step = 0.0;
     if (!yielding && std::fabs(err) < 0.6) {
       step = std::min(speed_ * dt, dist);
-      const auto next = pos_ + to_goal * (step / dist);
       // Personal-space floor, also during a detour (when the robot is otherwise ignored):
-      // never take a step that brings the body closer than min_robot_distance to the robot
-      // centre - a real person does not walk into a robot standing in the way.
-      if (TooCloseToRobot(next)) {
-        step = 0.0;
-      } else {
-        pos_ = next;
-      }
+      // a step that would bring the body closer than min_robot_distance to the robot centre
+      // slides around the robot instead - a real person neither walks into a robot nor
+      // freezes next to one that stands in the way.
+      const auto move = AroundRobot(to_goal * (step / dist));
+      step = move.Length();
+      pos_ += move;
     }
     actor_->SetScriptTime(actor_->ScriptTime() + (step > 0.0 ? step * animation_factor_ : 0.4 * dt));
     Apply();
@@ -266,19 +265,35 @@ private:
     }
   }
 
-  bool TooCloseToRobot(const ignition::math::Vector2d & next)
+  ignition::math::Vector2d AroundRobot(const ignition::math::Vector2d & step)
   {
     if (!robot_) {
       robot_ = world_->ModelByName(robot_name_);
       if (!robot_) {
-        return false;
+        return step;
       }
     }
     const auto rp = robot_->WorldPose().Pos();
     const ignition::math::Vector2d r(rp.X(), rp.Y());
-    const double d_next = (next - r).Length();
-    // blocked only when the step goes towards the robot: stepping away is always allowed
-    return d_next < min_robot_distance_ && d_next < (pos_ - r).Length();
+    const auto rel = pos_ - r;
+    const double d_now = rel.Length();
+    const double d_next = (pos_ + step - r).Length();
+    // far enough, or stepping away: walk normally
+    if (d_next >= min_robot_distance_ || d_next >= d_now || d_now < 1e-6) {
+      return step;
+    }
+    // drop the component towards the robot, keep walking along the tangent at full pace
+    const auto out = rel / d_now;
+    auto tangent = step - out * step.Dot(out);
+    if (tangent.Length() < 0.2 * step.Length()) {
+      // the goal is straight behind the robot: go round it on a fixed side
+      tangent = ignition::math::Vector2d(-out.Y(), out.X());
+    }
+    tangent = tangent.Normalized() * step.Length();
+    // the tangent leaves the circle slightly: put the body back at (at least) d_now
+    auto next = pos_ + tangent - r;
+    next = next.Normalized() * std::max(d_now, std::min(min_robot_distance_, next.Length()));
+    return r + next - pos_;
   }
 
   bool RobotAhead()
