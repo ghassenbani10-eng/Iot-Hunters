@@ -192,14 +192,16 @@ class BatterySimulator(Node):
             sample = e_wh / ds
             self.wh_per_m += (sample - self.wh_per_m) * min(1.0, ds / 5.0)
         if self.on_dock:
-            if self.away_m > 5.0:   # a mission just ended: blend it into the effective figure
+            if self.away_m > 20.0:  # a mission just ended: blend it into the effective figure;
+                # short trips are dominated by fixed costs (undocking, loading): low weight
                 mission = self.away_wh / self.away_m
-                self.wh_per_m_effective += (mission - self.wh_per_m_effective) * 0.5
+                w = 0.5 * min(1.0, self.away_m / 60.0)
+                self.wh_per_m_effective += (mission - self.wh_per_m_effective) * w
             self.away_wh, self.away_m = 0.0, 0.0
         elif e_wh > 0:
             self.away_wh += e_wh
             self.away_m += ds
-            if self.away_m > 10.0:  # live estimate during a long mission (never below the prior)
+            if self.away_m > 40.0:  # live estimate during a long mission (never below the prior)
                 self.wh_per_m_effective = max(self.wh_per_m_effective, self.away_wh / self.away_m)
         if self.soc <= 0.0 and not self.depleted:
             self.depleted = True
