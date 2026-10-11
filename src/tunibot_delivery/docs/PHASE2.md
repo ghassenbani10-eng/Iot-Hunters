@@ -144,7 +144,7 @@ RPP remains available (`controller:=rpp`).
 * **Speed zones**: 60 % speed in the doorways and corridors (`slow_zones`).
 * **Keepout zones**: tabletops (invisible to the 2D lidar) and the staff-only kitchen.
 * **Reachability pre-check**: before committing to a goal the manager asks the planner for a path.
-  No path → "route blocked": it clears stale obstacles and re-checks for up to 30 s (people usually
+  No path → "route blocked": it clears stale obstacles and re-checks for up to 45 s (people usually
   move away), then uses the next approach pose.
 * **Alternate approach poses**: every table has 2 approach poses (both sides of the table group); a
   blocked approach (trolley, chairs, people) is skipped automatically.

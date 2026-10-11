@@ -57,7 +57,7 @@ CASES = {
     'tc07': ('Complex layout / recovery',
              'Full world + a box blocking the full width of the service corridor (the only route to the lounge).',
              'Order table_9 (VIP lounge, unreachable), then order table_7.',
-             'After re-checking for 30 s per approach, order #1 is reported failed (reason recorded); the robot '
+             'After re-checking for 45 s per approach, order #1 is reported failed (reason recorded); the robot '
              'does not deadlock: order #2 is delivered and the robot returns to the dock.'),
     'tc08': ('Battery',
              'Battery forced to 18 % on the dock (test hook).',

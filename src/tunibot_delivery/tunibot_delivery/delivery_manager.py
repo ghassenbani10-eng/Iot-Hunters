@@ -87,7 +87,7 @@ class DeliveryManager(Node):
             'nav_attempts_per_pose': 2,
             'max_consecutive_failures': 3,
             'blocked_after_sec': 5.0,
-            'path_wait_sec': 30.0,         # wait this long for a blocked route to clear (people)
+            'path_wait_sec': 45.0,         # wait this long for a blocked route to clear (people)
             'cruise_speed': 0.35,          # m/s, used for the time part of energy estimates
             'pickup_depart_yaw': -1.5708,  # after loading, turn to face the dining room
             'pickup_staging_dist': 0.6,    # Nav2 stops this far back from a serving window
@@ -487,6 +487,7 @@ class Mission:
         m = self.mgr
         deadline = m.now() + m.cfg['path_wait_sec']
         announced = False
+        last_clear = m.now()
         while True:
             self.check_interrupts(away)
             length, ok = self.path_length(None, pose)
@@ -503,10 +504,16 @@ class Mission:
                 m.set_state(m.state, 'waiting: route blocked')
             if m.now() > deadline:
                 return False
-            # no costmap clearing here: it would also erase a real blockage (a trolley in
-            # the corridor) and send the robot back into the dead end; cells left by a
-            # person who walked away are cleared by the lidar raytracing anyway
-            m.sleep(2.0)
+            # Every 10 s: forget the costmap and let the lidar re-mark what is really still
+            # there (1.5 s). A person who left the doorway is gone from the map; a trolley
+            # or a wall in view is back after one scan. (Clearing on every check would
+            # also erase real blockages out of view and send the robot into a dead end.)
+            if m.now() - last_clear > 10.0:
+                last_clear = m.now()
+                self.nav.clearAllCostmaps()
+                self.hold(1.5)
+            else:
+                m.sleep(2.0)
 
     def go(self, name, away=True, label=None):
         """Navigate to a named place, trying each approach pose. Returns False if impossible."""
