@@ -33,6 +33,9 @@ import re
 import sys
 import xml.etree.ElementTree as ET
 
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import interior  # noqa: E402
+
 BEGIN = '<!-- BEGIN GENERATED (scripts/build_world.py) -->'
 END = '<!-- END GENERATED (scripts/build_world.py) -->'
 
@@ -56,7 +59,9 @@ WINDOWS = [(cx, w) for n, cx, w, _, _ in OPENINGS if n.startswith('window')]
 
 # Customer toilet, entered from the dining room through the partition (world frame)
 TOILET_DOOR = (9.0, 0.9)            # centre x, width
-TOILET_Y_MAX = 5.6                  # centre line of its north wall
+TOILET_Y_MID = 5.0                  # wall between the wash-basin lobby and the WC compartment
+TOILET_WC_DOOR = (9.1, 0.7)         # compartment door in that wall: centre x, width
+TOILET_Y_MAX = 7.0                  # centre line of its north wall
 
 # Full-height wall segments: (x1, y1, x2, y2[, extend_start, extend_end]), centre
 # lines, world frame. Ends are extended by half the thickness to close corners,
@@ -82,7 +87,10 @@ WALLS = [
     (-2.5, 8.9, 1.0, 8.9, True, False),
     (1.9, 8.9, 7.1, 8.9, False, True),
     # customer toilet (south end of the former storage room, east of the service
-    # corridor): north wall; the storage room behind it stays closed
+    # corridor): lobby / WC compartment wall with its door, north wall; the storage
+    # room behind it stays closed
+    (8.3, TOILET_Y_MID, TOILET_WC_DOOR[0] - TOILET_WC_DOOR[1] / 2, TOILET_Y_MID, True, False),
+    (TOILET_WC_DOOR[0] + TOILET_WC_DOOR[1] / 2, TOILET_Y_MID, X_MAX, TOILET_Y_MID, False, True),
     (8.3, TOILET_Y_MAX, X_MAX, TOILET_Y_MAX),
 ]
 
@@ -93,36 +101,13 @@ NICHES = [(8.45, 4.4, 5.2), (8.45, 7.1, 8.3)]
 
 # Static furniture with collision: (name, cx, cy, sx, sy, sz, material)
 FURNITURE = [
-    # kitchen: pass counters behind the serving windows and the takeaway door
-    ('pass_counter_1', -6.5, 3.35, 1.4, 0.55, 0.95, 'Gazebo/Wood'),
-    ('pass_counter_2', -5.0, 3.35, 1.3, 0.55, 0.95, 'Gazebo/Wood'),
+    # kitchen: the takeaway counter (the rest of the kitchen and the toilet fittings are
+    # generated in interior.py)
     ('takeaway_counter', -3.3, 3.4, 1.5, 0.6, 1.0, 'Gazebo/Wood'),
-    # cooking line along the north wall (under the extraction hood)
-    ('range_1', -9.4, 9.95, 0.9, 0.75, 0.9, 'Gazebo/DarkGrey'),
-    ('range_2', -8.45, 9.95, 0.9, 0.75, 0.9, 'Gazebo/DarkGrey'),
-    ('fryer', -7.6, 9.95, 0.7, 0.75, 0.9, 'Gazebo/Black'),
-    ('griddle', -6.8, 9.95, 0.8, 0.75, 0.9, 'Gazebo/DarkGrey'),
-    ('oven', -5.85, 9.95, 1.0, 0.75, 1.5, 'Gazebo/Black'),
-    ('salamander_counter', -4.6, 9.95, 1.4, 0.75, 0.9, 'Gazebo/Grey'),
-    # cold room + fridges + dry storage on the west wall
-    ('cold_room', -9.75, 4.3, 1.3, 2.3, 2.3, 'Gazebo/White'),
-    ('fridge_1', -10.05, 6.1, 0.7, 0.8, 2.0, 'Gazebo/White'),
-    ('fridge_2', -10.05, 7.0, 0.7, 0.8, 2.0, 'Gazebo/White'),
-    ('dry_storage', -10.1, 8.4, 0.6, 1.6, 1.8, 'Gazebo/Wood'),
-    # stainless prep tables (island)
-    ('prep_table_1', -7.4, 6.9, 2.4, 0.9, 0.9, 'Gazebo/Grey'),
-    ('prep_table_2', -4.8, 6.9, 1.8, 0.9, 0.9, 'Gazebo/Grey'),
-    # dish area on the east wall
-    ('dish_sink', -2.95, 5.6, 0.75, 1.3, 0.9, 'Gazebo/Grey'),
-    ('dishwasher', -2.95, 6.7, 0.75, 0.75, 0.9, 'Gazebo/White'),
-    ('plate_rack', -2.95, 7.7, 0.75, 1.0, 1.6, 'Gazebo/DarkGrey'),
-    # customer toilet: WC against the north wall, wash basin on the east wall
-    ('wc_toilet', 9.15, 5.15, 0.4, 0.65, 0.45, 'Gazebo/White'),
-    ('wc_sink', 9.3, 3.9, 0.45, 0.5, 0.85, 'Gazebo/White'),
     # VIP lounge sofa
     ('lounge_sofa', 3.0, 3.45, 3.0, 0.7, 0.8, 'Gazebo/Red'),
-    # storage room behind the service corridor (north of the toilet)
-    ('storage_rack', 8.9, 7.7, 1.0, 2.8, 1.8, 'Gazebo/DarkGrey'),
+    # storage room behind the service corridor (north of the toilet): rack on the east wall
+    ('storage_rack', 9.25, 8.75, 0.5, 2.9, 1.8, 'Gazebo/DarkGrey'),
     # main entrance (south-east): closed glass door
     ('entrance_door', 8.075, -9.686, 1.05, 0.06, 2.2, 'Gazebo/BlueTransparent'),
 ]
@@ -154,13 +139,18 @@ VIP_TABLES = [('cafe_table_vip_1', 0.5, 6.0), ('cafe_table_vip_2', 4.5, 6.0)]
 HUMANS = [
     # staff
     ('human_waiter', [(-7.5, 0.2), (6.0, 0.2)], 0.75, 3.0, 5.0),
-    ('human_cook', [(-8.6, 8.9), (-4.6, 8.9)], 0.5, 6.0, 3.0),
-    ('human_cook_2', [(-8.4, 4.3), (-3.9, 4.3)], 0.5, 5.0, 8.0),
+    # kitchen: a line cook between the line and the pass, a prep cook, the expediter
+    # checking plates at the pass, and the dishwasher at the dish station
+    ('human_cook', [(-8.6, 4.45), (-4.8, 4.45)], 0.5, 6.0, 3.0),
+    ('human_cook_2', [(-8.3, 8.1), (-4.6, 8.1)], 0.5, 5.0, 8.0),
+    ('human_expo', [(-6.3, 3.95), (-5.2, 3.95)], 0.35, 8.0, 2.0),
+    ('human_dish', [(-3.75, 8.3), (-3.75, 5.8)], 0.4, 10.0, 6.0),
     # customers
     ('human_guest', [(2.4, -4.2), (2.4, 0.6)], 0.6, 4.0, 12.0),
     ('human_vip', [(6.3, 4.1), (6.3, 8.2), (2.8, 8.2)], 0.55, 6.0, 20.0),
     # a guest going to the toilet (60 s inside) through its own door, next to door D2
-    ('human_wc', [(4.0, -1.0, 60.0), (8.95, 1.7), (9.0, 2.7), (8.85, 4.4, 60.0)], 0.7, 1.0, 40.0),
+    ('human_wc', [(4.0, -1.0, 60.0), (8.95, 1.7), (9.05, 2.7), (9.1, 4.6), (9.05, 5.85, 60.0)],
+     0.7, 1.0, 40.0),
     # takeaway queue: three people waiting (shuffling), one walking in from the entrance
     # along the east wall to the end of the queue and back out with the meal
     ('human_queue_1', [(-3.3, 2.35, 25.0), (-3.0, 2.35, 25.0)], 0.3, 25.0, 0.0),
@@ -169,8 +159,8 @@ HUMANS = [
     ('human_takeaway', [(7.9, -8.9, 10.0), (7.0, -7.8), (7.0, 0.4), (1.6, 2.35), (-0.3, 2.35, 30.0)],
      0.75, 1.0, 15.0),
     # parked for scripted test scenarios
-    ('human_extra_1', [(8.95, 9.7), (8.95, 9.72)], 0.5, 1000.0, 0.0),
-    ('human_extra_2', [(8.95, 5.95), (8.95, 5.97)], 0.5, 1000.0, 0.0),
+    ('human_extra_1', [(8.7, 9.9), (8.7, 9.92)], 0.5, 1000.0, 0.0),
+    ('human_extra_2', [(8.7, 9.25), (8.7, 9.27)], 0.5, 1000.0, 0.0),
 ]
 
 
@@ -245,8 +235,7 @@ def layout_model():
             continue
         links.append(visual_link('rope_%d' % i, (ax + bx) / 2, (ay + by) / 2, 0.9, math.hypot(bx - ax, by - ay), 0.03,
                                  0.03, math.atan2(by - ay, bx - ax), 'Gazebo/Red'))
-    # extraction hood above the cooking line, signs (visual only)
-    links.append(visual_link('hood', -7.2, 9.95, 2.1, 5.2, 0.9, 0.35, 0.0, 'Gazebo/Grey'))
+    # signs (visual only)
     links.append(visual_link('sign_takeaway', -3.3, Y_PART - 0.09, 2.3, 1.2, 0.02, 0.25, 0.0, 'Gazebo/Orange'))
     links.append(visual_link('sign_wc', TOILET_DOOR[0], Y_PART - 0.09, 2.2, 0.3, 0.02, 0.3, 0.0, 'Gazebo/Blue'))
     links.append(visual_link('sign_vip', 1.45, 8.9 + 0.09, 2.3, 0.9, 0.02, 0.2, 0.0, 'Gazebo/Gold'))
@@ -265,6 +254,9 @@ def layout_model():
                           length, 0.05, yaw, 'Gazebo/Yellow'))
     for name, cx, cy, sx, sy, yaw, mat in marks:
         links.append(visual_link(name, cx, cy, 0.002, sx, sy, 0.004, yaw, mat))
+    links += [p.xml() for p in interior.kitchen_parts()]
+    links += [p.xml() for p in interior.toilet_parts(
+        8.375, X_MAX, Y_PART + T / 2, TOILET_Y_MID, TOILET_Y_MAX - T / 2, TOILET_DOOR, NICHES)]
     return "\n    <model name='tunibot_layout'>\n      <static>1</static>%s\n    </model>" % ''.join(links)
 
 

@@ -3741,9 +3741,23 @@
         </visual>
       </link>
       <link name='wall_11'>
-        <pose>8.918 5.600 1.250 0 0 0.0000</pose>
-        <collision name='wall_11_collision'><geometry><box><size>1.385 0.150 2.500</size></box></geometry></collision>
-        <visual name='wall_11_visual'><geometry><box><size>1.385 0.150 2.500</size></box></geometry>
+        <pose>8.488 5.000 1.250 0 0 0.0000</pose>
+        <collision name='wall_11_collision'><geometry><box><size>0.525 0.150 2.500</size></box></geometry></collision>
+        <visual name='wall_11_visual'><geometry><box><size>0.525 0.150 2.500</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+      </link>
+      <link name='wall_12'>
+        <pose>9.530 5.000 1.250 0 0 0.0000</pose>
+        <collision name='wall_12_collision'><geometry><box><size>0.160 0.150 2.500</size></box></geometry></collision>
+        <visual name='wall_12_visual'><geometry><box><size>0.160 0.150 2.500</size></box></geometry>
+          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
+        </visual>
+      </link>
+      <link name='wall_13'>
+        <pose>8.918 7.000 1.250 0 0 0.0000</pose>
+        <collision name='wall_13_collision'><geometry><box><size>1.385 0.150 2.500</size></box></geometry></collision>
+        <visual name='wall_13_visual'><geometry><box><size>1.385 0.150 2.500</size></box></geometry>
           <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
         </visual>
       </link>
@@ -3852,144 +3866,11 @@
           <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
         </visual>
       </link>
-      <link name='pass_counter_1'>
-        <pose>-6.500 3.350 0.475 0 0 0.0000</pose>
-        <collision name='pass_counter_1_collision'><geometry><box><size>1.400 0.550 0.950</size></box></geometry></collision>
-        <visual name='pass_counter_1_visual'><geometry><box><size>1.400 0.550 0.950</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Wood</name></script></material>
-        </visual>
-      </link>
-      <link name='pass_counter_2'>
-        <pose>-5.000 3.350 0.475 0 0 0.0000</pose>
-        <collision name='pass_counter_2_collision'><geometry><box><size>1.300 0.550 0.950</size></box></geometry></collision>
-        <visual name='pass_counter_2_visual'><geometry><box><size>1.300 0.550 0.950</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Wood</name></script></material>
-        </visual>
-      </link>
       <link name='takeaway_counter'>
         <pose>-3.300 3.400 0.500 0 0 0.0000</pose>
         <collision name='takeaway_counter_collision'><geometry><box><size>1.500 0.600 1.000</size></box></geometry></collision>
         <visual name='takeaway_counter_visual'><geometry><box><size>1.500 0.600 1.000</size></box></geometry>
           <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Wood</name></script></material>
-        </visual>
-      </link>
-      <link name='range_1'>
-        <pose>-9.400 9.950 0.450 0 0 0.0000</pose>
-        <collision name='range_1_collision'><geometry><box><size>0.900 0.750 0.900</size></box></geometry></collision>
-        <visual name='range_1_visual'><geometry><box><size>0.900 0.750 0.900</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/DarkGrey</name></script></material>
-        </visual>
-      </link>
-      <link name='range_2'>
-        <pose>-8.450 9.950 0.450 0 0 0.0000</pose>
-        <collision name='range_2_collision'><geometry><box><size>0.900 0.750 0.900</size></box></geometry></collision>
-        <visual name='range_2_visual'><geometry><box><size>0.900 0.750 0.900</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/DarkGrey</name></script></material>
-        </visual>
-      </link>
-      <link name='fryer'>
-        <pose>-7.600 9.950 0.450 0 0 0.0000</pose>
-        <collision name='fryer_collision'><geometry><box><size>0.700 0.750 0.900</size></box></geometry></collision>
-        <visual name='fryer_visual'><geometry><box><size>0.700 0.750 0.900</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Black</name></script></material>
-        </visual>
-      </link>
-      <link name='griddle'>
-        <pose>-6.800 9.950 0.450 0 0 0.0000</pose>
-        <collision name='griddle_collision'><geometry><box><size>0.800 0.750 0.900</size></box></geometry></collision>
-        <visual name='griddle_visual'><geometry><box><size>0.800 0.750 0.900</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/DarkGrey</name></script></material>
-        </visual>
-      </link>
-      <link name='oven'>
-        <pose>-5.850 9.950 0.750 0 0 0.0000</pose>
-        <collision name='oven_collision'><geometry><box><size>1.000 0.750 1.500</size></box></geometry></collision>
-        <visual name='oven_visual'><geometry><box><size>1.000 0.750 1.500</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Black</name></script></material>
-        </visual>
-      </link>
-      <link name='salamander_counter'>
-        <pose>-4.600 9.950 0.450 0 0 0.0000</pose>
-        <collision name='salamander_counter_collision'><geometry><box><size>1.400 0.750 0.900</size></box></geometry></collision>
-        <visual name='salamander_counter_visual'><geometry><box><size>1.400 0.750 0.900</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
-        </visual>
-      </link>
-      <link name='cold_room'>
-        <pose>-9.750 4.300 1.150 0 0 0.0000</pose>
-        <collision name='cold_room_collision'><geometry><box><size>1.300 2.300 2.300</size></box></geometry></collision>
-        <visual name='cold_room_visual'><geometry><box><size>1.300 2.300 2.300</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/White</name></script></material>
-        </visual>
-      </link>
-      <link name='fridge_1'>
-        <pose>-10.050 6.100 1.000 0 0 0.0000</pose>
-        <collision name='fridge_1_collision'><geometry><box><size>0.700 0.800 2.000</size></box></geometry></collision>
-        <visual name='fridge_1_visual'><geometry><box><size>0.700 0.800 2.000</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/White</name></script></material>
-        </visual>
-      </link>
-      <link name='fridge_2'>
-        <pose>-10.050 7.000 1.000 0 0 0.0000</pose>
-        <collision name='fridge_2_collision'><geometry><box><size>0.700 0.800 2.000</size></box></geometry></collision>
-        <visual name='fridge_2_visual'><geometry><box><size>0.700 0.800 2.000</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/White</name></script></material>
-        </visual>
-      </link>
-      <link name='dry_storage'>
-        <pose>-10.100 8.400 0.900 0 0 0.0000</pose>
-        <collision name='dry_storage_collision'><geometry><box><size>0.600 1.600 1.800</size></box></geometry></collision>
-        <visual name='dry_storage_visual'><geometry><box><size>0.600 1.600 1.800</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Wood</name></script></material>
-        </visual>
-      </link>
-      <link name='prep_table_1'>
-        <pose>-7.400 6.900 0.450 0 0 0.0000</pose>
-        <collision name='prep_table_1_collision'><geometry><box><size>2.400 0.900 0.900</size></box></geometry></collision>
-        <visual name='prep_table_1_visual'><geometry><box><size>2.400 0.900 0.900</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
-        </visual>
-      </link>
-      <link name='prep_table_2'>
-        <pose>-4.800 6.900 0.450 0 0 0.0000</pose>
-        <collision name='prep_table_2_collision'><geometry><box><size>1.800 0.900 0.900</size></box></geometry></collision>
-        <visual name='prep_table_2_visual'><geometry><box><size>1.800 0.900 0.900</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
-        </visual>
-      </link>
-      <link name='dish_sink'>
-        <pose>-2.950 5.600 0.450 0 0 0.0000</pose>
-        <collision name='dish_sink_collision'><geometry><box><size>0.750 1.300 0.900</size></box></geometry></collision>
-        <visual name='dish_sink_visual'><geometry><box><size>0.750 1.300 0.900</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
-        </visual>
-      </link>
-      <link name='dishwasher'>
-        <pose>-2.950 6.700 0.450 0 0 0.0000</pose>
-        <collision name='dishwasher_collision'><geometry><box><size>0.750 0.750 0.900</size></box></geometry></collision>
-        <visual name='dishwasher_visual'><geometry><box><size>0.750 0.750 0.900</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/White</name></script></material>
-        </visual>
-      </link>
-      <link name='plate_rack'>
-        <pose>-2.950 7.700 0.800 0 0 0.0000</pose>
-        <collision name='plate_rack_collision'><geometry><box><size>0.750 1.000 1.600</size></box></geometry></collision>
-        <visual name='plate_rack_visual'><geometry><box><size>0.750 1.000 1.600</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/DarkGrey</name></script></material>
-        </visual>
-      </link>
-      <link name='wc_toilet'>
-        <pose>9.150 5.150 0.225 0 0 0.0000</pose>
-        <collision name='wc_toilet_collision'><geometry><box><size>0.400 0.650 0.450</size></box></geometry></collision>
-        <visual name='wc_toilet_visual'><geometry><box><size>0.400 0.650 0.450</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/White</name></script></material>
-        </visual>
-      </link>
-      <link name='wc_sink'>
-        <pose>9.300 3.900 0.425 0 0 0.0000</pose>
-        <collision name='wc_sink_collision'><geometry><box><size>0.450 0.500 0.850</size></box></geometry></collision>
-        <visual name='wc_sink_visual'><geometry><box><size>0.450 0.500 0.850</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/White</name></script></material>
         </visual>
       </link>
       <link name='lounge_sofa'>
@@ -4000,9 +3881,9 @@
         </visual>
       </link>
       <link name='storage_rack'>
-        <pose>8.900 7.700 0.900 0 0 0.0000</pose>
-        <collision name='storage_rack_collision'><geometry><box><size>1.000 2.800 1.800</size></box></geometry></collision>
-        <visual name='storage_rack_visual'><geometry><box><size>1.000 2.800 1.800</size></box></geometry>
+        <pose>9.250 8.750 0.900 0 0 0.0000</pose>
+        <collision name='storage_rack_collision'><geometry><box><size>0.500 2.900 1.800</size></box></geometry></collision>
+        <visual name='storage_rack_visual'><geometry><box><size>0.500 2.900 1.800</size></box></geometry>
           <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/DarkGrey</name></script></material>
         </visual>
       </link>
@@ -4083,12 +3964,6 @@
         <pose>0.500 1.800 0.900 0 0 0.0000</pose>
         <visual name='rope_4_visual'><geometry><box><size>1.000 0.030 0.030</size></box></geometry>
           <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Red</name></script></material>
-        </visual>
-      </link>
-      <link name='hood'>
-        <pose>-7.200 9.950 2.100 0 0 0.0000</pose>
-        <visual name='hood_visual'><geometry><box><size>5.200 0.900 0.350</size></box></geometry>
-          <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Grey</name></script></material>
         </visual>
       </link>
       <link name='sign_takeaway'>
@@ -4204,6 +4079,476 @@
         <visual name='lane_5_r_visual'><geometry><box><size>15.000 0.050 0.004</size></box></geometry>
           <material><script><uri>file://media/materials/scripts/gazebo.material</uri><name>Gazebo/Yellow</name></script></material>
         </visual>
+      </link>
+      <link name='k_floor'>
+        <visual name='k_floor_v0'><pose>-6.495 6.707 0.002 0 0 0.0000</pose><geometry><box><size>7.840 7.265 0.003</size></box></geometry><material><ambient>0.35 0.18 0.13 1</ambient><diffuse>0.58 0.30 0.22 1</diffuse><specular>0.30 0.30 0.30 1</specular></material></visual>
+        <visual name='k_floor_v1'><pose>-6.700 4.300 0.004 0 0 0.0000</pose><geometry><box><size>0.300 0.300 0.002</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_floor_v2'><pose>-3.750 7.200 0.004 0 0 0.0000</pose><geometry><box><size>0.300 0.300 0.002</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_floor_v3'><pose>-9.700 6.700 0.004 0 0 0.0000</pose><geometry><box><size>0.300 0.300 0.002</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_floor_v4'><pose>-6.700 4.450 0.010 0 0 0.0000</pose><geometry><box><size>4.400 0.660 0.013</size></box></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_floor_v5'><pose>-3.750 7.100 0.010 0 0 0.0000</pose><geometry><box><size>0.460 3.000 0.013</size></box></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_floor_v6'><pose>-10.409 6.707 0.900 0 0 0.0000</pose><geometry><box><size>0.012 7.265 1.800</size></box></geometry><material><ambient>0.56 0.56 0.56 1</ambient><diffuse>0.93 0.94 0.93 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='k_floor_v7'><pose>-6.495 10.334 0.900 0 0 0.0000</pose><geometry><box><size>7.840 0.012 1.800</size></box></geometry><material><ambient>0.56 0.56 0.56 1</ambient><diffuse>0.93 0.94 0.93 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='k_floor_v8'><pose>-2.581 6.088 0.900 0 0 0.0000</pose><geometry><box><size>0.012 6.025 1.800</size></box></geometry><material><ambient>0.56 0.56 0.56 1</ambient><diffuse>0.93 0.94 0.93 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+      </link>
+      <link name='k_pass'>
+        <collision name='k_pass_c0'><pose>-5.750 3.375 0.475 0 0 0.0000</pose><geometry><box><size>3.100 0.600 0.950</size></box></geometry></collision>
+        <visual name='k_pass_v0'><pose>-5.750 3.375 0.475 0 0 0.0000</pose><geometry><box><size>3.100 0.600 0.950</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_pass_v1'><pose>-5.750 3.375 0.260 0 0 0.0000</pose><geometry><box><size>3.100 0.600 0.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_pass_v2'><pose>-6.500 3.375 1.650 0 0 0.0000</pose><geometry><box><size>0.900 0.150 0.060</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_pass_v3'><pose>-6.500 3.375 1.610 0 0 0.0000</pose><geometry><box><size>0.840 0.090 0.020</size></box></geometry><material><ambient>0.60 0.27 0.06 1</ambient><diffuse>1.00 0.45 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>1.00 0.35 0.05 1</emissive></material></visual>
+        <visual name='k_pass_v4'><pose>-6.750 3.320 0.960 0 0 0</pose><geometry><cylinder><radius>0.130</radius><length>0.020</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_pass_v5'><pose>-6.750 3.320 0.985 0 0 0</pose><geometry><cylinder><radius>0.070</radius><length>0.030</length></cylinder></geometry><material><ambient>0.33 0.18 0.07 1</ambient><diffuse>0.55 0.30 0.12 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_pass_v6'><pose>-6.710 3.300 0.995 0 0 0</pose><geometry><sphere><radius>0.025</radius></sphere></geometry><material><ambient>0.12 0.33 0.09 1</ambient><diffuse>0.20 0.55 0.15 1</diffuse><specular>0.20 0.20 0.20 1</specular></material></visual>
+        <visual name='k_pass_v7'><pose>-6.280 3.320 0.960 0 0 0</pose><geometry><cylinder><radius>0.130</radius><length>0.020</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_pass_v8'><pose>-6.280 3.320 0.985 0 0 0</pose><geometry><cylinder><radius>0.070</radius><length>0.030</length></cylinder></geometry><material><ambient>0.51 0.39 0.12 1</ambient><diffuse>0.85 0.65 0.20 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_pass_v9'><pose>-6.240 3.300 0.995 0 0 0</pose><geometry><sphere><radius>0.025</radius></sphere></geometry><material><ambient>0.12 0.33 0.09 1</ambient><diffuse>0.20 0.55 0.15 1</diffuse><specular>0.20 0.20 0.20 1</specular></material></visual>
+        <visual name='k_pass_v10'><pose>-5.000 3.375 1.650 0 0 0.0000</pose><geometry><box><size>0.900 0.150 0.060</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_pass_v11'><pose>-5.000 3.375 1.610 0 0 0.0000</pose><geometry><box><size>0.840 0.090 0.020</size></box></geometry><material><ambient>0.60 0.27 0.06 1</ambient><diffuse>1.00 0.45 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>1.00 0.35 0.05 1</emissive></material></visual>
+        <visual name='k_pass_v12'><pose>-5.250 3.320 0.960 0 0 0</pose><geometry><cylinder><radius>0.130</radius><length>0.020</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_pass_v13'><pose>-5.250 3.320 0.985 0 0 0</pose><geometry><cylinder><radius>0.070</radius><length>0.030</length></cylinder></geometry><material><ambient>0.33 0.18 0.07 1</ambient><diffuse>0.55 0.30 0.12 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_pass_v14'><pose>-5.210 3.300 0.995 0 0 0</pose><geometry><sphere><radius>0.025</radius></sphere></geometry><material><ambient>0.12 0.33 0.09 1</ambient><diffuse>0.20 0.55 0.15 1</diffuse><specular>0.20 0.20 0.20 1</specular></material></visual>
+        <visual name='k_pass_v15'><pose>-4.780 3.320 0.960 0 0 0</pose><geometry><cylinder><radius>0.130</radius><length>0.020</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_pass_v16'><pose>-4.780 3.320 0.985 0 0 0</pose><geometry><cylinder><radius>0.070</radius><length>0.030</length></cylinder></geometry><material><ambient>0.51 0.39 0.12 1</ambient><diffuse>0.85 0.65 0.20 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_pass_v17'><pose>-4.740 3.300 0.995 0 0 0</pose><geometry><sphere><radius>0.025</radius></sphere></geometry><material><ambient>0.12 0.33 0.09 1</ambient><diffuse>0.20 0.55 0.15 1</diffuse><specular>0.20 0.20 0.20 1</specular></material></visual>
+        <visual name='k_pass_v18'><pose>-5.750 3.270 1.875 0 0 0.0000</pose><geometry><box><size>3.100 0.300 0.030</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_pass_v19'><pose>-7.050 3.270 1.971 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.162</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_pass_v20'><pose>-6.750 3.270 1.971 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.162</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_pass_v21'><pose>-4.750 3.270 1.971 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.162</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_pass_v22'><pose>-4.450 3.270 1.971 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.162</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_pass_v23'><pose>-5.750 3.655 1.460 0 0 0.0000</pose><geometry><box><size>3.000 0.030 0.020</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_pass_v24'><pose>-7.000 3.657 1.370 0 0 0.0000</pose><geometry><box><size>0.080 0.005 0.160</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_pass_v25'><pose>-6.600 3.657 1.370 0 0 0.0000</pose><geometry><box><size>0.080 0.005 0.160</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_pass_v26'><pose>-6.200 3.657 1.370 0 0 0.0000</pose><geometry><box><size>0.080 0.005 0.160</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_pass_v27'><pose>-5.400 3.657 1.370 0 0 0.0000</pose><geometry><box><size>0.080 0.005 0.160</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_pass_v28'><pose>-4.900 3.657 1.370 0 0 0.0000</pose><geometry><box><size>0.080 0.005 0.160</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_pass_v29'><pose>-4.500 3.657 1.370 0 0 0.0000</pose><geometry><box><size>0.080 0.005 0.160</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_pass_v30'><pose>-5.750 3.525 2.040 0 0 0.0000</pose><geometry><box><size>0.460 0.050 0.280</size></box></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_pass_v31'><pose>-5.750 3.558 2.040 0 0 0.0000</pose><geometry><box><size>0.400 0.005 0.220</size></box></geometry><material><ambient>0.06 0.18 0.36 1</ambient><diffuse>0.10 0.30 0.60 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.15 0.35 0.70 1</emissive></material></visual>
+      </link>
+      <link name='k_handsink_pass'>
+        <visual name='k_handsink_pass_v0'><pose>-2.765 4.025 0.825 0 0 0.0000</pose><geometry><box><size>0.380 0.450 0.150</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_handsink_pass_v1'><pose>-2.765 4.025 0.883 0 0 0.0000</pose><geometry><box><size>0.280 0.350 0.045</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.90 0.90 0.90 1</specular></material></visual>
+        <visual name='k_handsink_pass_v2'><pose>-2.615 4.025 1.010 0 0 0</pose><geometry><cylinder><radius>0.012</radius><length>0.220</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_handsink_pass_v3'><pose>-2.595 3.740 1.250 0 0 0.0000</pose><geometry><box><size>0.060 0.080 0.200</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_handsink_pass_v4'><pose>-2.595 4.410 1.350 0 0 0.0000</pose><geometry><box><size>0.100 0.280 0.300</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_handsink_pass_v5'><pose>-3.450 3.375 1.025 0 0 0.0000</pose><geometry><box><size>0.300 0.250 0.050</size></box></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_handsink_pass_v6'><pose>-3.450 3.420 1.150 0 0 0.0000</pose><geometry><box><size>0.260 0.030 0.200</size></box></geometry><material><ambient>0.06 0.12 0.24 1</ambient><diffuse>0.10 0.20 0.40 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.10 0.25 0.50 1</emissive></material></visual>
+        <visual name='k_handsink_pass_v7'><pose>-3.050 3.365 1.140 0 0 0.0000</pose><geometry><box><size>0.180 0.170 0.280</size></box></geometry><material><ambient>0.40 0.30 0.19 1</ambient><diffuse>0.66 0.50 0.32 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_handsink_pass_v8'><pose>-2.850 3.365 1.140 0 0 0.0000</pose><geometry><box><size>0.180 0.170 0.280</size></box></geometry><material><ambient>0.40 0.30 0.19 1</ambient><diffuse>0.66 0.50 0.32 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+      </link>
+      <link name='k_line'>
+        <collision name='k_line_c0'><pose>-6.7 5.325 0.45 0 0 0</pose><geometry><box><size>4.8 0.850 0.9</size></box></geometry></collision>
+        <visual name='k_line_v0'><pose>-8.650 5.325 0.420 0 0 0.0000</pose><geometry><box><size>0.900 0.850 0.840</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.70 0.70 0.70 1</specular></material></visual>
+        <visual name='k_line_v1'><pose>-8.650 5.305 0.850 0 0 0.0000</pose><geometry><box><size>0.800 0.650 0.020</size></box></geometry><material><ambient>0.60 0.18 0.03 1</ambient><diffuse>1.00 0.30 0.05 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.90 0.22 0.02 1</emissive></material></visual>
+        <visual name='k_line_v2'><pose>-9.015 5.305 0.875 0 0 0.0000</pose><geometry><box><size>0.030 0.650 0.030</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v3'><pose>-8.920 5.305 0.875 0 0 0.0000</pose><geometry><box><size>0.030 0.650 0.030</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v4'><pose>-8.825 5.305 0.875 0 0 0.0000</pose><geometry><box><size>0.030 0.650 0.030</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v5'><pose>-8.730 5.305 0.875 0 0 0.0000</pose><geometry><box><size>0.030 0.650 0.030</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v6'><pose>-8.635 5.305 0.875 0 0 0.0000</pose><geometry><box><size>0.030 0.650 0.030</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v7'><pose>-8.540 5.305 0.875 0 0 0.0000</pose><geometry><box><size>0.030 0.650 0.030</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v8'><pose>-8.445 5.305 0.875 0 0 0.0000</pose><geometry><box><size>0.030 0.650 0.030</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v9'><pose>-8.350 5.305 0.875 0 0 0.0000</pose><geometry><box><size>0.030 0.650 0.030</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v10'><pose>-8.255 5.305 0.875 0 0 0.0000</pose><geometry><box><size>0.030 0.650 0.030</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v11'><pose>-8.850 5.290 0.903 0 0 0.0000</pose><geometry><box><size>0.160 0.180 0.025</size></box></geometry><material><ambient>0.24 0.10 0.06 1</ambient><diffuse>0.40 0.16 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v12'><pose>-8.500 5.290 0.903 0 0 0.0000</pose><geometry><box><size>0.160 0.180 0.025</size></box></geometry><material><ambient>0.24 0.10 0.06 1</ambient><diffuse>0.40 0.16 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v13'><pose>-7.750 5.325 0.440 0 0 0.0000</pose><geometry><box><size>0.900 0.850 0.880</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.70 0.70 0.70 1</specular></material></visual>
+        <visual name='k_line_v14'><pose>-7.750 4.897 0.370 0 0 0.0000</pose><geometry><box><size>0.740 0.006 0.500</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_line_v15'><pose>-7.750 4.860 0.660 0 1.5708 0</pose><geometry><cylinder><radius>0.012</radius><length>0.600</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.90 0.90 0.90 1</specular></material></visual>
+        <visual name='k_line_v16'><pose>-8.100 4.880 0.780 1.5708 0 0</pose><geometry><cylinder><radius>0.022</radius><length>0.030</length></cylinder></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v17'><pose>-7.970 4.880 0.780 1.5708 0 0</pose><geometry><cylinder><radius>0.022</radius><length>0.030</length></cylinder></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v18'><pose>-7.840 4.880 0.780 1.5708 0 0</pose><geometry><cylinder><radius>0.022</radius><length>0.030</length></cylinder></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v19'><pose>-7.710 4.880 0.780 1.5708 0 0</pose><geometry><cylinder><radius>0.022</radius><length>0.030</length></cylinder></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v20'><pose>-7.580 4.880 0.780 1.5708 0 0</pose><geometry><cylinder><radius>0.022</radius><length>0.030</length></cylinder></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v21'><pose>-7.450 4.880 0.780 1.5708 0 0</pose><geometry><cylinder><radius>0.022</radius><length>0.030</length></cylinder></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v22'><pose>-8.050 5.080 0.890 0 0 0.0000</pose><geometry><box><size>0.260 0.300 0.020</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v23'><pose>-8.050 5.080 0.904 0 0 0</pose><geometry><cylinder><radius>0.060</radius><length>0.008</length></cylinder></geometry><material><ambient>0.12 0.24 0.60 1</ambient><diffuse>0.20 0.40 1.00 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.15 0.35 1.00 1</emissive></material></visual>
+        <visual name='k_line_v24'><pose>-8.050 5.450 0.890 0 0 0.0000</pose><geometry><box><size>0.260 0.300 0.020</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v25'><pose>-8.050 5.450 0.904 0 0 0</pose><geometry><cylinder><radius>0.060</radius><length>0.008</length></cylinder></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v26'><pose>-7.750 5.080 0.890 0 0 0.0000</pose><geometry><box><size>0.260 0.300 0.020</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v27'><pose>-7.750 5.080 0.904 0 0 0</pose><geometry><cylinder><radius>0.060</radius><length>0.008</length></cylinder></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v28'><pose>-7.750 5.450 0.890 0 0 0.0000</pose><geometry><box><size>0.260 0.300 0.020</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v29'><pose>-7.750 5.450 0.904 0 0 0</pose><geometry><cylinder><radius>0.060</radius><length>0.008</length></cylinder></geometry><material><ambient>0.12 0.24 0.60 1</ambient><diffuse>0.20 0.40 1.00 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.15 0.35 1.00 1</emissive></material></visual>
+        <visual name='k_line_v30'><pose>-7.450 5.080 0.890 0 0 0.0000</pose><geometry><box><size>0.260 0.300 0.020</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v31'><pose>-7.450 5.080 0.904 0 0 0</pose><geometry><cylinder><radius>0.060</radius><length>0.008</length></cylinder></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v32'><pose>-7.450 5.450 0.890 0 0 0.0000</pose><geometry><box><size>0.260 0.300 0.020</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v33'><pose>-7.450 5.450 0.904 0 0 0</pose><geometry><cylinder><radius>0.060</radius><length>0.008</length></cylinder></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v34'><pose>-8.050 5.080 1.040 0 0 0</pose><geometry><cylinder><radius>0.160</radius><length>0.260</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.90 0.90 0.90 1</specular></material></visual>
+        <visual name='k_line_v35'><pose>-7.750 5.450 0.945 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.070</length></cylinder></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_line_v36'><pose>-7.750 5.250 0.945 1.5708 0 0</pose><geometry><cylinder><radius>0.012</radius><length>0.220</length></cylinder></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v37'><pose>-6.850 5.325 0.430 0 0 0.0000</pose><geometry><box><size>0.900 0.850 0.860</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.70 0.70 0.70 1</specular></material></visual>
+        <visual name='k_line_v38'><pose>-6.850 5.350 0.873 0 0 0.0000</pose><geometry><box><size>0.800 0.700 0.025</size></box></geometry><material><ambient>0.04 0.04 0.05 1</ambient><diffuse>0.07 0.07 0.08 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='k_line_v39'><pose>-6.850 4.960 0.850 0 0 0.0000</pose><geometry><box><size>0.800 0.080 0.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v40'><pose>-7.285 5.375 0.930 0 0 0.0000</pose><geometry><box><size>0.030 0.750 0.140</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v41'><pose>-6.415 5.375 0.930 0 0 0.0000</pose><geometry><box><size>0.030 0.750 0.140</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v42'><pose>-7.100 5.200 0.895 0 0 0</pose><geometry><cylinder><radius>0.055</radius><length>0.020</length></cylinder></geometry><material><ambient>0.21 0.11 0.06 1</ambient><diffuse>0.35 0.18 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v43'><pose>-6.900 5.250 0.895 0 0 0</pose><geometry><cylinder><radius>0.055</radius><length>0.020</length></cylinder></geometry><material><ambient>0.21 0.11 0.06 1</ambient><diffuse>0.35 0.18 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v44'><pose>-6.700 5.150 0.895 0 0 0</pose><geometry><cylinder><radius>0.055</radius><length>0.020</length></cylinder></geometry><material><ambient>0.21 0.11 0.06 1</ambient><diffuse>0.35 0.18 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v45'><pose>-6.900 5.500 0.895 0 0 0</pose><geometry><cylinder><radius>0.055</radius><length>0.020</length></cylinder></geometry><material><ambient>0.21 0.11 0.06 1</ambient><diffuse>0.35 0.18 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v46'><pose>-6.200 5.325 0.450 0 0 0.0000</pose><geometry><box><size>0.400 0.850 0.900</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.70 0.70 0.70 1</specular></material></visual>
+        <visual name='k_line_v47'><pose>-6.200 5.325 0.895 0 0 0.0000</pose><geometry><box><size>0.300 0.550 0.010</size></box></geometry><material><ambient>0.33 0.24 0.05 1</ambient><diffuse>0.55 0.40 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.25 0.17 0.00 1</emissive></material></visual>
+        <visual name='k_line_v48'><pose>-6.200 5.105 0.905 0 0 0.0000</pose><geometry><box><size>0.240 0.010 0.070</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_line_v49'><pose>-6.200 5.495 0.905 0 0 0.0000</pose><geometry><box><size>0.240 0.010 0.070</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_line_v50'><pose>-6.315 5.300 0.905 0 0 0.0000</pose><geometry><box><size>0.010 0.400 0.070</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_line_v51'><pose>-6.085 5.300 0.905 0 0 0.0000</pose><geometry><box><size>0.010 0.400 0.070</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_line_v52'><pose>-6.280 5.180 0.906 0 0 -0.3000</pose><geometry><box><size>0.012 0.100 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v53'><pose>-6.225 5.180 0.906 0 0 0.0000</pose><geometry><box><size>0.012 0.100 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v54'><pose>-6.170 5.180 0.906 0 0 0.3000</pose><geometry><box><size>0.012 0.100 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v55'><pose>-6.115 5.180 0.906 0 0 -0.3000</pose><geometry><box><size>0.012 0.100 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v56'><pose>-6.280 5.260 0.906 0 0 0.0000</pose><geometry><box><size>0.012 0.100 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v57'><pose>-6.225 5.260 0.906 0 0 0.3000</pose><geometry><box><size>0.012 0.100 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v58'><pose>-6.170 5.260 0.906 0 0 -0.3000</pose><geometry><box><size>0.012 0.100 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v59'><pose>-6.200 5.000 0.970 1.5708 0 0</pose><geometry><cylinder><radius>0.008</radius><length>0.220</length></cylinder></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v60'><pose>-5.800 5.325 0.450 0 0 0.0000</pose><geometry><box><size>0.400 0.850 0.900</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.70 0.70 0.70 1</specular></material></visual>
+        <visual name='k_line_v61'><pose>-5.800 5.325 0.895 0 0 0.0000</pose><geometry><box><size>0.300 0.550 0.010</size></box></geometry><material><ambient>0.33 0.24 0.05 1</ambient><diffuse>0.55 0.40 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.25 0.17 0.00 1</emissive></material></visual>
+        <visual name='k_line_v62'><pose>-5.800 5.105 0.905 0 0 0.0000</pose><geometry><box><size>0.240 0.010 0.070</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_line_v63'><pose>-5.800 5.495 0.905 0 0 0.0000</pose><geometry><box><size>0.240 0.010 0.070</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_line_v64'><pose>-5.915 5.300 0.905 0 0 0.0000</pose><geometry><box><size>0.010 0.400 0.070</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_line_v65'><pose>-5.685 5.300 0.905 0 0 0.0000</pose><geometry><box><size>0.010 0.400 0.070</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_line_v66'><pose>-5.880 5.180 0.906 0 0 -0.3000</pose><geometry><box><size>0.012 0.100 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v67'><pose>-5.825 5.180 0.906 0 0 0.0000</pose><geometry><box><size>0.012 0.100 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v68'><pose>-5.770 5.180 0.906 0 0 0.3000</pose><geometry><box><size>0.012 0.100 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v69'><pose>-5.715 5.180 0.906 0 0 -0.3000</pose><geometry><box><size>0.012 0.100 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v70'><pose>-5.880 5.260 0.906 0 0 0.0000</pose><geometry><box><size>0.012 0.100 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v71'><pose>-5.825 5.260 0.906 0 0 0.3000</pose><geometry><box><size>0.012 0.100 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v72'><pose>-5.770 5.260 0.906 0 0 -0.3000</pose><geometry><box><size>0.012 0.100 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v73'><pose>-5.800 5.000 0.970 1.5708 0 0</pose><geometry><cylinder><radius>0.008</radius><length>0.220</length></cylinder></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v74'><pose>-5.350 5.325 0.440 0 0 0.0000</pose><geometry><box><size>0.500 0.850 0.880</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.70 0.70 0.70 1</specular></material></visual>
+        <visual name='k_line_v75'><pose>-5.350 5.325 0.873 0 0 0.0000</pose><geometry><box><size>0.400 0.650 0.025</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_line_v76'><pose>-5.500 5.080 0.891 0 0 -1.0000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v77'><pose>-5.440 5.080 0.901 0 0 0.0000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v78'><pose>-5.380 5.080 0.891 0 0 1.0000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v79'><pose>-5.320 5.080 0.901 0 0 -0.5000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v80'><pose>-5.260 5.080 0.891 0 0 0.5000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v81'><pose>-5.200 5.080 0.901 0 0 -1.0000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v82'><pose>-5.500 5.250 0.891 0 0 0.0000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v83'><pose>-5.440 5.250 0.901 0 0 1.0000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v84'><pose>-5.380 5.250 0.891 0 0 -0.5000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v85'><pose>-5.320 5.250 0.901 0 0 0.5000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v86'><pose>-5.260 5.250 0.891 0 0 -1.0000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v87'><pose>-5.200 5.250 0.901 0 0 0.0000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v88'><pose>-5.500 5.420 0.891 0 0 1.0000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v89'><pose>-5.440 5.420 0.901 0 0 -0.5000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v90'><pose>-5.380 5.420 0.891 0 0 0.5000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v91'><pose>-5.320 5.420 0.901 0 0 -1.0000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v92'><pose>-5.260 5.420 0.891 0 0 0.0000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v93'><pose>-5.200 5.420 0.901 0 0 1.0000</pose><geometry><box><size>0.012 0.110 0.012</size></box></geometry><material><ambient>0.56 0.47 0.18 1</ambient><diffuse>0.93 0.78 0.30 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v94'><pose>-5.350 5.325 1.525 0 0 0.0000</pose><geometry><box><size>0.400 0.150 0.050</size></box></geometry><material><ambient>0.60 0.27 0.06 1</ambient><diffuse>1.00 0.45 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>1.00 0.35 0.05 1</emissive></material></visual>
+        <visual name='k_line_v95'><pose>-4.700 5.325 0.440 0 0 0.0000</pose><geometry><box><size>0.800 0.850 0.880</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.70 0.70 0.70 1</specular></material></visual>
+        <visual name='k_line_v96'><pose>-5.000 5.120 0.870 0 0 0.0000</pose><geometry><box><size>0.300 0.260 0.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v97'><pose>-5.000 5.120 0.883 0 0 0.0000</pose><geometry><box><size>0.260 0.220 0.005</size></box></geometry><material><ambient>0.58 0.57 0.53 1</ambient><diffuse>0.96 0.95 0.88 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v98'><pose>-4.600 5.120 0.870 0 0 0.0000</pose><geometry><box><size>0.300 0.260 0.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v99'><pose>-4.600 5.120 0.883 0 0 0.0000</pose><geometry><box><size>0.260 0.220 0.005</size></box></geometry><material><ambient>0.45 0.07 0.04 1</ambient><diffuse>0.75 0.12 0.06 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v100'><pose>-5.000 5.440 0.870 0 0 0.0000</pose><geometry><box><size>0.300 0.260 0.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v101'><pose>-5.000 5.440 0.883 0 0 0.0000</pose><geometry><box><size>0.260 0.220 0.005</size></box></geometry><material><ambient>0.24 0.13 0.06 1</ambient><diffuse>0.40 0.22 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v102'><pose>-4.600 5.440 0.870 0 0 0.0000</pose><geometry><box><size>0.300 0.260 0.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v103'><pose>-4.600 5.440 0.883 0 0 0.0000</pose><geometry><box><size>0.260 0.220 0.005</size></box></geometry><material><ambient>0.15 0.33 0.09 1</ambient><diffuse>0.25 0.55 0.15 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v104'><pose>-6.700 5.675 1.100 0 0 0.0000</pose><geometry><box><size>4.800 0.150 0.400</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.70 0.70 0.70 1</specular></material></visual>
+        <visual name='k_line_v105'><pose>-6.700 5.650 1.310 0 0 0.0000</pose><geometry><box><size>4.800 0.200 0.020</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_line_v106'><pose>-8.900 5.660 1.420 0 0 0</pose><geometry><cylinder><radius>0.030</radius><length>0.200</length></cylinder></geometry><material><ambient>0.47 0.06 0.05 1</ambient><diffuse>0.78 0.10 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v107'><pose>-8.800 5.660 1.420 0 0 0</pose><geometry><cylinder><radius>0.030</radius><length>0.200</length></cylinder></geometry><material><ambient>0.54 0.45 0.06 1</ambient><diffuse>0.90 0.75 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v108'><pose>-6.300 5.660 1.420 0 0 0</pose><geometry><cylinder><radius>0.030</radius><length>0.200</length></cylinder></geometry><material><ambient>0.47 0.06 0.05 1</ambient><diffuse>0.78 0.10 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v109'><pose>-6.200 5.660 1.420 0 0 0</pose><geometry><cylinder><radius>0.030</radius><length>0.200</length></cylinder></geometry><material><ambient>0.54 0.45 0.06 1</ambient><diffuse>0.90 0.75 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v110'><pose>-4.600 5.660 1.420 0 0 0</pose><geometry><cylinder><radius>0.030</radius><length>0.200</length></cylinder></geometry><material><ambient>0.47 0.06 0.05 1</ambient><diffuse>0.78 0.10 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v111'><pose>-4.500 5.660 1.420 0 0 0</pose><geometry><cylinder><radius>0.030</radius><length>0.200</length></cylinder></geometry><material><ambient>0.54 0.45 0.06 1</ambient><diffuse>0.90 0.75 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_line_v112'><pose>-7.000 5.650 1.410 0 0 0</pose><geometry><cylinder><radius>0.110</radius><length>0.180</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_line_v113'><pose>-5.400 5.650 1.410 0 0 0</pose><geometry><cylinder><radius>0.110</radius><length>0.180</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+      </link>
+      <link name='k_hood'>
+        <visual name='k_hood_v0'><pose>-6.700 5.325 2.225 0 0 0.0000</pose><geometry><box><size>5.100 1.150 0.450</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_hood_v1'><pose>-8.940 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v2'><pose>-8.630 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v3'><pose>-8.320 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v4'><pose>-8.010 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v5'><pose>-7.700 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v6'><pose>-7.390 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v7'><pose>-7.080 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v8'><pose>-6.770 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v9'><pose>-6.460 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v10'><pose>-6.150 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v11'><pose>-5.840 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v12'><pose>-5.530 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v13'><pose>-5.220 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v14'><pose>-4.910 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v15'><pose>-4.600 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v16'><pose>-4.290 5.325 1.995 0 0 0.0000</pose><geometry><box><size>0.220 0.650 0.010</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_hood_v17'><pose>-8.600 4.865 1.993 0 0 0.0000</pose><geometry><box><size>0.300 0.130 0.015</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.90 0.90 0.85 1</emissive></material></visual>
+        <visual name='k_hood_v18'><pose>-7.300 4.865 1.993 0 0 0.0000</pose><geometry><box><size>0.300 0.130 0.015</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.90 0.90 0.85 1</emissive></material></visual>
+        <visual name='k_hood_v19'><pose>-6.000 4.865 1.993 0 0 0.0000</pose><geometry><box><size>0.300 0.130 0.015</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.90 0.90 0.85 1</emissive></material></visual>
+        <visual name='k_hood_v20'><pose>-4.800 4.865 1.993 0 0 0.0000</pose><geometry><box><size>0.300 0.130 0.015</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.90 0.90 0.85 1</emissive></material></visual>
+        <visual name='k_hood_v21'><pose>-6.700 5.320 2.650 0 0 0</pose><geometry><cylinder><radius>0.250</radius><length>0.400</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.70 0.70 0.70 1</specular></material></visual>
+        <visual name='k_hood_v22'><pose>-6.700 4.850 2.470 0 1.5708 0</pose><geometry><cylinder><radius>0.015</radius><length>5.100</length></cylinder></geometry><material><ambient>0.47 0.06 0.05 1</ambient><diffuse>0.78 0.10 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+      </link>
+      <link name='k_prep_veg'>
+        <collision name='k_prep_veg_c0'><pose>-8.100 7.275 0.450 0 0 0</pose><geometry><box><size>1.600 0.750 0.900</size></box></geometry></collision>
+        <visual name='k_prep_veg_v0'><pose>-8.100 7.275 0.880 0 0 0.0000</pose><geometry><box><size>1.600 0.750 0.040</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_prep_veg_v1'><pose>-8.860 6.940 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_veg_v2'><pose>-8.860 7.610 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_veg_v3'><pose>-7.340 6.940 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_veg_v4'><pose>-7.340 7.610 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_veg_v5'><pose>-8.100 7.275 0.230 0 0 0.0000</pose><geometry><box><size>1.560 0.710 0.020</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_veg_v6'><pose>-8.500 7.225 0.910 0 0 0.0000</pose><geometry><box><size>0.500 0.350 0.020</size></box></geometry><material><ambient>0.09 0.33 0.13 1</ambient><diffuse>0.15 0.55 0.22 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_prep_veg_v7'><pose>-8.475 7.315 0.925 0 0 0.0000</pose><geometry><box><size>0.250 0.030 0.010</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_prep_veg_v8'><pose>-8.050 7.100 0.940 0 0 0</pose><geometry><sphere><radius>0.038</radius></sphere></geometry><material><ambient>0.51 0.07 0.05 1</ambient><diffuse>0.85 0.12 0.08 1</diffuse><specular>0.20 0.20 0.20 1</specular></material></visual>
+        <visual name='k_prep_veg_v9'><pose>-7.970 7.170 0.940 0 0 0</pose><geometry><sphere><radius>0.038</radius></sphere></geometry><material><ambient>0.51 0.07 0.05 1</ambient><diffuse>0.85 0.12 0.08 1</diffuse><specular>0.20 0.20 0.20 1</specular></material></visual>
+        <visual name='k_prep_veg_v10'><pose>-8.120 7.180 0.940 0 0 0</pose><geometry><sphere><radius>0.038</radius></sphere></geometry><material><ambient>0.51 0.07 0.05 1</ambient><diffuse>0.85 0.12 0.08 1</diffuse><specular>0.20 0.20 0.20 1</specular></material></visual>
+        <visual name='k_prep_veg_v11'><pose>-7.900 7.060 0.940 0 0 0</pose><geometry><sphere><radius>0.038</radius></sphere></geometry><material><ambient>0.51 0.07 0.05 1</ambient><diffuse>0.85 0.12 0.08 1</diffuse><specular>0.20 0.20 0.20 1</specular></material></visual>
+        <visual name='k_prep_veg_v12'><pose>-7.600 7.350 0.980 0 0 0</pose><geometry><sphere><radius>0.080</radius></sphere></geometry><material><ambient>0.21 0.39 0.12 1</ambient><diffuse>0.35 0.65 0.20 1</diffuse><specular>0.20 0.20 0.20 1</specular></material></visual>
+        <visual name='k_prep_veg_v13'><pose>-7.600 7.120 0.940 0 0 0</pose><geometry><sphere><radius>0.040</radius></sphere></geometry><material><ambient>0.54 0.51 0.39 1</ambient><diffuse>0.90 0.85 0.65 1</diffuse><specular>0.20 0.20 0.20 1</specular></material></visual>
+        <visual name='k_prep_veg_v14'><pose>-7.800 7.450 0.945 0 0 0</pose><geometry><cylinder><radius>0.140</radius><length>0.090</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.90 0.90 0.90 1</specular></material></visual>
+        <visual name='k_prep_veg_v15'><pose>-8.600 7.270 0.340 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.200</length></cylinder></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_prep_veg_v16'><pose>-8.100 7.270 0.340 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.200</length></cylinder></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_prep_veg_v17'><pose>-7.600 7.270 0.340 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.200</length></cylinder></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+      </link>
+      <link name='k_prep_meat'>
+        <collision name='k_prep_meat_c0'><pose>-6.300 7.275 0.450 0 0 0</pose><geometry><box><size>1.600 0.750 0.900</size></box></geometry></collision>
+        <visual name='k_prep_meat_v0'><pose>-6.300 7.275 0.880 0 0 0.0000</pose><geometry><box><size>1.600 0.750 0.040</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_prep_meat_v1'><pose>-7.060 6.940 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_meat_v2'><pose>-7.060 7.610 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_meat_v3'><pose>-5.540 6.940 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_meat_v4'><pose>-5.540 7.610 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_meat_v5'><pose>-6.300 7.275 0.230 0 0 0.0000</pose><geometry><box><size>1.560 0.710 0.020</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_meat_v6'><pose>-6.750 7.225 0.910 0 0 0.0000</pose><geometry><box><size>0.500 0.350 0.020</size></box></geometry><material><ambient>0.47 0.06 0.05 1</ambient><diffuse>0.78 0.10 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_prep_meat_v7'><pose>-6.775 7.225 0.935 0 0 0.0000</pose><geometry><box><size>0.250 0.150 0.030</size></box></geometry><material><ambient>0.33 0.07 0.06 1</ambient><diffuse>0.55 0.12 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_prep_meat_v8'><pose>-6.175 7.225 0.910 0 0 0.0000</pose><geometry><box><size>0.450 0.350 0.020</size></box></geometry><material><ambient>0.07 0.18 0.42 1</ambient><diffuse>0.12 0.30 0.70 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_prep_meat_v9'><pose>-6.170 7.230 0.935 0 0 0.0000</pose><geometry><box><size>0.300 0.100 0.030</size></box></geometry><material><ambient>0.47 0.48 0.49 1</ambient><diffuse>0.78 0.80 0.82 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_meat_v10'><pose>-5.750 7.300 0.960 0 0 0.0000</pose><geometry><box><size>0.300 0.400 0.120</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_prep_meat_v11'><pose>-5.750 7.150 1.120 1.5708 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.020</length></cylinder></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.90 0.90 0.90 1</specular></material></visual>
+      </link>
+      <link name='k_prep_pastry'>
+        <collision name='k_prep_pastry_c0'><pose>-4.700 7.275 0.450 0 0 0</pose><geometry><box><size>1.200 0.750 0.900</size></box></geometry></collision>
+        <visual name='k_prep_pastry_v0'><pose>-4.700 7.275 0.880 0 0 0.0000</pose><geometry><box><size>1.200 0.750 0.040</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_prep_pastry_v1'><pose>-5.260 6.940 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_pastry_v2'><pose>-5.260 7.610 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_pastry_v3'><pose>-4.140 6.940 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_pastry_v4'><pose>-4.140 7.610 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_pastry_v5'><pose>-4.700 7.275 0.230 0 0 0.0000</pose><geometry><box><size>1.160 0.710 0.020</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_pastry_v6'><pose>-4.975 7.225 0.910 0 0 0.0000</pose><geometry><box><size>0.450 0.350 0.020</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_prep_pastry_v7'><pose>-4.950 7.220 0.970 0 0 0</pose><geometry><sphere><radius>0.070</radius></sphere></geometry><material><ambient>0.56 0.51 0.39 1</ambient><diffuse>0.93 0.85 0.65 1</diffuse><specular>0.20 0.20 0.20 1</specular></material></visual>
+        <visual name='k_prep_pastry_v8'><pose>-4.375 7.275 0.950 0 0 0.0000</pose><geometry><box><size>0.350 0.450 0.100</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_prep_pastry_v9'><pose>-4.400 7.440 1.225 0 0 0.0000</pose><geometry><box><size>0.160 0.120 0.450</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_prep_pastry_v10'><pose>-4.365 7.275 1.440 0 0 0.0000</pose><geometry><box><size>0.230 0.450 0.120</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_prep_pastry_v11'><pose>-4.400 7.200 1.100 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.200</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.90 0.90 0.90 1</specular></material></visual>
+      </link>
+      <link name='k_prep_sink'>
+        <collision name='k_prep_sink_c0'><pose>-10.115 6.700 0.450 0 0 0.0000</pose><geometry><box><size>0.600 1.400 0.900</size></box></geometry></collision>
+        <visual name='k_prep_sink_v0'><pose>-10.115 6.700 0.450 0 0 0.0000</pose><geometry><box><size>0.600 1.400 0.900</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_prep_sink_v1'><pose>-10.115 6.400 0.883 0 0 0.0000</pose><geometry><box><size>0.440 0.440 0.045</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_prep_sink_v2'><pose>-10.355 6.400 1.100 0 0 0</pose><geometry><cylinder><radius>0.015</radius><length>0.400</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_prep_sink_v3'><pose>-10.255 6.400 1.300 0 1.5708 0</pose><geometry><cylinder><radius>0.012</radius><length>0.220</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_prep_sink_v4'><pose>-10.115 6.950 0.883 0 0 0.0000</pose><geometry><box><size>0.440 0.440 0.045</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_prep_sink_v5'><pose>-10.355 6.950 1.100 0 0 0</pose><geometry><cylinder><radius>0.015</radius><length>0.400</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_prep_sink_v6'><pose>-10.255 6.950 1.300 0 1.5708 0</pose><geometry><cylinder><radius>0.012</radius><length>0.220</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_prep_sink_v7'><pose>-10.115 6.075 1.025 0 0 0.0000</pose><geometry><box><size>0.600 0.150 0.250</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_prep_sink_v8'><pose>-10.225 7.725 0.825 0 0 0.0000</pose><geometry><box><size>0.380 0.450 0.150</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_prep_sink_v9'><pose>-10.225 7.725 0.883 0 0 0.0000</pose><geometry><box><size>0.280 0.350 0.045</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.90 0.90 0.90 1</specular></material></visual>
+        <visual name='k_prep_sink_v10'><pose>-10.375 7.725 1.010 0 0 0</pose><geometry><cylinder><radius>0.012</radius><length>0.220</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_prep_sink_v11'><pose>-10.395 7.440 1.250 0 0 0.0000</pose><geometry><box><size>0.060 0.080 0.200</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_prep_sink_v12'><pose>-10.395 8.110 1.350 0 0 0.0000</pose><geometry><box><size>0.100 0.280 0.300</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_prep_sink_v13'><pose>-10.405 7.725 1.675 0 0 0.0000</pose><geometry><box><size>0.020 0.350 0.250</size></box></geometry><material><ambient>0.07 0.18 0.42 1</ambient><diffuse>0.12 0.30 0.70 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+      </link>
+      <link name='k_reachin'>
+        <collision name='k_reachin_c0'><pose>-10.015 3.800 1.000 0 0 0.0000</pose><geometry><box><size>0.800 1.300 2.000</size></box></geometry></collision>
+        <visual name='k_reachin_v0'><pose>-10.015 3.800 1.000 0 0 0.0000</pose><geometry><box><size>0.800 1.300 2.000</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.70 0.70 0.70 1</specular></material></visual>
+        <visual name='k_reachin_v1'><pose>-9.610 3.490 1.050 0 0 0.0000</pose><geometry><box><size>0.010 0.580 1.600</size></box></geometry><material><ambient>0.42 0.49 0.53 1</ambient><diffuse>0.70 0.82 0.88 1</diffuse><specular>0.90 0.90 0.90 1</specular><emissive>0.08 0.10 0.12 1</emissive></material></visual>
+        <visual name='k_reachin_v2'><pose>-9.590 3.490 1.150 0 0 0.0000</pose><geometry><box><size>0.030 0.020 0.500</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_reachin_v3'><pose>-9.610 4.110 1.050 0 0 0.0000</pose><geometry><box><size>0.010 0.580 1.600</size></box></geometry><material><ambient>0.42 0.49 0.53 1</ambient><diffuse>0.70 0.82 0.88 1</diffuse><specular>0.90 0.90 0.90 1</specular><emissive>0.08 0.10 0.12 1</emissive></material></visual>
+        <visual name='k_reachin_v4'><pose>-9.590 4.110 1.150 0 0 0.0000</pose><geometry><box><size>0.030 0.020 0.500</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_reachin_v5'><pose>-9.610 3.800 1.935 0 0 0.0000</pose><geometry><box><size>0.010 1.200 0.070</size></box></geometry><material><ambient>0.06 0.06 0.06 1</ambient><diffuse>0.10 0.10 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.00 0.25 0.05 1</emissive></material></visual>
+        <visual name='k_reachin_v6'><pose>-10.315 5.200 0.275 0 0 0</pose><geometry><cylinder><radius>0.075</radius><length>0.550</length></cylinder></geometry><material><ambient>0.47 0.06 0.05 1</ambient><diffuse>0.78 0.10 0.08 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_reachin_v7'><pose>-10.400 5.200 1.250 0 0 0.0000</pose><geometry><box><size>0.010 0.200 0.300</size></box></geometry><material><ambient>0.47 0.06 0.05 1</ambient><diffuse>0.78 0.10 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_reachin_v8'><pose>-10.115 4.850 0.375 0 0 0</pose><geometry><cylinder><radius>0.220</radius><length>0.750</length></cylinder></geometry><material><ambient>0.18 0.19 0.20 1</ambient><diffuse>0.30 0.32 0.34 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_reachin_v9'><pose>-10.115 5.750 0.375 0 0 0</pose><geometry><cylinder><radius>0.220</radius><length>0.750</length></cylinder></geometry><material><ambient>0.06 0.27 0.12 1</ambient><diffuse>0.10 0.45 0.20 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+      </link>
+      <link name='k_walkin_cooler'>
+        <collision name='k_walkin_cooler_c0'><pose>-9.207 9.470 1.150 0 0 0.0000</pose><geometry><box><size>2.415 1.740 2.300</size></box></geometry></collision>
+        <visual name='k_walkin_cooler_v0'><pose>-9.207 9.470 1.150 0 0 0.0000</pose><geometry><box><size>2.415 1.740 2.300</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.30 0.30 0.30 1</specular></material></visual>
+        <visual name='k_walkin_cooler_v1'><pose>-9.207 8.593 1.025 0 0 0.0000</pose><geometry><box><size>0.900 0.015 1.950</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_walkin_cooler_v2'><pose>-8.922 8.562 1.100 0 0 0.0000</pose><geometry><box><size>0.070 0.045 0.400</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.90 0.90 0.90 1</specular></material></visual>
+        <visual name='k_walkin_cooler_v3'><pose>-9.707 8.593 1.025 0 0 0.0000</pose><geometry><box><size>0.100 0.015 2.050</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_walkin_cooler_v4'><pose>-8.557 8.595 2.000 0 0 0.0000</pose><geometry><box><size>0.200 0.010 0.100</size></box></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_walkin_cooler_v5'><pose>-8.557 8.589 2.000 0 0 0.0000</pose><geometry><box><size>0.160 0.002 0.060</size></box></geometry><material><ambient>0.00 0.48 0.12 1</ambient><diffuse>0.00 0.80 0.20 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.00 0.80 0.20 1</emissive></material></visual>
+        <visual name='k_walkin_cooler_v6'><pose>-9.765 9.400 2.450 0 0 0.0000</pose><geometry><box><size>0.900 0.800 0.300</size></box></geometry><material><ambient>0.36 0.37 0.38 1</ambient><diffuse>0.60 0.62 0.64 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+      </link>
+      <link name='k_walkin_freezer'>
+        <collision name='k_walkin_freezer_c0'><pose>-7.050 9.470 1.150 0 0 0.0000</pose><geometry><box><size>1.700 1.740 2.300</size></box></geometry></collision>
+        <visual name='k_walkin_freezer_v0'><pose>-7.050 9.470 1.150 0 0 0.0000</pose><geometry><box><size>1.700 1.740 2.300</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.30 0.30 0.30 1</specular></material></visual>
+        <visual name='k_walkin_freezer_v1'><pose>-7.050 8.593 1.025 0 0 0.0000</pose><geometry><box><size>0.900 0.015 1.950</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_walkin_freezer_v2'><pose>-6.765 8.562 1.100 0 0 0.0000</pose><geometry><box><size>0.070 0.045 0.400</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.90 0.90 0.90 1</specular></material></visual>
+        <visual name='k_walkin_freezer_v3'><pose>-7.550 8.593 1.025 0 0 0.0000</pose><geometry><box><size>0.100 0.015 2.050</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_walkin_freezer_v4'><pose>-6.400 8.595 2.000 0 0 0.0000</pose><geometry><box><size>0.200 0.010 0.100</size></box></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_walkin_freezer_v5'><pose>-6.400 8.589 2.000 0 0 0.0000</pose><geometry><box><size>0.160 0.002 0.060</size></box></geometry><material><ambient>0.12 0.30 0.60 1</ambient><diffuse>0.20 0.50 1.00 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.20 0.50 1.00 1</emissive></material></visual>
+        <visual name='k_walkin_freezer_v6'><pose>-7.250 9.400 2.450 0 0 0.0000</pose><geometry><box><size>0.900 0.800 0.300</size></box></geometry><material><ambient>0.36 0.37 0.38 1</ambient><diffuse>0.60 0.62 0.64 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+      </link>
+      <link name='k_dry_storage'>
+        <collision name='k_dry_storage_c0'><pose>-5.000 10.090 0.900 0 0 0</pose><geometry><box><size>2.000 0.500 1.800</size></box></geometry></collision>
+        <visual name='k_dry_storage_v0'><pose>-5.985 9.855 0.900 0 0 0</pose><geometry><cylinder><radius>0.013</radius><length>1.800</length></cylinder></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='k_dry_storage_v1'><pose>-5.985 10.325 0.900 0 0 0</pose><geometry><cylinder><radius>0.013</radius><length>1.800</length></cylinder></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='k_dry_storage_v2'><pose>-4.015 9.855 0.900 0 0 0</pose><geometry><cylinder><radius>0.013</radius><length>1.800</length></cylinder></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='k_dry_storage_v3'><pose>-4.015 10.325 0.900 0 0 0</pose><geometry><cylinder><radius>0.013</radius><length>1.800</length></cylinder></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='k_dry_storage_v4'><pose>-5.000 10.090 0.160 0 0 0.0000</pose><geometry><box><size>2.000 0.500 0.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_dry_storage_v5'><pose>-5.000 10.090 0.610 0 0 0.0000</pose><geometry><box><size>2.000 0.500 0.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_dry_storage_v6'><pose>-5.000 10.090 1.060 0 0 0.0000</pose><geometry><box><size>2.000 0.500 0.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_dry_storage_v7'><pose>-5.000 10.090 1.510 0 0 0.0000</pose><geometry><box><size>2.000 0.500 0.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_dry_storage_v8'><pose>-5.750 10.090 0.295 0 0 0.0000</pose><geometry><box><size>0.400 0.380 0.250</size></box></geometry><material><ambient>0.54 0.51 0.42 1</ambient><diffuse>0.90 0.85 0.70 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v9'><pose>-5.310 10.090 0.295 0 0 0.0000</pose><geometry><box><size>0.400 0.380 0.250</size></box></geometry><material><ambient>0.54 0.51 0.42 1</ambient><diffuse>0.90 0.85 0.70 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v10'><pose>-4.870 10.090 0.295 0 0 0.0000</pose><geometry><box><size>0.400 0.380 0.250</size></box></geometry><material><ambient>0.54 0.51 0.42 1</ambient><diffuse>0.90 0.85 0.70 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v11'><pose>-4.430 10.090 0.295 0 0 0.0000</pose><geometry><box><size>0.400 0.380 0.250</size></box></geometry><material><ambient>0.54 0.51 0.42 1</ambient><diffuse>0.90 0.85 0.70 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v12'><pose>-5.800 10.090 0.770 0 0 0.0000</pose><geometry><box><size>0.300 0.380 0.300</size></box></geometry><material><ambient>0.40 0.30 0.19 1</ambient><diffuse>0.66 0.50 0.32 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v13'><pose>-5.460 10.090 0.770 0 0 0.0000</pose><geometry><box><size>0.300 0.380 0.300</size></box></geometry><material><ambient>0.40 0.30 0.19 1</ambient><diffuse>0.66 0.50 0.32 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v14'><pose>-5.120 10.090 0.770 0 0 0.0000</pose><geometry><box><size>0.300 0.380 0.300</size></box></geometry><material><ambient>0.40 0.30 0.19 1</ambient><diffuse>0.66 0.50 0.32 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v15'><pose>-4.780 10.090 0.770 0 0 0.0000</pose><geometry><box><size>0.300 0.380 0.300</size></box></geometry><material><ambient>0.40 0.30 0.19 1</ambient><diffuse>0.66 0.50 0.32 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v16'><pose>-4.440 10.090 0.770 0 0 0.0000</pose><geometry><box><size>0.300 0.380 0.300</size></box></geometry><material><ambient>0.40 0.30 0.19 1</ambient><diffuse>0.66 0.50 0.32 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v17'><pose>-5.900 10.050 1.140 0 0 0</pose><geometry><cylinder><radius>0.050</radius><length>0.140</length></cylinder></geometry><material><ambient>0.45 0.06 0.05 1</ambient><diffuse>0.75 0.10 0.08 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dry_storage_v18'><pose>-5.760 10.050 1.140 0 0 0</pose><geometry><cylinder><radius>0.050</radius><length>0.140</length></cylinder></geometry><material><ambient>0.45 0.06 0.05 1</ambient><diffuse>0.75 0.10 0.08 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dry_storage_v19'><pose>-5.620 10.050 1.140 0 0 0</pose><geometry><cylinder><radius>0.050</radius><length>0.140</length></cylinder></geometry><material><ambient>0.45 0.06 0.05 1</ambient><diffuse>0.75 0.10 0.08 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dry_storage_v20'><pose>-5.480 10.050 1.140 0 0 0</pose><geometry><cylinder><radius>0.050</radius><length>0.140</length></cylinder></geometry><material><ambient>0.45 0.06 0.05 1</ambient><diffuse>0.75 0.10 0.08 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dry_storage_v21'><pose>-5.340 10.050 1.140 0 0 0</pose><geometry><cylinder><radius>0.050</radius><length>0.140</length></cylinder></geometry><material><ambient>0.45 0.06 0.05 1</ambient><diffuse>0.75 0.10 0.08 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dry_storage_v22'><pose>-5.200 10.050 1.140 0 0 0</pose><geometry><cylinder><radius>0.050</radius><length>0.140</length></cylinder></geometry><material><ambient>0.45 0.06 0.05 1</ambient><diffuse>0.75 0.10 0.08 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dry_storage_v23'><pose>-5.060 10.050 1.140 0 0 0</pose><geometry><cylinder><radius>0.050</radius><length>0.140</length></cylinder></geometry><material><ambient>0.45 0.06 0.05 1</ambient><diffuse>0.75 0.10 0.08 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dry_storage_v24'><pose>-4.920 10.050 1.140 0 0 0</pose><geometry><cylinder><radius>0.050</radius><length>0.140</length></cylinder></geometry><material><ambient>0.45 0.06 0.05 1</ambient><diffuse>0.75 0.10 0.08 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dry_storage_v25'><pose>-4.780 10.050 1.140 0 0 0</pose><geometry><cylinder><radius>0.050</radius><length>0.140</length></cylinder></geometry><material><ambient>0.45 0.06 0.05 1</ambient><diffuse>0.75 0.10 0.08 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dry_storage_v26'><pose>-4.640 10.050 1.140 0 0 0</pose><geometry><cylinder><radius>0.050</radius><length>0.140</length></cylinder></geometry><material><ambient>0.45 0.06 0.05 1</ambient><diffuse>0.75 0.10 0.08 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dry_storage_v27'><pose>-4.500 10.050 1.140 0 0 0</pose><geometry><cylinder><radius>0.050</radius><length>0.140</length></cylinder></geometry><material><ambient>0.45 0.06 0.05 1</ambient><diffuse>0.75 0.10 0.08 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dry_storage_v28'><pose>-4.360 10.050 1.140 0 0 0</pose><geometry><cylinder><radius>0.050</radius><length>0.140</length></cylinder></geometry><material><ambient>0.45 0.06 0.05 1</ambient><diffuse>0.75 0.10 0.08 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dry_storage_v29'><pose>-5.880 10.090 1.670 0 0 0.0000</pose><geometry><box><size>0.140 0.380 0.300</size></box></geometry><material><ambient>0.54 0.45 0.06 1</ambient><diffuse>0.90 0.75 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v30'><pose>-5.700 10.090 1.670 0 0 0.0000</pose><geometry><box><size>0.140 0.380 0.300</size></box></geometry><material><ambient>0.54 0.45 0.06 1</ambient><diffuse>0.90 0.75 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v31'><pose>-5.520 10.090 1.670 0 0 0.0000</pose><geometry><box><size>0.140 0.380 0.300</size></box></geometry><material><ambient>0.54 0.45 0.06 1</ambient><diffuse>0.90 0.75 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v32'><pose>-5.340 10.090 1.670 0 0 0.0000</pose><geometry><box><size>0.140 0.380 0.300</size></box></geometry><material><ambient>0.54 0.45 0.06 1</ambient><diffuse>0.90 0.75 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v33'><pose>-5.160 10.090 1.670 0 0 0.0000</pose><geometry><box><size>0.140 0.380 0.300</size></box></geometry><material><ambient>0.54 0.45 0.06 1</ambient><diffuse>0.90 0.75 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v34'><pose>-4.980 10.090 1.670 0 0 0.0000</pose><geometry><box><size>0.140 0.380 0.300</size></box></geometry><material><ambient>0.54 0.45 0.06 1</ambient><diffuse>0.90 0.75 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v35'><pose>-5.000 10.330 2.100 1.5708 0 0</pose><geometry><cylinder><radius>0.150</radius><length>0.020</length></cylinder></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dry_storage_v36'><pose>-5.000 10.315 2.150 0 0 0.0000</pose><geometry><box><size>0.010 0.010 0.100</size></box></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+      </link>
+      <link name='k_receiving'>
+        <visual name='k_receiving_v0'><pose>-3.775 10.025 0.040 0 0 0.0000</pose><geometry><box><size>0.550 0.550 0.080</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_receiving_v1'><pose>-3.775 10.225 0.590 0 0 0.0000</pose><geometry><box><size>0.050 0.050 1.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_receiving_v2'><pose>-3.775 10.220 1.175 0 0 0.0000</pose><geometry><box><size>0.210 0.100 0.150</size></box></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_receiving_v3'><pose>-3.775 10.168 1.175 0 0 0.0000</pose><geometry><box><size>0.170 0.005 0.090</size></box></geometry><material><ambient>0.06 0.30 0.12 1</ambient><diffuse>0.10 0.50 0.20 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.05 0.40 0.10 1</emissive></material></visual>
+        <visual name='k_receiving_v4'><pose>-2.665 8.950 0.250 0 0 0</pose><geometry><cylinder><radius>0.080</radius><length>0.500</length></cylinder></geometry><material><ambient>0.47 0.06 0.05 1</ambient><diffuse>0.78 0.10 0.08 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_receiving_v5'><pose>-2.585 8.950 1.375 0 0 0.0000</pose><geometry><box><size>0.020 0.140 0.150</size></box></geometry><material><ambient>0.47 0.06 0.05 1</ambient><diffuse>0.78 0.10 0.08 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+      </link>
+      <link name='k_dish'>
+        <collision name='k_dish_c0'><pose>-2.938 8.200 0.450 0 0 0</pose><geometry><box><size>0.725 1.200 0.900</size></box></geometry></collision>
+        <collision name='k_dish_c1'><pose>-2.938 7.200 0.725 0 0 0.0000</pose><geometry><box><size>0.725 0.800 1.450</size></box></geometry></collision>
+        <collision name='k_dish_c2'><pose>-2.938 6.200 0.450 0 0 0</pose><geometry><box><size>0.725 1.200 0.900</size></box></geometry></collision>
+        <collision name='k_dish_c3'><pose>-2.888 4.925 0.900 0 0 0</pose><geometry><box><size>0.625 1.150 1.800</size></box></geometry></collision>
+        <visual name='k_dish_v0'><pose>-2.938 8.200 0.880 0 0 0.0000</pose><geometry><box><size>0.725 1.200 0.040</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_dish_v1'><pose>-3.260 7.640 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v2'><pose>-3.260 8.760 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v3'><pose>-2.615 7.640 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v4'><pose>-2.615 8.760 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v5'><pose>-2.938 8.000 0.883 0 0 0.0000</pose><geometry><box><size>0.525 0.500 0.045</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_dish_v6'><pose>-2.695 8.000 1.275 0 0 0</pose><geometry><cylinder><radius>0.018</radius><length>0.750</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_dish_v7'><pose>-2.695 8.000 1.775 0 0 0</pose><geometry><cylinder><radius>0.035</radius><length>0.250</length></cylinder></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v8'><pose>-2.875 8.000 1.500 0 1.5708 0</pose><geometry><cylinder><radius>0.012</radius><length>0.360</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_dish_v9'><pose>-2.938 8.400 0.975 0 0 0.0000</pose><geometry><box><size>0.565 0.220 0.150</size></box></geometry><material><ambient>0.21 0.22 0.23 1</ambient><diffuse>0.35 0.36 0.38 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v10'><pose>-2.950 8.400 1.030 0 0 0</pose><geometry><cylinder><radius>0.110</radius><length>0.060</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v11'><pose>-2.938 8.650 0.975 0 0 0.0000</pose><geometry><box><size>0.565 0.220 0.150</size></box></geometry><material><ambient>0.21 0.22 0.23 1</ambient><diffuse>0.35 0.36 0.38 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v12'><pose>-2.950 8.650 1.030 0 0 0</pose><geometry><cylinder><radius>0.110</radius><length>0.060</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v13'><pose>-2.938 7.200 0.725 0 0 0.0000</pose><geometry><box><size>0.725 0.800 1.450</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_dish_v14'><pose>-2.938 7.200 1.700 0 0 0.0000</pose><geometry><box><size>0.625 0.700 0.500</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_dish_v15'><pose>-3.303 7.200 1.135 0 0 0.0000</pose><geometry><box><size>0.006 0.700 0.570</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_dish_v16'><pose>-3.323 7.200 1.320 0 0 0.0000</pose><geometry><box><size>0.034 0.600 0.040</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_dish_v17'><pose>-3.303 7.200 0.375 0 0 0.0000</pose><geometry><box><size>0.006 0.700 0.450</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v18'><pose>-3.302 7.000 1.675 0 0 0.0000</pose><geometry><box><size>0.005 0.200 0.150</size></box></geometry><material><ambient>0.02 0.02 0.02 1</ambient><diffuse>0.03 0.03 0.03 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v19'><pose>-3.306 7.000 1.675 0 0 0.0000</pose><geometry><box><size>0.002 0.140 0.090</size></box></geometry><material><ambient>0.06 0.48 0.12 1</ambient><diffuse>0.10 0.80 0.20 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.05 0.60 0.10 1</emissive></material></visual>
+        <visual name='k_dish_v20'><pose>-2.938 6.200 0.880 0 0 0.0000</pose><geometry><box><size>0.725 1.200 0.040</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='k_dish_v21'><pose>-3.260 5.640 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v22'><pose>-3.260 6.760 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v23'><pose>-2.615 5.640 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v24'><pose>-2.615 6.760 0.430 0 0 0</pose><geometry><cylinder><radius>0.020</radius><length>0.860</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v25'><pose>-2.938 6.200 0.230 0 0 0.0000</pose><geometry><box><size>0.685 1.160 0.020</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v26'><pose>-2.940 5.850 0.950 0 0 0.0000</pose><geometry><box><size>0.520 0.500 0.100</size></box></geometry><material><ambient>0.27 0.28 0.30 1</ambient><diffuse>0.45 0.47 0.50 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v27'><pose>-3.145 5.850 1.035 0 0 0.0000</pose><geometry><box><size>0.010 0.240 0.230</size></box></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v28'><pose>-3.045 5.850 1.035 0 0 0.0000</pose><geometry><box><size>0.010 0.240 0.230</size></box></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v29'><pose>-2.945 5.850 1.035 0 0 0.0000</pose><geometry><box><size>0.010 0.240 0.230</size></box></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v30'><pose>-2.845 5.850 1.035 0 0 0.0000</pose><geometry><box><size>0.010 0.240 0.230</size></box></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v31'><pose>-2.745 5.850 1.035 0 0 0.0000</pose><geometry><box><size>0.010 0.240 0.230</size></box></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v32'><pose>-2.940 6.400 0.950 0 0 0.0000</pose><geometry><box><size>0.520 0.500 0.100</size></box></geometry><material><ambient>0.27 0.28 0.30 1</ambient><diffuse>0.45 0.47 0.50 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v33'><pose>-3.145 6.400 1.035 0 0 0.0000</pose><geometry><box><size>0.010 0.240 0.230</size></box></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v34'><pose>-3.045 6.400 1.035 0 0 0.0000</pose><geometry><box><size>0.010 0.240 0.230</size></box></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v35'><pose>-2.945 6.400 1.035 0 0 0.0000</pose><geometry><box><size>0.010 0.240 0.230</size></box></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v36'><pose>-2.845 6.400 1.035 0 0 0.0000</pose><geometry><box><size>0.010 0.240 0.230</size></box></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v37'><pose>-2.745 6.400 1.035 0 0 0.0000</pose><geometry><box><size>0.010 0.240 0.230</size></box></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='k_dish_v38'><pose>-3.185 4.365 0.900 0 0 0</pose><geometry><cylinder><radius>0.013</radius><length>1.800</length></cylinder></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='k_dish_v39'><pose>-3.185 5.485 0.900 0 0 0</pose><geometry><cylinder><radius>0.013</radius><length>1.800</length></cylinder></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='k_dish_v40'><pose>-2.590 4.365 0.900 0 0 0</pose><geometry><cylinder><radius>0.013</radius><length>1.800</length></cylinder></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='k_dish_v41'><pose>-2.590 5.485 0.900 0 0 0</pose><geometry><cylinder><radius>0.013</radius><length>1.800</length></cylinder></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='k_dish_v42'><pose>-2.888 4.925 0.160 0 0 0.0000</pose><geometry><box><size>0.625 1.150 0.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_dish_v43'><pose>-2.888 4.925 0.610 0 0 0.0000</pose><geometry><box><size>0.625 1.150 0.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_dish_v44'><pose>-2.888 4.925 1.060 0 0 0.0000</pose><geometry><box><size>0.625 1.150 0.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_dish_v45'><pose>-2.888 4.925 1.510 0 0 0.0000</pose><geometry><box><size>0.625 1.150 0.020</size></box></geometry><material><ambient>0.25 0.26 0.28 1</ambient><diffuse>0.42 0.44 0.47 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='k_dish_v46'><pose>-2.950 4.600 0.233 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.126</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v47'><pose>-2.950 5.000 0.233 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.126</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v48'><pose>-2.950 5.300 0.233 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.126</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v49'><pose>-2.950 4.600 0.683 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.126</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v50'><pose>-2.950 5.000 0.683 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.126</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v51'><pose>-2.950 5.300 0.683 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.126</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v52'><pose>-2.950 4.600 1.133 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.126</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v53'><pose>-2.950 5.000 1.133 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.126</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v54'><pose>-2.950 5.300 1.133 0 0 0</pose><geometry><cylinder><radius>0.120</radius><length>0.126</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='k_dish_v55'><pose>-3.100 4.500 1.585 0 0 0</pose><geometry><cylinder><radius>0.040</radius><length>0.130</length></cylinder></geometry><material><ambient>0.42 0.49 0.53 1</ambient><diffuse>0.70 0.82 0.88 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_dish_v56'><pose>-2.850 4.500 1.585 0 0 0</pose><geometry><cylinder><radius>0.040</radius><length>0.130</length></cylinder></geometry><material><ambient>0.42 0.49 0.53 1</ambient><diffuse>0.70 0.82 0.88 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_dish_v57'><pose>-3.100 4.850 1.585 0 0 0</pose><geometry><cylinder><radius>0.040</radius><length>0.130</length></cylinder></geometry><material><ambient>0.42 0.49 0.53 1</ambient><diffuse>0.70 0.82 0.88 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_dish_v58'><pose>-2.850 4.850 1.585 0 0 0</pose><geometry><cylinder><radius>0.040</radius><length>0.130</length></cylinder></geometry><material><ambient>0.42 0.49 0.53 1</ambient><diffuse>0.70 0.82 0.88 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_dish_v59'><pose>-3.100 5.200 1.585 0 0 0</pose><geometry><cylinder><radius>0.040</radius><length>0.130</length></cylinder></geometry><material><ambient>0.42 0.49 0.53 1</ambient><diffuse>0.70 0.82 0.88 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='k_dish_v60'><pose>-2.850 5.200 1.585 0 0 0</pose><geometry><cylinder><radius>0.040</radius><length>0.130</length></cylinder></geometry><material><ambient>0.42 0.49 0.53 1</ambient><diffuse>0.70 0.82 0.88 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+      </link>
+      <link name='wc_finish'>
+        <visual name='wc_finish_v0'><pose>8.955 5.000 0.002 0 0 0.0000</pose><geometry><box><size>1.160 3.850 0.004</size></box></geometry><material><ambient>0.48 0.49 0.50 1</ambient><diffuse>0.80 0.81 0.83 1</diffuse><specular>0.40 0.40 0.40 1</specular></material></visual>
+        <visual name='wc_finish_v1'><pose>8.457 4.800 1.252 0 0 0.0000</pose><geometry><box><size>0.155 0.970 2.505</size></box></geometry><material><ambient>0.48 0.53 0.56 1</ambient><diffuse>0.80 0.88 0.93 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='wc_finish_v2'><pose>8.381 5.000 1.000 0 0 0.0000</pose><geometry><box><size>0.012 3.850 2.000</size></box></geometry><material><ambient>0.48 0.53 0.56 1</ambient><diffuse>0.80 0.88 0.93 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='wc_finish_v3'><pose>9.529 5.000 1.000 0 0 0.0000</pose><geometry><box><size>0.012 3.850 2.000</size></box></geometry><material><ambient>0.48 0.53 0.56 1</ambient><diffuse>0.80 0.88 0.93 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='wc_finish_v4'><pose>8.955 6.919 1.000 0 0 0.0000</pose><geometry><box><size>1.160 0.012 2.000</size></box></geometry><material><ambient>0.48 0.53 0.56 1</ambient><diffuse>0.80 0.88 0.93 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='wc_finish_v5'><pose>8.955 3.373 0.005 0 0 0.0000</pose><geometry><box><size>1.160 0.003 0.001</size></box></geometry><material><ambient>0.36 0.36 0.37 1</ambient><diffuse>0.60 0.60 0.62 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_finish_v6'><pose>8.955 3.674 0.005 0 0 0.0000</pose><geometry><box><size>1.160 0.003 0.001</size></box></geometry><material><ambient>0.36 0.36 0.37 1</ambient><diffuse>0.60 0.60 0.62 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_finish_v7'><pose>8.955 3.974 0.005 0 0 0.0000</pose><geometry><box><size>1.160 0.003 0.001</size></box></geometry><material><ambient>0.36 0.36 0.37 1</ambient><diffuse>0.60 0.60 0.62 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_finish_v8'><pose>8.955 4.274 0.005 0 0 0.0000</pose><geometry><box><size>1.160 0.003 0.001</size></box></geometry><material><ambient>0.36 0.36 0.37 1</ambient><diffuse>0.60 0.60 0.62 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_finish_v9'><pose>8.955 4.574 0.005 0 0 0.0000</pose><geometry><box><size>1.160 0.003 0.001</size></box></geometry><material><ambient>0.36 0.36 0.37 1</ambient><diffuse>0.60 0.60 0.62 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_finish_v10'><pose>8.955 4.873 0.005 0 0 0.0000</pose><geometry><box><size>1.160 0.003 0.001</size></box></geometry><material><ambient>0.36 0.36 0.37 1</ambient><diffuse>0.60 0.60 0.62 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_finish_v11'><pose>8.955 5.174 0.005 0 0 0.0000</pose><geometry><box><size>1.160 0.003 0.001</size></box></geometry><material><ambient>0.36 0.36 0.37 1</ambient><diffuse>0.60 0.60 0.62 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_finish_v12'><pose>8.955 5.473 0.005 0 0 0.0000</pose><geometry><box><size>1.160 0.003 0.001</size></box></geometry><material><ambient>0.36 0.36 0.37 1</ambient><diffuse>0.60 0.60 0.62 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_finish_v13'><pose>8.955 5.774 0.005 0 0 0.0000</pose><geometry><box><size>1.160 0.003 0.001</size></box></geometry><material><ambient>0.36 0.36 0.37 1</ambient><diffuse>0.60 0.60 0.62 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_finish_v14'><pose>8.955 6.074 0.005 0 0 0.0000</pose><geometry><box><size>1.160 0.003 0.001</size></box></geometry><material><ambient>0.36 0.36 0.37 1</ambient><diffuse>0.60 0.60 0.62 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_finish_v15'><pose>8.955 6.373 0.005 0 0 0.0000</pose><geometry><box><size>1.160 0.003 0.001</size></box></geometry><material><ambient>0.36 0.36 0.37 1</ambient><diffuse>0.60 0.60 0.62 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_finish_v16'><pose>8.955 6.673 0.005 0 0 0.0000</pose><geometry><box><size>1.160 0.003 0.001</size></box></geometry><material><ambient>0.36 0.36 0.37 1</ambient><diffuse>0.60 0.60 0.62 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_finish_v17'><pose>8.955 3.525 2.310 0 0 0.0000</pose><geometry><box><size>0.960 0.100 0.020</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.90 0.90 0.90 1</emissive></material></visual>
+        <visual name='wc_finish_v18'><pose>8.955 6.375 2.310 0 0 0.0000</pose><geometry><box><size>0.960 0.100 0.020</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular><emissive>0.90 0.90 0.90 1</emissive></material></visual>
+      </link>
+      <link name='wc_doors'>
+        <visual name='wc_doors_v0'><pose>9.495 3.525 1.025 0 0 0.0000</pose><geometry><box><size>0.040 0.860 2.050</size></box></geometry><material><ambient>0.33 0.22 0.12 1</ambient><diffuse>0.55 0.37 0.20 1</diffuse><specular>0.30 0.30 0.30 1</specular></material></visual>
+        <visual name='wc_doors_v1'><pose>9.455 3.805 1.020 0 0 0.0000</pose><geometry><box><size>0.040 0.060 0.040</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='wc_doors_v2'><pose>9.495 5.425 1.000 0 0 0.0000</pose><geometry><box><size>0.040 0.650 2.000</size></box></geometry><material><ambient>0.33 0.22 0.12 1</ambient><diffuse>0.55 0.37 0.20 1</diffuse><specular>0.30 0.30 0.30 1</specular></material></visual>
+        <visual name='wc_doors_v3'><pose>9.455 5.700 1.005 0 0 0.0000</pose><geometry><box><size>0.040 0.040 0.050</size></box></geometry><material><ambient>0.48 0.06 0.06 1</ambient><diffuse>0.80 0.10 0.10 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+      </link>
+      <link name='wc_lobby'>
+        <collision name='wc_lobby_c0'><pose>8.585 3.825 0.415 0 0 0.0000</pose><geometry><box><size>0.420 0.600 0.830</size></box></geometry></collision>
+        <visual name='wc_lobby_v0'><pose>8.585 3.825 0.415 0 0 0.0000</pose><geometry><box><size>0.420 0.600 0.830</size></box></geometry><material><ambient>0.21 0.15 0.11 1</ambient><diffuse>0.35 0.25 0.18 1</diffuse><specular>0.20 0.20 0.20 1</specular></material></visual>
+        <visual name='wc_lobby_v1'><pose>8.595 3.825 0.845 0 0 0.0000</pose><geometry><box><size>0.440 0.640 0.030</size></box></geometry><material><ambient>0.15 0.15 0.16 1</ambient><diffuse>0.25 0.25 0.27 1</diffuse><specular>0.70 0.70 0.70 1</specular></material></visual>
+        <visual name='wc_lobby_v2'><pose>8.615 3.825 0.845 0 0 0</pose><geometry><cylinder><radius>0.170</radius><length>0.050</length></cylinder></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='wc_lobby_v3'><pose>8.435 3.825 0.950 0 0 0</pose><geometry><cylinder><radius>0.015</radius><length>0.180</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='wc_lobby_v4'><pose>8.505 3.825 1.030 0 1.5708 0</pose><geometry><cylinder><radius>0.012</radius><length>0.150</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='wc_lobby_v5'><pose>8.391 3.825 1.400 0 0 0.0000</pose><geometry><box><size>0.008 0.600 0.700</size></box></geometry><material><ambient>0.42 0.49 0.53 1</ambient><diffuse>0.70 0.82 0.88 1</diffuse><specular>1.00 1.00 1.00 1</specular><emissive>0.10 0.12 0.14 1</emissive></material></visual>
+        <visual name='wc_lobby_v6'><pose>8.421 4.225 1.200 0 0 0.0000</pose><geometry><box><size>0.068 0.100 0.200</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_lobby_v7'><pose>9.429 4.425 1.250 0 0 0.0000</pose><geometry><box><size>0.188 0.300 0.300</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name='wc_lobby_v8'><pose>8.391 3.295 1.600 0 0 0.0000</pose><geometry><box><size>0.008 0.280 0.300</size></box></geometry><material><ambient>0.07 0.18 0.42 1</ambient><diffuse>0.12 0.30 0.70 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+      </link>
+      <link name='wc_compartment'>
+        <collision name='wc_compartment_c0'><pose>8.905 6.480 0.200 0 0 0.0000</pose><geometry><box><size>0.380 0.550 0.400</size></box></geometry></collision>
+        <collision name='wc_compartment_c1'><pose>8.905 6.820 0.725 0 0 0.0000</pose><geometry><box><size>0.420 0.190 0.650</size></box></geometry></collision>
+        <visual name='wc_compartment_v0'><pose>8.905 6.480 0.200 0 0 0.0000</pose><geometry><box><size>0.380 0.550 0.400</size></box></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='wc_compartment_v1'><pose>8.905 6.470 0.415 0 0 0.0000</pose><geometry><box><size>0.400 0.570 0.030</size></box></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.50 0.50 0.50 1</specular></material></visual>
+        <visual name='wc_compartment_v2'><pose>8.905 6.820 0.725 0 0 0.0000</pose><geometry><box><size>0.420 0.190 0.650</size></box></geometry><material><ambient>0.58 0.58 0.59 1</ambient><diffuse>0.97 0.97 0.98 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='wc_compartment_v3'><pose>8.905 6.723 0.950 0 0 0.0000</pose><geometry><box><size>0.100 0.005 0.060</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='wc_compartment_v4'><pose>8.425 6.475 0.850 1.5708 0 0</pose><geometry><cylinder><radius>0.016</radius><length>0.700</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='wc_compartment_v5'><pose>8.406 6.125 0.850 0 0 0.0000</pose><geometry><box><size>0.038 0.040 0.060</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_compartment_v6'><pose>8.406 6.825 0.850 0 0 0.0000</pose><geometry><box><size>0.038 0.040 0.060</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_compartment_v7'><pose>9.455 6.175 0.700 1.5708 0 0</pose><geometry><cylinder><radius>0.055</radius><length>0.100</length></cylinder></geometry><material><ambient>0.57 0.57 0.57 1</ambient><diffuse>0.95 0.95 0.95 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
+        <visual name='wc_compartment_v8'><pose>9.514 6.175 0.700 0 0 0.0000</pose><geometry><box><size>0.018 0.140 0.040</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>1.00 1.00 1.00 1</specular></material></visual>
+        <visual name='wc_compartment_v9'><pose>8.575 6.805 0.175 0 0 0</pose><geometry><cylinder><radius>0.050</radius><length>0.350</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='wc_compartment_v10'><pose>9.355 6.745 0.150 0 0 0</pose><geometry><cylinder><radius>0.100</radius><length>0.300</length></cylinder></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.80 0.80 0.80 1</specular></material></visual>
+        <visual name='wc_compartment_v11'><pose>9.504 6.025 1.675 0 0 0.0000</pose><geometry><box><size>0.038 0.050 0.050</size></box></geometry><material><ambient>0.44 0.46 0.47 1</ambient><diffuse>0.74 0.76 0.79 1</diffuse><specular>0.15 0.15 0.15 1</specular></material></visual>
       </link>
     </model>
     <model name='cafe_table_vip_1'>
@@ -4394,7 +4739,7 @@
       </plugin>
     </actor>
     <model name='human_cook'>
-      <pose>-8.6 8.9 0 0 0 0</pose>
+      <pose>-8.6 4.45 0 0 0 0</pose>
       <link name='body'>
         <gravity>0</gravity>
         <kinematic>1</kinematic>
@@ -4406,13 +4751,13 @@
       </link>
     </model>
     <actor name='human_cook_actor'>
-      <pose>-8.6 8.9 1.0 1.5708 0 0</pose>
+      <pose>-8.6 4.45 1.0 1.5708 0 0</pose>
       <skin><filename>walk.dae</filename><scale>1.0</scale></skin>
       <animation name='walking'><filename>walk.dae</filename><scale>1.0</scale><interpolate_x>true</interpolate_x></animation>
       <plugin name='human_cook_walker' filename='libtunibot_human_actor.so'>
           <ros><namespace>/human_cook</namespace></ros>
-          <waypoint>-8.60 8.90</waypoint>
-          <waypoint>-4.60 8.90</waypoint>
+          <waypoint>-8.60 4.45</waypoint>
+          <waypoint>-4.80 4.45</waypoint>
           <speed>0.5</speed>
           <dwell>6.0</dwell>
           <start_delay>3.0</start_delay>
@@ -4423,7 +4768,7 @@
       </plugin>
     </actor>
     <model name='human_cook_2'>
-      <pose>-8.4 4.3 0 0 0 0</pose>
+      <pose>-8.3 8.1 0 0 0 0</pose>
       <link name='body'>
         <gravity>0</gravity>
         <kinematic>1</kinematic>
@@ -4435,17 +4780,75 @@
       </link>
     </model>
     <actor name='human_cook_2_actor'>
-      <pose>-8.4 4.3 1.0 1.5708 0 0</pose>
+      <pose>-8.3 8.1 1.0 1.5708 0 0</pose>
       <skin><filename>walk.dae</filename><scale>1.0</scale></skin>
       <animation name='walking'><filename>walk.dae</filename><scale>1.0</scale><interpolate_x>true</interpolate_x></animation>
       <plugin name='human_cook_2_walker' filename='libtunibot_human_actor.so'>
           <ros><namespace>/human_cook_2</namespace></ros>
-          <waypoint>-8.40 4.30</waypoint>
-          <waypoint>-3.90 4.30</waypoint>
+          <waypoint>-8.30 8.10</waypoint>
+          <waypoint>-4.60 8.10</waypoint>
           <speed>0.5</speed>
           <dwell>5.0</dwell>
           <start_delay>8.0</start_delay>
           <body>human_cook_2</body>
+          <robot>waiter_robot</robot>
+          <yield_distance>0.9</yield_distance>
+          <max_yield_time>6.0</max_yield_time>
+      </plugin>
+    </actor>
+    <model name='human_expo'>
+      <pose>-6.3 3.95 0 0 0 0</pose>
+      <link name='body'>
+        <gravity>0</gravity>
+        <kinematic>1</kinematic>
+        <inertial><mass>70</mass><inertia><ixx>1</ixx><iyy>1</iyy><izz>1</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+        <collision name='body_collision'>
+          <pose>0 0 0.85 0 0 0</pose>
+          <geometry><cylinder><radius>0.22</radius><length>1.7</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <actor name='human_expo_actor'>
+      <pose>-6.3 3.95 1.0 1.5708 0 0</pose>
+      <skin><filename>walk.dae</filename><scale>1.0</scale></skin>
+      <animation name='walking'><filename>walk.dae</filename><scale>1.0</scale><interpolate_x>true</interpolate_x></animation>
+      <plugin name='human_expo_walker' filename='libtunibot_human_actor.so'>
+          <ros><namespace>/human_expo</namespace></ros>
+          <waypoint>-6.30 3.95</waypoint>
+          <waypoint>-5.20 3.95</waypoint>
+          <speed>0.35</speed>
+          <dwell>8.0</dwell>
+          <start_delay>2.0</start_delay>
+          <body>human_expo</body>
+          <robot>waiter_robot</robot>
+          <yield_distance>0.9</yield_distance>
+          <max_yield_time>6.0</max_yield_time>
+      </plugin>
+    </actor>
+    <model name='human_dish'>
+      <pose>-3.75 8.3 0 0 0 0</pose>
+      <link name='body'>
+        <gravity>0</gravity>
+        <kinematic>1</kinematic>
+        <inertial><mass>70</mass><inertia><ixx>1</ixx><iyy>1</iyy><izz>1</izz><ixy>0</ixy><ixz>0</ixz><iyz>0</iyz></inertia></inertial>
+        <collision name='body_collision'>
+          <pose>0 0 0.85 0 0 0</pose>
+          <geometry><cylinder><radius>0.22</radius><length>1.7</length></cylinder></geometry>
+        </collision>
+      </link>
+    </model>
+    <actor name='human_dish_actor'>
+      <pose>-3.75 8.3 1.0 1.5708 0 0</pose>
+      <skin><filename>walk.dae</filename><scale>1.0</scale></skin>
+      <animation name='walking'><filename>walk.dae</filename><scale>1.0</scale><interpolate_x>true</interpolate_x></animation>
+      <plugin name='human_dish_walker' filename='libtunibot_human_actor.so'>
+          <ros><namespace>/human_dish</namespace></ros>
+          <waypoint>-3.75 8.30</waypoint>
+          <waypoint>-3.75 5.80</waypoint>
+          <speed>0.4</speed>
+          <dwell>10.0</dwell>
+          <start_delay>6.0</start_delay>
+          <body>human_dish</body>
           <robot>waiter_robot</robot>
           <yield_distance>0.9</yield_distance>
           <max_yield_time>6.0</max_yield_time>
@@ -4530,8 +4933,9 @@
           <ros><namespace>/human_wc</namespace></ros>
           <waypoint>4.00 -1.00 60.00</waypoint>
           <waypoint>8.95 1.70</waypoint>
-          <waypoint>9.00 2.70</waypoint>
-          <waypoint>8.85 4.40 60.00</waypoint>
+          <waypoint>9.05 2.70</waypoint>
+          <waypoint>9.10 4.60</waypoint>
+          <waypoint>9.05 5.85 60.00</waypoint>
           <speed>0.7</speed>
           <dwell>1.0</dwell>
           <start_delay>40.0</start_delay>
@@ -4661,7 +5065,7 @@
       </plugin>
     </actor>
     <model name='human_extra_1'>
-      <pose>8.95 9.7 0 0 0 0</pose>
+      <pose>8.7 9.9 0 0 0 0</pose>
       <link name='body'>
         <gravity>0</gravity>
         <kinematic>1</kinematic>
@@ -4673,13 +5077,13 @@
       </link>
     </model>
     <actor name='human_extra_1_actor'>
-      <pose>8.95 9.7 1.0 1.5708 0 0</pose>
+      <pose>8.7 9.9 1.0 1.5708 0 0</pose>
       <skin><filename>walk.dae</filename><scale>1.0</scale></skin>
       <animation name='walking'><filename>walk.dae</filename><scale>1.0</scale><interpolate_x>true</interpolate_x></animation>
       <plugin name='human_extra_1_walker' filename='libtunibot_human_actor.so'>
           <ros><namespace>/human_extra_1</namespace></ros>
-          <waypoint>8.95 9.70</waypoint>
-          <waypoint>8.95 9.72</waypoint>
+          <waypoint>8.70 9.90</waypoint>
+          <waypoint>8.70 9.92</waypoint>
           <speed>0.5</speed>
           <dwell>1000.0</dwell>
           <start_delay>0.0</start_delay>
@@ -4690,7 +5094,7 @@
       </plugin>
     </actor>
     <model name='human_extra_2'>
-      <pose>8.95 5.95 0 0 0 0</pose>
+      <pose>8.7 9.25 0 0 0 0</pose>
       <link name='body'>
         <gravity>0</gravity>
         <kinematic>1</kinematic>
@@ -4702,13 +5106,13 @@
       </link>
     </model>
     <actor name='human_extra_2_actor'>
-      <pose>8.95 5.95 1.0 1.5708 0 0</pose>
+      <pose>8.7 9.25 1.0 1.5708 0 0</pose>
       <skin><filename>walk.dae</filename><scale>1.0</scale></skin>
       <animation name='walking'><filename>walk.dae</filename><scale>1.0</scale><interpolate_x>true</interpolate_x></animation>
       <plugin name='human_extra_2_walker' filename='libtunibot_human_actor.so'>
           <ros><namespace>/human_extra_2</namespace></ros>
-          <waypoint>8.95 5.95</waypoint>
-          <waypoint>8.95 5.97</waypoint>
+          <waypoint>8.70 9.25</waypoint>
+          <waypoint>8.70 9.27</waypoint>
           <speed>0.5</speed>
           <dwell>1000.0</dwell>
           <start_delay>0.0</start_delay>

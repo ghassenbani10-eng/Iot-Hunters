@@ -25,9 +25,18 @@ The layout follows how restaurants that use service robots are organised today: 
 closed to the robot, the robot has its **own marked lanes**, and customers who only take away never
 cross the dining room's robot traffic. The restaurant is **divided in two** by a partition wall:
 
-* **Kitchen** (north-west, staff only), fully equipped: cooking line under an extraction hood
-  (2 ranges, fryer, griddle, oven, salamander), cold room, fridges, dry storage, two stainless prep
-  tables, dish area (sink, dishwasher, plate rack) and two cooks. Three openings in the partition:
+* **Kitchen** (north-west, staff only), laid out like a real commercial kitchen (`scripts/interior.py`):
+  the food moves one way, never back — **receiving** at the staff door (platform scale) → **storage**
+  (walk-in cooler and walk-in freezer, dry-goods shelving) → **prep** (three stainless tables with
+  colour-coded boards: green vegetables, red meat, blue fish, white bakery; slicer, stand mixer,
+  two-bowl prep sink) → **cooking line** (island: charbroiler, 6-burner range with oven, griddle,
+  two fryers, fry-holding station, steam table) under a hood overhanging the appliances by 15 cm
+  (baffle filters, lights, duct, fire-suppression line) → **the pass** behind the robot windows
+  (heat lamps, plated orders, ticket rail, kitchen display screen). Dirty dishes have their own route
+  along the east wall: dish drop with pre-rinse → dishwasher → clean racks → plate/glass shelving.
+  Aisles are 0.9-1.25 m; hand sinks at the prep area, the pass and the dish station; fire
+  extinguishers (K-class at the line), alarm pull station. Four staff: line cook, prep cook,
+  expediter at the pass, dishwasher. Three openings in the partition:
   * **two serving windows** for the robot (counter at 0.95 m, opening up to 1.75 m) — the robot parks
     in front of a window, trays facing the cook; window 2 is used automatically when window 1 is blocked;
   * the **takeaway counter** (half door, counter at 1.0 m): customers who do not sit **queue along
@@ -41,7 +50,8 @@ cross the dining room's robot traffic. The restaurant is **divided in two** by a
   off the lanes a small, non-lethal cost (`make_keepout_mask.py`, `scale` mode), so the planner uses the
   lanes whenever it can and leaves them only for the last metres to a table.
 * **Customer toilet** east of the service corridor, entered straight from the dining room through its
-  own door next to D2: customers never walk in the robot's 1.05 m corridor (a person and the robot
+  own door next to D2 — a wash-basin lobby (vanity, mirror, soap, hand dryer) and a WC compartment
+  behind its own lockable door (wall-hung pan, cistern, grab bar, paper holder, brush, bin), tiled: customers never walk in the robot's 1.05 m corridor (a person and the robot
   cannot pass each other there). Keepout for the robot. North of it: the closed storage room.
 * **Main entrance** (glass door, south-east), where takeaway customers come in.
 * **VIP lounge** (north-east, customer side, sofa + 2 tables) — the "complex layout" part, reached through:
@@ -80,8 +90,8 @@ The plugin solves it:
   (Gazebo's spawn service cannot create actors, so two extra people wait parked in the closed storage
   room).
 
-Ten people live in the world: a waiter crossing the dining room, a guest walking between the table
-rows, two cooks in the kitchen, a guest in the VIP lounge, a guest who goes to the toilet (through
+Twelve people live in the world: a waiter crossing the dining room, a guest walking between the table
+rows, four kitchen staff, a guest in the VIP lounge, a guest who goes to the toilet (through
 its own door next to D2, 60 s inside), three customers waiting in the takeaway queue (shuffling
 forward) and a takeaway customer who walks in from the entrance, waits at the end of the queue and
 leaves. Waypoints can carry their own pause (`<waypoint>x y dwell</waypoint>`). Test scenarios send

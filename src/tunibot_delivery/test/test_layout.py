@@ -171,3 +171,35 @@ def test_waypoint_dwell_format():
         assert len(wps) >= 2 and speed > 0
         for w in wps:
             assert len(w) in (2, 3)
+
+
+def layout_collision_boxes():
+    """Axis-aligned collision boxes of the generated static layout (walls, furniture, interiors)."""
+    import xml.etree.ElementTree as ET
+    model = ET.fromstring(bw.layout_model())
+    for link in model.iter('link'):
+        lx, ly = (float(v) for v in (link.findtext('pose') or '0 0').split()[:2])
+        for c in link.iter('collision'):
+            size = c.find('geometry/box/size')
+            if size is None:
+                continue
+            sx, sy, _ = (float(v) for v in size.text.split())
+            px, py, _, _, _, yaw = (float(v) for v in (c.findtext('pose') or '0 0 0 0 0 0').split())
+            cx, cy = lx + px, ly + py
+            lyaw = float((link.findtext('pose') or '0 0 0 0 0 0').split()[5]) + yaw
+            hx = abs(math.cos(lyaw)) * sx / 2 + abs(math.sin(lyaw)) * sy / 2
+            hy = abs(math.sin(lyaw)) * sx / 2 + abs(math.cos(lyaw)) * sy / 2
+            yield link.get('name'), (cx - hx, cx + hx, cy - hy, cy + hy)
+
+
+@pytest.mark.parametrize('human', [h[0] for h in bw.HUMANS])
+def test_people_walk_clear_of_walls_and_furniture(human):
+    radius = 0.2     # collision body 0.22 m; 2 cm tolerance for visuals touching
+    wps = [w[:2] for w in next(h for h in bw.HUMANS if h[0] == human)[1]]
+    boxes = list(layout_collision_boxes())
+    for (ax, ay), (bx, by) in zip(wps, wps[1:]):
+        for i in range(41):
+            px, py = ax + (bx - ax) * i / 40, ay + (by - ay) * i / 40
+            for name, (x0, x1, y0, y1) in boxes:
+                assert not (x0 - radius < px < x1 + radius and y0 - radius < py < y1 + radius), \
+                    '%s walks through %s at (%.2f, %.2f)' % (human, name, px, py)
