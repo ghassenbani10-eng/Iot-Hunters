@@ -127,7 +127,7 @@ metrics (`CONTROLLER=rpp|mppi scripts/run_tests.sh tc03 tc05 tc07`):
 | TC05 VIP lounge (3 doors, 1.05 m corridor, L-turn) | ✅ 420 s, 0 contacts (earlier run) | ✅ 355 s, 0.25 m, 0 contacts |
 | TC07 corridor blocked → fail order 1, serve order 2 | ❌ still stuck after 887 s | ✅ 351 s, 0 contacts |
 
-MPPI is the default (`navigation.launch.py controller:=mppi`): it scores ~2000 sampled trajectories
+MPPI is the default (`navigation.launch.py controller:=mppi`): it scores ~1200 sampled trajectories
 per cycle with the real footprint, so turning in a corridor or next to a wall is collision-checked —
 Humble's RotationShim turns in place without any check, which is what trapped RPP in the dead end.
 RPP remains available (`controller:=rpp`).

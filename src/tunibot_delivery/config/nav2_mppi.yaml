@@ -1,7 +1,7 @@
 # MPPI controller (nav2_mppi_controller) for the TuniBot waiter robot.
 # Overlay on nav2_params.yaml, selected with:  navigation.launch.py controller:=mppi
 #
-# MPPI samples ~2000 velocity sequences every cycle and scores them with critics
+# MPPI samples ~1200 velocity sequences every cycle and scores them with critics
 # (obstacles with the real footprint, path following, goal, forward preference).
 # Compared with RotationShim + Regulated Pure Pursuit it turns while driving
 # instead of stop-rotate-go, and swerves around people smoothly.
@@ -12,7 +12,7 @@ controller_server:
       plugin: "nav2_mppi_controller::MPPIController"
       time_steps: 56
       model_dt: 0.05
-      batch_size: 2000
+      batch_size: 1200
       vx_std: 0.2
       vy_std: 0.2
       wz_std: 0.4
@@ -22,7 +22,7 @@ controller_server:
       wz_max: 0.9
       iteration_count: 1
       prune_distance: 1.7
-      transform_tolerance: 0.2
+      transform_tolerance: 0.5
       temperature: 0.3
       gamma: 0.015
       motion_model: "DiffDrive"
