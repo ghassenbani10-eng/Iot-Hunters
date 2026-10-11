@@ -30,7 +30,7 @@ tracked people and their 2 s predicted motion, robot state and battery. Scenario
 in front of the robot on its way from the serving window to table 4; the robot yields and delivers,
 0 contacts (ground truth).
 
-**Test results: 12/12 scenarios pass** — [docs/TEST_CASES.md](docs/TEST_CASES.md).
+**Test results: 16/16 scenarios pass** (0 contacts, ground-truth metrics) — [docs/TEST_CASES.md](docs/TEST_CASES.md).
 
 ## Architecture
 

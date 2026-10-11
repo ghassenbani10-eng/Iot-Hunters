@@ -49,9 +49,17 @@ cross the dining room's robot traffic. The restaurant is **divided in two** by a
   windows, the west and east aisles and two cross aisles. The keepout mask gives every dining-room cell
   off the lanes a small, non-lethal cost (`make_keepout_mask.py`, `scale` mode), so the planner uses the
   lanes whenever it can and leaves them only for the last metres to a table.
+  | | |
+  |---|---|
+  | ![kitchen overview](media/kitchen_overview.jpg) | ![cooking line](media/kitchen_cooking_line.jpg) |
+  | *Kitchen: island line under the hood, walk-ins, dry storage, prep, dish station* | *Cooking line: charbroiler, range + oven, griddle, fryers, steam table* |
+  | ![the pass](media/kitchen_pass.jpg) | ![prep and storage](media/kitchen_prep_storage.jpg) |
+  | *The pass behind the robot windows: heat lamps, plated orders, order screen* | *Prep (colour-coded boards) and storage* |
+  | ![dish station](media/kitchen_dish_station.jpg) | ![toilet lobby](media/toilet_lobby.jpg) |
+  | *Dish station: drop, dishwasher, clean racks* | *Customer toilet: wash-basin lobby* |
 * **Customer toilet** east of the service corridor, entered straight from the dining room through its
   own door next to D2 — a wash-basin lobby (vanity, mirror, soap, hand dryer) and a WC compartment
-  behind its own lockable door (wall-hung pan, cistern, grab bar, paper holder, brush, bin), tiled: customers never walk in the robot's 1.05 m corridor (a person and the robot
+  behind its own lockable door (wall-hung pan, cistern, grab bar, paper holder, brush, bin - [picture](media/toilet_wc.jpg)), tiled: customers never walk in the robot's 1.05 m corridor (a person and the robot
   cannot pass each other there). Keepout for the robot. North of it: the closed storage room.
 * **Main entrance** (glass door, south-east), where takeaway customers come in.
 * **VIP lounge** (north-east, customer side, sofa + 2 tables) — the "complex layout" part, reached through:
@@ -221,8 +229,11 @@ RPP remains available (`controller:=rpp`).
   perpendicular distance to that line - insensitive to a small heading error - is compared with a
   reference learned at start-up while the robot stands on the pad where it was installed. The lidar
   value is used only when it agrees with AMCL within 12 cm (a person or a chair in those beams can
-  look like a wall). TC12 ground truth: **1.1–1.3 cm** from the pad centre over 3 dockings
-  (`test/test_docking.py` covers heading error, a chair leg and a person hiding the wall).
+  look like a wall); a reading that drops out for a moment is bridged with the odometry since the
+  last good one. On the pad, the **slope of the same wall line gives the heading** (AMCL's was up to
+  5° off): the robot turns by the difference to the slope learned at start-up, then measures the
+  remaining gap at rest and creeps back by it. TC12 ground truth: **0.7–3.6 cm and 0–1.1°** over
+  3 dockings (`test/test_docking.py` covers heading error, a chair leg, a person hiding the wall).
 * **Hold position**: while loading/serving the robot actively holds zero velocity (the simulated base,
   like many real ones without a watchdog, keeps executing the last velocity command it received).
 
@@ -311,9 +322,16 @@ TC15 (charger fault on the dock: detected after 10 s, reported, recovered), TC16
 blocked → window 2, next to the takeaway queue). `REPEAT=N scripts/run_tests.sh` repeats every scenario
 on fresh stacks and the report adds success rates and metric spreads.
 
+**Result: 16/16 pass, 0 contacts** ([TEST_CASES.md](TEST_CASES.md), one run of all scenarios on the
+final code). Simulated people behave like polite pedestrians: they yield to the robot, walk round it
+after a while, and never step closer than 0.72 m to its centre (they slide round it instead), so a
+low clearance in the report is always the robot's own doing.
+
 **Static tests and CI.** `test/` holds unit tests that need no simulator: every delivery pose is
 checked against the walls, the furniture and the keepout mask; doors keep their width; lanes are clear;
-the queue zone does not cover a robot window; the battery voltage curve; the social metrics. GitHub
+the queue zone does not cover a robot window; nobody's walking path crosses a wall or a piece of
+furniture; the battery voltage curve and state of health; the lidar docking (wall distance and
+heading, outliers); the social metrics. GitHub
 Actions (`.github/workflows/ci.yml`) builds both packages in a `ros:humble` container, runs the tests
 and checks that the committed world and mask match their generators.
 
