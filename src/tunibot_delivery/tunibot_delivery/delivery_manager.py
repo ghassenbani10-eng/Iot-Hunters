@@ -84,7 +84,7 @@ class DeliveryManager(Node):
             'energy_reserve': 12.0,        # % of capacity that must remain at the dock
             'energy_safety_factor': 1.3,   # margin on the path-length energy estimate
             'energy_check_period_sec': 3.0,
-            'nav_attempts_per_pose': 2,
+            'nav_attempts_per_pose': 3,
             'max_consecutive_failures': 3,
             'blocked_after_sec': 5.0,
             'path_wait_sec': 45.0,         # wait this long for a blocked route to clear (people)
@@ -540,8 +540,9 @@ class Mission:
                 self.mgr.event('failure', 'Navigation to %s failed (approach %d/%d, attempt %d)' % (
                     label, i + 1, len(poses), attempt + 1))
                 # (no costmap clearing: what the robot just saw - e.g. a trolley parked on
-                # the approach pose - is exactly what the next reachability check needs)
-                self.hold(1.0)
+                # the approach pose - is exactly what the next reachability check needs;
+                # a short pause lets people walking around move on)
+                self.hold(3.0)
         return False
 
     def drive(self, distance, speed, until=None, timeout=None):

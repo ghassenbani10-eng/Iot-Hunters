@@ -57,7 +57,13 @@ The plugin solves it:
   the same physics update, so the lidar and the bumper perceive the person exactly where it is
   drawn (measured: 7.93 m lidar range vs 7.88 m expected, i.e. the body radius);
 * like a real pedestrian it **stops when the robot is right in front of it** (< 0.9 m, ±50°), and
-  after waiting 6 s it turns back (no robot/person standoff in a corridor).
+  after waiting 6 s it **walks around the robot** (1 m sidestep away from it, then on to its
+  destination). Two earlier versions deadlocked and are worth knowing about: a patience timer reset by
+  a robot hovering at the edge of the person's view cone (fixed with hysteresis), and "turning back"
+  at the very end of a path, which leads nowhere;
+* it has a ROS 2 command topic (`/<name>/cmd`): tests and demos give a person a new walk at runtime
+  (Gazebo's spawn service cannot create actors, so two extra people wait parked in the closed storage
+  room).
 
 Four people live in the world: a waiter crossing the whole dining room, a guest walking between the
 table rows, a cook walking along the kitchen pass (behind the serving windows) and a guest in the VIP
@@ -65,6 +71,11 @@ lounge. Test scenarios spawn more (head-on,
 crossing, standing in a doorway).
 
 ### 1.3 Robot model fixes and additions
+
+* **Parking drift**: after stopping, the robot drifted 15 cm and 15° in 30 s — even with zero velocity
+  commands — because the rigid wheel contact jittered and slid. Damped stiff contact (kp 1e6, kd 100,
+  no penetration dead zone) + axle friction: 1.6 cm / 0.1° in 30 s. Found by the docking tests: the
+  robot was slowly rolling off its charging pad while charging.
 
 * **Traction fix** (affected Phase 1 too): the wheels used a soft contact (`minDepth` 1 mm), so they
   sank until the frictionless casters — 1 mm above the floor — carried most of the weight. The robot
@@ -152,8 +163,15 @@ RPP remains available (`controller:=rpp`).
 * **Mission-level recovery**: a table that stays unreachable fails *only that order* (reason recorded
   and shown in the UI); the queue continues. After 3 consecutive failures the robot returns to the dock
   and enters **ERROR**, waiting for an operator `resume` (no endless retry loop).
-* **Localization watchdog**: if `map → odom` stops being refreshed, AMCL is re-seeded from the last
-  consistent pose.
+* **Localization supervisor** (1 Hz, always on): AMCL (Humble) occasionally stops refreshing
+  `map → odom`; every lookup then fails with "transform too old" and the robot freezes. When the
+  transform is stale for 2.5 s, AMCL is re-seeded with the best estimate (last `map → odom` composed
+  with live odometry), stamped with the odometry time so that AMCL accepts it. Measured AMCL error
+  against ground truth during a full VIP round trip: ≤ 0.20 m (worst case along the 10 m corridor).
+* **Lifecycle watchdog**: with FastDDS a lifecycle `change_state` request sent while discovery is still
+  running can lose its response, and the Nav2 lifecycle manager then waits forever (seen in ~1 out
+  of 5 launches). The lifecycle managers start 4 s after the servers, and `lifecycle_watchdog`
+  drives any server left behind to ACTIVE itself.
 * **Serving-window approach**: the window pose is 0.5 m from the partition. Nav2 stops at a
   *staging* pose 0.6 m back in open floor, the robot faces the window and creeps in straight under
   closed-loop control; after loading it backs out (only when no tracked person is behind it — the
