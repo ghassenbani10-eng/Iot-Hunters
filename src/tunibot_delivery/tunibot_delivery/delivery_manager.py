@@ -637,10 +637,14 @@ class Mission:
         After serving, the robot faces the table; the way out is often behind it. MPPI
         sometimes does not settle into a 180 deg turn next to a table and oscillates on the
         spot (moving, so never 'blocked'). Turning first removes that. Only with room to
-        turn: nothing lethal / inscribed within 45 cm (never inside the narrow corridor)."""
+        turn: nothing lethal / inscribed within 55 cm (never inside the narrow corridor)
+        and nobody within 1.5 m (the corners sweep 37 cm around the centre, and a person
+        who stopped politely next to the robot is not always in the costmap yet)."""
         m = self.mgr
         pose = m.robot_pose()
-        if pose is None or m.pose_occupied(pose[0], pose[1], radius=0.45):
+        near = m.people.get('nearest')
+        if pose is None or (near is not None and near < 1.5) or \
+                m.pose_occupied(pose[0], pose[1], radius=0.55):
             return
         try:
             path = self.planner.getPath(self.pose_msg(*goal), self.pose_msg(*goal), use_start=False)
