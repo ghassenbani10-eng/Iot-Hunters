@@ -87,8 +87,8 @@ The plugin solves it:
   a robot hovering at the edge of the person's view cone (fixed with hysteresis), and "turning back"
   at the very end of a path, which leads nowhere;
 * it has a ROS 2 command topic (`/<name>/cmd`): tests and demos give a person a new walk at runtime
-  (Gazebo's spawn service cannot create actors, so two extra people wait parked in the closed storage
-  room).
+  (Gazebo's spawn service cannot create actors, so two extra people wait parked off stage, outside the
+  building).
 
 Twelve people live in the world: a waiter crossing the dining room, a guest walking between the table
 rows, four kitchen staff, a guest in the VIP lounge, a guest who goes to the toilet (through

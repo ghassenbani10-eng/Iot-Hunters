@@ -135,7 +135,8 @@ VIP_TABLES = [('cafe_table_vip_1', 0.5, 6.0), ('cafe_table_vip_2', 4.5, 6.0)]
 # Walking people: name, waypoints (world frame, (x, y) or (x, y, dwell)), speed,
 # default dwell, start delay. Each one also listens on /<name>/cmd
 # (std_msgs/Float64MultiArray) to be given a new walk at runtime. human_extra_1/2 wait,
-# parked in the closed storage room, until a test scenario or a demo sends them.
+# parked off stage (outside the building, behind the default camera, out of the lidar's
+# range), until a test scenario or a demo sends them: the command moves them to its start.
 HUMANS = [
     # staff
     ('human_waiter', [(-7.5, 0.2), (6.0, 0.2)], 0.75, 3.0, 5.0),
@@ -158,9 +159,9 @@ HUMANS = [
     ('human_queue_3', [(-1.5, 2.35, 35.0), (-1.2, 2.35, 35.0)], 0.3, 35.0, 11.0),
     ('human_takeaway', [(7.9, -8.9, 10.0), (7.0, -7.8), (7.0, 0.4), (1.6, 2.35), (-0.3, 2.35, 30.0)],
      0.75, 1.0, 15.0),
-    # parked for scripted test scenarios
-    ('human_extra_1', [(8.7, 9.9), (8.7, 9.92)], 0.5, 1000.0, 0.0),
-    ('human_extra_2', [(8.7, 9.25), (8.7, 9.27)], 0.5, 1000.0, 0.0),
+    # parked off stage for scripted test scenarios
+    ('human_extra_1', [(-5.0, -40.0), (-5.0, -39.98)], 0.5, 1000.0, 0.0),
+    ('human_extra_2', [(-4.0, -40.0), (-4.0, -39.98)], 0.5, 1000.0, 0.0),
 ]
 
 

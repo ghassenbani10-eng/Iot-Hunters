@@ -5065,7 +5065,7 @@
       </plugin>
     </actor>
     <model name='human_extra_1'>
-      <pose>8.7 9.9 0 0 0 0</pose>
+      <pose>-5.0 -40.0 0 0 0 0</pose>
       <link name='body'>
         <gravity>0</gravity>
         <kinematic>1</kinematic>
@@ -5077,13 +5077,13 @@
       </link>
     </model>
     <actor name='human_extra_1_actor'>
-      <pose>8.7 9.9 1.0 1.5708 0 0</pose>
+      <pose>-5.0 -40.0 1.0 1.5708 0 0</pose>
       <skin><filename>walk.dae</filename><scale>1.0</scale></skin>
       <animation name='walking'><filename>walk.dae</filename><scale>1.0</scale><interpolate_x>true</interpolate_x></animation>
       <plugin name='human_extra_1_walker' filename='libtunibot_human_actor.so'>
           <ros><namespace>/human_extra_1</namespace></ros>
-          <waypoint>8.70 9.90</waypoint>
-          <waypoint>8.70 9.92</waypoint>
+          <waypoint>-5.00 -40.00</waypoint>
+          <waypoint>-5.00 -39.98</waypoint>
           <speed>0.5</speed>
           <dwell>1000.0</dwell>
           <start_delay>0.0</start_delay>
@@ -5094,7 +5094,7 @@
       </plugin>
     </actor>
     <model name='human_extra_2'>
-      <pose>8.7 9.25 0 0 0 0</pose>
+      <pose>-4.0 -40.0 0 0 0 0</pose>
       <link name='body'>
         <gravity>0</gravity>
         <kinematic>1</kinematic>
@@ -5106,13 +5106,13 @@
       </link>
     </model>
     <actor name='human_extra_2_actor'>
-      <pose>8.7 9.25 1.0 1.5708 0 0</pose>
+      <pose>-4.0 -40.0 1.0 1.5708 0 0</pose>
       <skin><filename>walk.dae</filename><scale>1.0</scale></skin>
       <animation name='walking'><filename>walk.dae</filename><scale>1.0</scale><interpolate_x>true</interpolate_x></animation>
       <plugin name='human_extra_2_walker' filename='libtunibot_human_actor.so'>
           <ros><namespace>/human_extra_2</namespace></ros>
-          <waypoint>8.70 9.25</waypoint>
-          <waypoint>8.70 9.27</waypoint>
+          <waypoint>-4.00 -40.00</waypoint>
+          <waypoint>-4.00 -39.98</waypoint>
           <speed>0.5</speed>
           <dwell>1000.0</dwell>
           <start_delay>0.0</start_delay>

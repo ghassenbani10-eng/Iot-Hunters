@@ -210,7 +210,7 @@ class Runner(Node):
         return ok
 
     def walk_person(self, name, waypoints, speed=0.8, dwell=1000.0, start_delay=0.0, ping_pong=False):
-        """Send one of the world's people (e.g. human_extra_1, parked in the storage room)
+        """Send one of the world's people (e.g. human_extra_1, parked off stage)
         on a scripted walk: it appears at waypoints[0] (map frame) and walks the list.
         (gazebo_ros' spawn service cannot spawn actors, so test people are pre-placed.)"""
         if name not in self.cmd_pubs:
