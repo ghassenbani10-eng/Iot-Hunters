@@ -28,7 +28,7 @@
 //   <robot>waiter_robot</robot>     model to yield to
 //   <yield_distance>0.9</yield_distance>
 //   <max_yield_time>6.0</max_yield_time>
-//   <min_robot_distance>0.62</min_robot_distance>
+//   <min_robot_distance>0.72</min_robot_distance>
 //   <animation_factor>5.1</animation_factor>
 //   <ping_pong>true</ping_pong>     true: A-B-C-B-A..., false: A-B-C-A-B...
 //   <ros><namespace>/human_x</namespace></ros>
@@ -90,7 +90,7 @@ public:
     robot_name_ = sdf->Get<std::string>("robot", "waiter_robot").first;
     yield_distance_ = sdf->Get<double>("yield_distance", 0.9).first;
     max_yield_time_ = sdf->Get<double>("max_yield_time", 6.0).first;
-    min_robot_distance_ = sdf->Get<double>("min_robot_distance", 0.62).first;
+    min_robot_distance_ = sdf->Get<double>("min_robot_distance", 0.72).first;
     animation_factor_ = sdf->Get<double>("animation_factor", 5.1).first;
     ping_pong_ = sdf->Get<bool>("ping_pong", true).first;
 
@@ -337,7 +337,7 @@ private:
   double start_delay_{0.0};
   double yield_distance_{0.9};
   double max_yield_time_{6.0};
-  double min_robot_distance_{0.62};   // body (0.22) + robot half-diagonal (0.37) + margin
+  double min_robot_distance_{0.72};   // body 0.22 + robot half-diagonal 0.37 + 0.13: >= 5 cm to a corner
   double animation_factor_{5.1};
   bool ping_pong_{true};
   double last_time_{0.0};
