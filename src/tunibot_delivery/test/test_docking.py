@@ -4,7 +4,7 @@ import math
 import pytest
 
 pytest.importorskip('nav2_simple_commander')
-from tunibot_delivery.delivery_manager import rear_wall_distance  # noqa: E402
+from tunibot_delivery.delivery_manager import rear_wall_distance, rear_wall_fit  # noqa: E402
 
 # the robot's lidar: 290 beams over +-145 deg, 0.12-12 m
 N, AMIN, AMAX = 290, -2.5307, 2.5307
@@ -53,3 +53,9 @@ def test_person_hiding_the_wall_gives_no_reading():
 
 def test_no_wall_behind():
     assert rear_wall_distance([float('inf')] * N, AMIN, INC, 0.12, 12.0) is None
+
+
+def test_wall_angle_gives_the_heading():
+    for yaw in (-0.08, -0.03, 0.0, 0.03, 0.08):
+        _, ang = rear_wall_fit(scan_of_wall(1.6, yaw), AMIN, INC, 0.12, 12.0)
+        assert abs(ang - yaw) < 1e-3, (yaw, ang)

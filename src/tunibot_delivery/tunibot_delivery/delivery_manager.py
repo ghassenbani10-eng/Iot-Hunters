@@ -69,8 +69,15 @@ def yaw_of(q):
 
 
 def rear_wall_distance(ranges, angle_min, angle_inc, range_min, range_max, lo=-2.54, hi=-2.18):
-    """Perpendicular distance (m) from the lidar to the wall behind the robot, seen by the
-    rear-right beams (the lidar is blind in a +-35 deg cone straight behind).
+    """Perpendicular distance (m) from the lidar to the wall behind the robot (see rear_wall_fit)."""
+    fit = rear_wall_fit(ranges, angle_min, angle_inc, range_min, range_max, lo, hi)
+    return None if fit is None else fit[0]
+
+
+def rear_wall_fit(ranges, angle_min, angle_inc, range_min, range_max, lo=-2.54, hi=-2.18):
+    """(distance, angle) of the wall behind the robot, seen by the rear-right beams (the
+    lidar is blind in a +-35 deg cone straight behind): perpendicular distance (m) from the
+    lidar, and the robot's heading relative to the wall normal (rad, + = turned left).
 
     A line x = m y + c is fitted to the hits in the lidar frame: points within 15 cm of
     their median depth first (a chair leg or a bag is far off it), least squares, then
@@ -102,7 +109,7 @@ def rear_wall_distance(ranges, angle_min, angle_inc, range_min, range_max, lo=-2
         pts = [p for p in pts if abs(p[0] - (m * p[1] + c)) / math.sqrt(1 + m * m) < 0.04]
     if len(pts) < 0.75 * total or c >= 0.0:
         return None                     # not behind the robot
-    return -c / math.sqrt(1.0 + m * m)
+    return -c / math.sqrt(1.0 + m * m), math.atan(m)
 
 
 class DeliveryManager(Node):
@@ -159,6 +166,7 @@ class DeliveryManager(Node):
         # while the robot still stands exactly on the charging pad where it was installed
         self.scan = None
         self.dock_ref = None
+        self.dock_ref_angle = 0.0
         self.dock_ref_samples = []
         self.left_dock_once = False
 
@@ -238,23 +246,28 @@ class DeliveryManager(Node):
                     return True
         return False
 
-    def rear_wall(self):
+    def rear_wall_fit(self):
         s = self.scan
         if s is None:
             return None
-        return rear_wall_distance(s.ranges, s.angle_min, s.angle_increment, s.range_min, s.range_max)
+        return rear_wall_fit(s.ranges, s.angle_min, s.angle_increment, s.range_min, s.range_max)
+
+    def rear_wall(self):
+        fit = self.rear_wall_fit()
+        return None if fit is None else fit[0]
 
     def on_scan(self, msg):
         self.scan = msg
         if self.dock_ref is None and not self.left_dock_once and self.docked:
-            d = self.rear_wall()
-            if d is not None:
-                self.dock_ref_samples.append(d)
+            fit = self.rear_wall_fit()
+            if fit is not None:
+                self.dock_ref_samples.append(fit)
             if len(self.dock_ref_samples) >= 20:
-                v = sorted(self.dock_ref_samples)
-                self.dock_ref = v[len(v) // 2]
-                self.event('dock', 'Docking reference learned from the lidar: wall %.3f m behind the lidar'
-                           % self.dock_ref)
+                n = len(self.dock_ref_samples)
+                self.dock_ref_angle = sorted(f[1] for f in self.dock_ref_samples)[n // 2]
+                self.dock_ref = sorted(f[0] for f in self.dock_ref_samples)[n // 2]
+                self.event('dock', 'Docking reference learned from the lidar: wall %.3f m behind the lidar, '
+                           'at %.1f deg' % (self.dock_ref, math.degrees(self.dock_ref_angle)))
 
     def robot_pose(self):
         try:
@@ -743,12 +756,14 @@ class Mission:
         p0 = m.robot_pose()
         max_travel = (0.0 if p0 is None else (p0[0] - dx) * c + (p0[1] - dy) * s) + 0.15
         start = m.odom.pose.pose.position
+        last_lidar = None               # (along measured by the lidar, odometry travel then, time)
         while m.now() < end and not m.estop:
             pose = m.robot_pose()
             if pose is None:
                 break
             cur = m.odom.pose.pose.position
-            if math.hypot(cur.x - start.x, cur.y - start.y) > max_travel:
+            travel = math.hypot(cur.x - start.x, cur.y - start.y)
+            if travel > max_travel:
                 break                   # odometry cap: never drive into the station
             along = (pose[0] - dx) * c + (pose[1] - dy) * s       # > 0: still in front of the pad
             lateral = -(pose[0] - dx) * s + (pose[1] - dy) * c
@@ -756,9 +771,14 @@ class Mission:
             # blind cone for AMCL too, so the localized pose can be several cm off here
             # (only when both agree within 12 cm: a person or a chair in the rear beams can
             # look like a wall right behind the robot)
+            # A reading that drops out for a moment (a beam on a chair leg) is bridged with the
+            # odometry since the last good one, not replaced by the biased AMCL value.
             wall = m.rear_wall() if m.dock_ref is not None else None
             if wall is not None and abs((wall - m.dock_ref) - along) < 0.12:
                 along = wall - m.dock_ref
+                last_lidar = (along, travel, m.now())
+            elif last_lidar is not None and m.now() - last_lidar[2] < 1.5:
+                along = last_lidar[0] - (travel - last_lidar[1])
             if along < 0.015:
                 break
             # reversing: a small positive yaw moves the robot to its right, so the
@@ -771,6 +791,56 @@ class Mission:
             m.cmd_pub.publish(cmd)
             time.sleep(0.05)
         self.stop()
+
+    def odom_yaw(self):
+        return yaw_of(self.mgr.odom.pose.pose.orientation)
+
+    def rotate_by(self, delta, tol=0.004, timeout=8.0):
+        """Small in-place turn measured with the odometry (relative, no localization)."""
+        m = self.mgr
+        target = self.odom_yaw() + delta
+        end = m.now() + timeout
+        cmd = Twist()
+        while m.now() < end and not m.estop:
+            err = math.remainder(target - self.odom_yaw(), 2 * math.pi)
+            if abs(err) < tol:
+                break
+            cmd.angular.z = math.copysign(max(0.06, min(0.3, 1.5 * abs(err))), err)
+            m.cmd_pub.publish(cmd)
+            time.sleep(0.05)
+        self.stop()
+
+    def align_to_wall(self):
+        """Heading on the pad from the wall behind (same reason as the distance: AMCL's
+        heading near the dock can be a few degrees off). The wall line's slope gives the
+        robot's heading relative to the wall; the reference slope was learned at start-up."""
+        m = self.mgr
+        if m.dock_ref is None:
+            return
+        for _ in range(2):
+            self.hold(0.5)                      # a fresh scan of the robot at rest
+            fit = m.rear_wall_fit()
+            if fit is None:
+                return
+            err = fit[1] - m.dock_ref_angle
+            if abs(err) < 0.01 or abs(err) > 0.2:   # aligned / implausible: keep it
+                return
+            self.rotate_by(-err)
+
+    def creep_onto_pad(self, dx, dy, dyaw):
+        """Last centimetres, measured at rest with the lidar: creep back by the remaining
+        gap (2-15 cm; beyond that something is wrong and the contact check decides)."""
+        m = self.mgr
+        if m.dock_ref is None:
+            return
+        self.hold(0.5)
+        wall, pose = m.rear_wall(), m.robot_pose()
+        if wall is None or pose is None:
+            return
+        gap = wall - m.dock_ref
+        amcl = (pose[0] - dx) * math.cos(dyaw) + (pose[1] - dy) * math.sin(dyaw)
+        if 0.02 < gap < 0.15 and abs(gap - amcl) < 0.12:
+            self.drive(-gap, 0.04)
 
     def dock(self, reason):
         """Return to the dock and get onto the charging contacts. True when charging."""
@@ -794,6 +864,8 @@ class Mission:
                 continue
             self.reverse_onto_dock(dx, dy, dyaw)
             self.rotate_to(dyaw, tol=0.03)  # final heading touch-up on the pad
+            self.align_to_wall()
+            self.creep_onto_pad(dx, dy, dyaw)
             self.hold(1.5)              # charger contact check, robot braked
             if m.battery.get('on_dock', False) or m.battery.get('charging', False):
                 with m.lock:
