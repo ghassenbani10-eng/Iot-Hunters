@@ -15,7 +15,9 @@
 //   - if it has been waiting more than `max_yield_time` s, it walks around the
 //     robot: a 1 m sidestep away from it, then on to its destination, ignoring
 //     the robot for 5 s meanwhile (two polite agents waiting for each other would
-//     deadlock; turning back does not work at the end of a path).
+//     deadlock; turning back does not work at the end of a path);
+//   - whatever it does, it never steps closer than `min_robot_distance` to the
+//     robot centre (it stops instead): people do not walk into a robot.
 //
 // SDF parameters (all optional except <waypoint>):
 //   <waypoint>x y [dwell]</waypoint> (repeat, world frame, metres; optional wait there, s)
@@ -26,6 +28,7 @@
 //   <robot>waiter_robot</robot>     model to yield to
 //   <yield_distance>0.9</yield_distance>
 //   <max_yield_time>6.0</max_yield_time>
+//   <min_robot_distance>0.62</min_robot_distance>
 //   <animation_factor>5.1</animation_factor>
 //   <ping_pong>true</ping_pong>     true: A-B-C-B-A..., false: A-B-C-A-B...
 //   <ros><namespace>/human_x</namespace></ros>
@@ -87,6 +90,7 @@ public:
     robot_name_ = sdf->Get<std::string>("robot", "waiter_robot").first;
     yield_distance_ = sdf->Get<double>("yield_distance", 0.9).first;
     max_yield_time_ = sdf->Get<double>("max_yield_time", 6.0).first;
+    min_robot_distance_ = sdf->Get<double>("min_robot_distance", 0.62).first;
     animation_factor_ = sdf->Get<double>("animation_factor", 5.1).first;
     ping_pong_ = sdf->Get<bool>("ping_pong", true).first;
 
@@ -214,7 +218,15 @@ private:
     double step = 0.0;
     if (!yielding && std::fabs(err) < 0.6) {
       step = std::min(speed_ * dt, dist);
-      pos_ += to_goal * (step / dist);
+      const auto next = pos_ + to_goal * (step / dist);
+      // Personal-space floor, also during a detour (when the robot is otherwise ignored):
+      // never take a step that brings the body closer than min_robot_distance to the robot
+      // centre - a real person does not walk into a robot standing in the way.
+      if (TooCloseToRobot(next)) {
+        step = 0.0;
+      } else {
+        pos_ = next;
+      }
     }
     actor_->SetScriptTime(actor_->ScriptTime() + (step > 0.0 ? step * animation_factor_ : 0.4 * dt));
     Apply();
@@ -252,6 +264,21 @@ private:
     } else {
       target_ = (target_ + 1) % n;
     }
+  }
+
+  bool TooCloseToRobot(const ignition::math::Vector2d & next)
+  {
+    if (!robot_) {
+      robot_ = world_->ModelByName(robot_name_);
+      if (!robot_) {
+        return false;
+      }
+    }
+    const auto rp = robot_->WorldPose().Pos();
+    const ignition::math::Vector2d r(rp.X(), rp.Y());
+    const double d_next = (next - r).Length();
+    // blocked only when the step goes towards the robot: stepping away is always allowed
+    return d_next < min_robot_distance_ && d_next < (pos_ - r).Length();
   }
 
   bool RobotAhead()
@@ -310,6 +337,7 @@ private:
   double start_delay_{0.0};
   double yield_distance_{0.9};
   double max_yield_time_{6.0};
+  double min_robot_distance_{0.62};   // body (0.22) + robot half-diagonal (0.37) + margin
   double animation_factor_{5.1};
   bool ping_pong_{true};
   double last_time_{0.0};
