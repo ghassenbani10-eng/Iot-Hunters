@@ -396,14 +396,15 @@ def tc05(r):
 
 
 def tc06(r):
-    """The primary approach pose of table_5 is blocked by a trolley: alternate approach used."""
-    r.spawn_box('tc_trolley', 9.40, -5.97, 0.7, 0.5, 0.9)
+    """The closest approach pose of table_5 is blocked by a trolley: alternate approach used."""
+    # north side = the shortest route from the kitchen, the side the robot picks first
+    r.spawn_box('tc_trolley', 9.40, -3.40, 0.7, 0.5, 0.9)
     r.order('table_5', 'TC06: 2 sodas')
     done = r.wait_orders_done(1, 700)
     ok = done and delivered(r, 1)
     alt = any('approach 1/2' in e['text'].lower() for e in r.events)
     return {'title': 'Table approach blocked by a trolley -> alternate approach pose', 'passed': ok and alt,
-            'criteria': 'first approach fails, robot uses the second approach pose, order delivered',
+            'criteria': 'closest approach fails, robot uses the other side of the table, order delivered',
             'measured': {'delivered': ok, 'first_approach_failed': alt}, 'clearance_threshold': 0.05}
 
 
@@ -591,8 +592,147 @@ def tc16(r):
             'measured': {'delivered': ok, 'window_2_used': used2}, 'clearance_threshold': 0.05}
 
 
+# ------------------------------------------------------- delivery task management
+
+def delivery_sequence(r):
+    """Order ids in the order they were delivered (from the event log)."""
+    return [e.get('order_id') for e in r.events if e['kind'] == 'delivery']
+
+
+def statuses(r):
+    return {i: o['status'] for i, o in sorted(r.history().items())}
+
+
+def tc17(r):
+    """A VIP order jumps the queue: served right after the order in progress."""
+    r.order('table_7', 'TC17 order 1')
+    r.wait_state('TO_PICKUP', 120)                # order 1 has left the queue
+    r.order('table_4', 'TC17 order 2')
+    r.order('table_5', 'TC17 order 3')
+    r.order('table_6', 'TC17 VIP order 4', vip=True)
+    r.wait_sim(1.0)
+    queue_after_vip = [o['id'] for o in r.status.get('queue', [])]
+    done = r.wait_orders_done(4, 1800)
+    seq = delivery_sequence(r)
+    ok = done and seq == [1, 4, 2, 3]
+    return {'title': 'VIP order jumps the queue', 'passed': ok,
+            'criteria': 'VIP order #4 (sent last) is served right after the order in progress: delivery '
+                        'sequence 1, 4, 2, 3; all 4 orders delivered',
+            'measured': {'queue_after_vip': queue_after_vip, 'delivery_sequence': seq,
+                         'statuses': statuses(r)}, 'clearance_threshold': 0.05}
+
+
+def tc18(r):
+    """The customer cancels while the robot is on its way: order cancelled, next order served."""
+    r.order('table_3', 'TC18: order cancelled by the customer')
+    r.order('table_7', 'TC18: next order')
+    r.wait_state('TO_TABLE', 300)
+    r.wait_moving_away_from('pickup', 1.5, 120)
+    r.command('cancel')
+    cancelled = r.wait_until(lambda: r.history().get(1, {}).get('status') == 'cancelled', 30)
+    done = r.wait_orders_done(2, 900) and r.wait_state('DOCKED', 400)
+    st = statuses(r)
+    ok = cancelled and done and st.get(1) == 'cancelled' and st.get(2) == 'delivered'
+    return {'title': 'Order cancelled during the delivery, queue continues', 'passed': ok,
+            'criteria': 'order #1 cancelled within a few seconds of the "cancel" command (never reported '
+                        'delivered), order #2 delivered, robot back on the dock',
+            'measured': {'cancelled_quickly': cancelled, 'statuses': st, 'delivery_sequence': delivery_sequence(r)},
+            'clearance_threshold': 0.05}
+
+
+def tc19(r):
+    """The operator clears the queue during a delivery: current order finished, waiting ones cancelled."""
+    r.order('table_4', 'TC19 order 1')
+    r.order('table_2', 'TC19 order 2')
+    r.order('table_3', 'TC19 order 3')
+    r.wait_state('TO_TABLE', 300)
+    r.command('clear')
+    r.wait_sim(1.0)
+    queue_empty = not r.status.get('queue')
+    done = r.wait_orders_done(3, 600) and r.wait_state('DOCKED', 400)
+    st = statuses(r)
+    ok = done and queue_empty and st == {1: 'delivered', 2: 'cancelled', 3: 'cancelled'}
+    return {'title': 'Queue cleared by the operator during a delivery', 'passed': ok,
+            'criteria': 'after "clear" the queue is empty, orders #2 and #3 are cancelled, the order in progress '
+                        '(#1) is still delivered, then the robot returns to the dock',
+            'measured': {'queue_empty_after_clear': queue_empty, 'statuses': st}, 'clearance_threshold': 0.05}
+
+
+def tc20(r):
+    """Order validation: unknown tables rejected, plain-text order accepted."""
+    r.order_pub.publish(String(data='table_42'))                       # unknown table
+    r.order_pub.publish(String(data='{"table": "kitchen", "items": "x"}'))  # not a table
+    r.order_pub.publish(String(data='table_2'))                        # plain text, valid
+    r.wait_sim(2.0)
+    rejected = sum(1 for e in r.events if e['kind'] == 'order' and e['text'].startswith('Rejected'))
+    done = r.wait_orders_done(1, 600) and r.wait_state('DOCKED', 400)
+    h = r.history()
+    ok = done and rejected == 2 and len(h) == 1 and delivered(r, 1) and h[1]['table'] == 'table_2'
+    return {'title': 'Order validation: unknown tables rejected, plain-text order served', 'passed': ok,
+            'criteria': '"table_42" and "kitchen" rejected with an event (never queued), the plain-text order '
+                        '"table_2" delivered, robot back on the dock',
+            'measured': {'rejected': rejected, 'orders_created': len(h), 'statuses': statuses(r)},
+            'clearance_threshold': 0.05}
+
+
+def tc21(r):
+    """Full service: one order for each of the 9 tables (dining room + VIP lounge)."""
+    tables = ['table_%d' % i for i in range(1, 10)]
+    for t in tables:
+        r.order(t, 'TC21 %s' % t)
+    done = r.wait_orders_done(len(tables), 3600) and r.wait_state(('DOCKED', 'CHARGING'), 500)
+    served = sorted(o['table'] for o in r.history().values() if o['status'] == 'delivered')
+    ok = done and served == sorted(tables)
+    return {'title': 'Full service: every table (1-9) served once', 'passed': ok and r.min_soc > 0,
+            'criteria': 'the 9 orders delivered in FIFO order (each table reached, VIP lounge included), '
+                        'charging handled autonomously, SoC never 0, robot back on the dock',
+            'measured': {'delivered': len(served), 'of': len(tables), 'delivery_sequence': delivery_sequence(r),
+                         'charging_sessions': sum(1 for e in r.events
+                                                  if e['kind'] == 'battery' and 'Charging to' in e['text'])},
+            'clearance_threshold': 0.05}
+
+
+def tc22(r):
+    """An order arrives while the robot is charging: it leaves as soon as the order's energy is there."""
+    r.set_soc(40.0)                     # below battery_resume (60 %): idle charging on the dock
+    charging = r.wait_state('CHARGING', 30)
+    r.order('table_6', 'TC22: order during charging')
+    soc_at_departure = None
+    if r.wait_state('UNDOCKING', 300):
+        soc_at_departure = r.battery.get('soc')
+    done = r.wait_orders_done(1, 600)
+    ok = charging and done and delivered(r, 1) and soc_at_departure is not None and soc_at_departure < 60.0
+    return {'title': 'Order arrives while charging -> leaves without waiting for a full charge',
+            'passed': ok and r.min_soc > 0,
+            'criteria': 'robot charging at 40 %: the order interrupts idle charging (no wait until 60 %) because '
+                        'the energy for the order + reserve is available; order delivered',
+            'measured': {'was_charging': charging, 'soc_at_departure': soc_at_departure,
+                         'need_soc': r.status.get('energy', {}).get('need_soc'), 'delivered': done and delivered(r, 1)},
+            'clearance_threshold': 0.05}
+
+
+def tc23(r):
+    """Each table is served from its closest side instead of driving around it."""
+    tables = ['table_1', 'table_4', 'table_7']      # side 2 = north, facing the kitchen
+    for t in tables:
+        r.order(t, 'TC23 %s' % t)
+    done = r.wait_orders_done(len(tables), 1200) and r.wait_state('DOCKED', 400)
+    sides = {}
+    for e in r.events:
+        if e['kind'] == 'nav' and e['text'].startswith('Serving '):
+            words = e['text'].split()           # "Serving table_1 from side 2 of 2 (4.1 m, ...)"
+            sides[words[1]] = int(words[4])
+    served = all(delivered(r, i + 1) for i in range(len(tables)))
+    ok = done and served and all(sides.get(t) == 2 for t in tables)
+    return {'title': 'Tables served from the closest side (shortest route)', 'passed': ok,
+            'criteria': 'tables 1, 4 and 7 served from their north side (towards the kitchen), no detour around '
+                        'the table, all 3 orders delivered',
+            'measured': {'sides_used': sides, 'statuses': statuses(r), 'path_length_m': round(r.path_len, 1)},
+            'clearance_threshold': 0.05}
+
+
 SCENARIOS = {f.__name__: f for f in (tc01, tc02, tc03, tc04, tc05, tc06, tc07, tc08, tc09, tc10, tc11, tc12,
-                                          tc13, tc14, tc15, tc16)}
+                                          tc13, tc14, tc15, tc16, tc17, tc18, tc19, tc20, tc21, tc22, tc23)}
 
 
 ROBOT_R = 0.37    # circumscribed radius of the 0.54 x 0.50 m footprint

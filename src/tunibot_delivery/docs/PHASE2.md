@@ -193,8 +193,13 @@ RPP remains available (`controller:=rpp`).
 * **Reachability pre-check**: before committing to a goal the manager asks the planner for a path.
   No path → "route blocked": it clears stale obstacles and re-checks for up to 45 s (people usually
   move away), then uses the next approach pose.
-* **Alternate approach poses**: every table has 2 approach poses (both sides of the table group); a
-  blocked approach (trolley, chairs, people) is skipped automatically.
+* **Alternate approach poses, closest side first**: every table has 2 approach poses (both sides of
+  the table group; the free-standing VIP tables also have side poses: 4 for table_8, 3 for table_9).
+  Before driving to a table the robot plans a route to each of them and serves from the shortest one
+  (e.g. the north side of tables 1-7, facing the kitchen, instead of a detour around the table); a
+  blocked approach (trolley, chairs, people) is skipped automatically and the next closest one used.
+  A side with a customer sitting or standing within 1 m of it counts 5 m longer, so the robot does
+  not squeeze in next to them when another side is reasonable.
 * **Nav2 recovery** (custom BT, 6 rounds): wait → clear costmaps → back up → spin → wait.
 * **Mission-level recovery**: a table that stays unreachable fails *only that order* (reason recorded
   and shown in the UI); the queue continues. After 3 consecutive failures the robot returns to the dock
@@ -227,7 +232,9 @@ RPP remains available (`controller:=rpp`).
   (−145°…−125°) see the wall obliquely; a line is fitted to their hits (median pre-filter, least
   squares, a second fit without points > 4 cm off, ≥ 75 % of the beams must agree), and the
   perpendicular distance to that line - insensitive to a small heading error - is compared with a
-  reference learned at start-up while the robot stands on the pad where it was installed. The lidar
+  reference learned at start-up while the robot stands on the pad where it was installed. The final
+  creep uses the median over the scans of 1.5 s (robot braked): a single scan sometimes gives no
+  clean line, and the robot then stayed where AMCL put it (up to 7 cm off the pad). The lidar
   value is used only when it agrees with AMCL within 12 cm (a person or a chair in those beams can
   look like a wall); a reading that drops out for a moment is bridged with the odometry since the
   last good one. On the pad, the **slope of the same wall line gives the heading** (AMCL's was up to

@@ -473,10 +473,12 @@ class Mission:
     def order_energy(self, order):
         """Energy (Wh) to do the whole order from where the robot is and get back to the dock."""
         m = self.mgr
-        pickup, table, dock = m.places['pickup'][0], m.places[order['table']][0], m.places['pre_dock'][0]
+        pickup, dock = m.places['pickup'][0], m.places['pre_dock'][0]
         start = None if not m.docked else m.places['pre_dock'][0]
         l1, ok1 = self.path_length(start, pickup)
-        l2, ok2 = self.path_length(pickup, table)
+        # the table is served from its closest side (see nearest_first)
+        (l2, ok2), table = min(((self.path_length(pickup, p), p) for p in m.places[order['table']]),
+                               key=lambda c: (not c[0][1], c[0][0]))
         l3, ok3 = self.path_length(table, dock)
         total = l1 + l2 + l3
         need = self.energy_for(total, m.cfg['load_time_sec'] + m.cfg['serve_time_sec'])
@@ -618,6 +620,8 @@ class Mission:
         """Navigate to a named place, trying each approach pose. Returns False if impossible."""
         label = label or name
         poses = self.mgr.places[name]
+        if name in self.mgr.tables:
+            poses = self.nearest_first(poses, label)
         # Serving windows are 0.5 m from the partition wall: Nav2 stops at a staging
         # pose in open floor, then the robot faces the window and creeps in straight.
         # (Humble's rotation shim turns in place without collision checking: a turn
@@ -643,6 +647,29 @@ class Mission:
                 # a short pause lets people walking around move on)
                 self.hold(3.0)
         return False
+
+    def nearest_first(self, poses, label):
+        """Sort a table's approach poses by the length of the Nav2 path from the robot.
+
+        The table is served from the closest free side instead of driving around it
+        to a fixed side; poses without a plan (blocked right now) go last. A side where
+        a customer is sitting or standing (slow track within 1 m) counts 5 m longer:
+        the robot does not squeeze in next to them if another side is reasonable."""
+        if len(poses) < 2:
+            return poses
+        crowded = [(t['x'], t['y']) for t in self.mgr.people.get('tracks', []) if t.get('speed', 0.0) < 0.3]
+        ranked = []
+        for i, p in enumerate(poses):
+            length, planned = self.path_length(None, p)
+            busy = any(math.hypot(p[0] - x, p[1] - y) < 1.0 for x, y in crowded)
+            ranked.append((not planned, length + (5.0 if busy else 0.0), i, p, length, busy))
+        ranked.sort()
+        best = ranked[0]
+        self.mgr.event('nav', 'Serving %s from side %d of %d (%.1f m, shortest planned route%s)'
+                       % (label, best[2] + 1, len(poses), best[4],
+                          '; a customer is next to the closest side' if ranked[0][2] != min(
+                              ranked, key=lambda r: (r[0], r[4]))[2] else ''))
+        return [r[3] for r in ranked]
 
     def face_route(self, goal, lookahead=0.8, min_turn=1.0):
         """Before leaving a place, turn in place towards the first metre of the planned route.
@@ -827,6 +854,21 @@ class Mission:
                 return
             self.rotate_by(-err)
 
+    def rear_wall_settled(self, duration=1.5):
+        """Median rear-wall distance over the scans of `duration` s, robot braked: one
+        scan may not give a clean line (noise, a leg behind); None if under 3 do."""
+        m = self.mgr
+        fits, last, end = [], None, m.now() + duration
+        while m.now() < end:
+            m.cmd_pub.publish(Twist())
+            if m.scan is not None and m.scan is not last:
+                last = m.scan
+                w = m.rear_wall()
+                if w is not None:
+                    fits.append(w)
+            time.sleep(0.05)
+        return sorted(fits)[len(fits) // 2] if len(fits) >= 3 else None
+
     def creep_onto_pad(self, dx, dy, dyaw):
         """Last centimetres, measured at rest with the lidar: creep back by the remaining
         gap (2-15 cm; beyond that something is wrong and the contact check decides)."""
@@ -834,7 +876,7 @@ class Mission:
         if m.dock_ref is None:
             return
         self.hold(0.5)
-        wall, pose = m.rear_wall(), m.robot_pose()
+        wall, pose = self.rear_wall_settled(), m.robot_pose()
         if wall is None or pose is None:
             return
         gap = wall - m.dock_ref
@@ -873,7 +915,7 @@ class Mission:
                     m.dock_requested = False
                 m.set_state(DOCKED)
                 pose = m.robot_pose() or (dx, dy, dyaw)
-                wall = m.rear_wall() if m.dock_ref is not None else None
+                wall = self.rear_wall_settled(1.0) if m.dock_ref is not None else None
                 lat = -(pose[0] - dx) * math.sin(dyaw) + (pose[1] - dy) * math.cos(dyaw)
                 along = (pose[0] - dx) * math.cos(dyaw) + (pose[1] - dy) * math.sin(dyaw)
                 lidar = wall is not None and abs((wall - m.dock_ref) - along) < 0.12

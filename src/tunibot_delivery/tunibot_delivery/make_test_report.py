@@ -50,10 +50,11 @@ CASES = {
              'The robot passes the doorways and the corridor without touching anything (bumper), serves the VIP '
              'table and comes back to the dock.'),
     'tc06': ('Complex layout / recovery',
-             'Full world + a trolley (0.7 × 0.5 m box) placed exactly on the first approach pose of table_5.',
+             'Full world + a trolley (0.7 × 0.5 m box) placed exactly on the closest approach pose of table_5 '
+             '(north side, the one facing the kitchen).',
              'Order table_5.',
-             'The first approach is detected as unreachable (reachability pre-check) and the robot uses the second '
-             'approach pose (other side of the table). Delivery completed.'),
+             'The closest side is detected as unreachable (reachability pre-check) and the robot uses the next '
+             'closest approach pose (other side of the table). Delivery completed.'),
     'tc07': ('Complex layout / recovery',
              'Full world + a box blocking the full width of the service corridor (the only route to the lounge).',
              'Order table_9 (VIP lounge, unreachable), then order table_7.',
@@ -113,6 +114,43 @@ CASES.update({
              'Order table_4.',
              'Approach 1 of the pickup is unreachable → the robot uses window 2 (between window 1 and the '
              'takeaway queue), never entering the queue zone; delivers.'),
+    'tc17': ('Delivery task management',
+             'Full world, battery 100 %.',
+             'Order #1 table_7; once the robot has left the dock: orders #2 table_4, #3 table_5, then VIP order '
+             '#4 table_6.',
+             'The VIP order is inserted before the normal orders still waiting: delivery sequence 1, 4, 2, 3 '
+             '(the order in progress is never interrupted).'),
+    'tc18': ('Delivery task management',
+             'Full world, battery 100 %.',
+             'Orders #1 table_3 and #2 table_7; "cancel" sent once the robot carries order #1 towards the table.',
+             'Navigation to table_3 stops, order #1 is reported cancelled (not delivered, not failed), the robot '
+             'goes on with order #2, then returns to the dock.'),
+    'tc19': ('Delivery task management',
+             'Full world, battery 100 %.',
+             'Orders #1 table_4, #2 table_2, #3 table_3; "clear" sent while order #1 is on its way to the table.',
+             'The waiting orders #2 and #3 are cancelled at once; order #1 (already loaded) is still delivered; '
+             'the robot returns to the dock.'),
+    'tc20': ('Delivery task management',
+             'Full world, battery 100 %.',
+             'Three messages on /delivery/order: "table_42" (unknown), {"table": "kitchen"} (not a table), '
+             '"table_2" (plain text instead of JSON).',
+             'The two invalid orders are rejected with an event and never queued; the plain-text order is '
+             'accepted and delivered.'),
+    'tc21': ('Delivery task management / endurance',
+             'Full world, battery 100 %, energy flows ×25.',
+             '9 orders queued at once, one for every table (dining room 1-7, VIP lounge 8-9).',
+             'Every table is reached and served once, in FIFO order; the robot charges by itself when the next '
+             'order needs it; SoC never reaches 0; back on the dock at the end.'),
+    'tc22': ('Delivery task management / battery',
+             'Battery forced to 40 % on the dock: the robot is idle-charging towards 60 %.',
+             'Order table_6 while it charges.',
+             'Idle charging does not delay the service: the energy for the whole order + reserve is available, '
+             'so the robot leaves at once (below 60 %) and delivers.'),
+    'tc23': ('Delivery task management / navigation',
+             'Full world, battery 100 %.',
+             'Orders table_1, table_4, table_7 (each table has a north and a south approach pose).',
+             'Before driving to a table the robot plans a route to every approach pose and serves from the '
+             'shortest one: the north side, facing the kitchen, instead of a detour around the table.'),
 })
 
 

@@ -147,7 +147,7 @@ documentation: [docs/TEST_CASES.md](docs/TEST_CASES.md).
 The robot spawns on the dock at Gazebo world (−9.0, 2.2, yaw 0) — north-west corner of the dining
 room, next to the serving windows. Cartographer starts the map there: **map = world + (9.0, −2.2)**.
 Named places (`config/delivery_points.yaml`) are in the map frame; each has one or more approach
-poses.
+poses. A table is served from the approach pose with the shortest planned route from the robot.
 
 ## Layout
 

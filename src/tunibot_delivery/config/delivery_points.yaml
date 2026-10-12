@@ -4,8 +4,9 @@
 #     map = world + (9.0, -2.2)
 #
 # Each place is a flat list of one or more approach poses [x, y, yaw, x2, y2, yaw2, ...]
-# (metres, metres, radians). The delivery manager tries them in order: if the
-# first approach is blocked (people, chairs moved...), it uses the next one.
+# (metres, metres, radians). Tables are served from the side with the shortest planned
+# route from the robot (Mission.nearest_first); if it is blocked (people, chairs moved...)
+# the next closest side is used. Other places are tried in the listed order.
 delivery_manager:
   ros__parameters:
     dock:      [0.0, 0.0, 0.0]     # on the charging pad (world -9.0, 2.2)
@@ -20,11 +21,13 @@ delivery_manager:
     table_3:   [11.82, -10.22, 1.5708, 11.82, -6.50, -1.5708]
     table_4:   [6.40, -6.02, 1.5708, 6.40, -3.40, -1.5708]
     table_5:   [9.40, -5.97, 1.5708, 9.40, -3.40, -1.5708]
-    table_6:   [13.41, -6.01, 1.5708, 13.41, -3.40, -1.5708]
+    table_6:   [13.41, -6.01, 1.5708, 13.80, -3.40, -1.5708]   # north side 0.4 m east: a guest stands at (13.0, -3.2)
     table_7:   [2.44, -6.01, 1.5708, 2.44, -3.40, -1.5708]
     # VIP lounge (Phase 2): door D2 -> 1.05 m corridor -> L-turn -> 1.36 m corridor -> door D3
-    table_8:   [9.50, 5.10, -1.5708, 9.50, 2.50, 1.5708]    # VIP 1 (world 0.5, 6.0)
-    table_9:   [13.50, 5.10, -1.5708, 13.50, 2.50, 1.5708]   # VIP 2 (world 4.5, 6.0)
+    # VIP tables are free-standing: also served from the west/east side (not the east side of
+    # table_9: the VIP guest walks along map x 15.3)
+    table_8:   [9.50, 5.10, -1.5708, 9.50, 2.50, 1.5708, 8.20, 3.80, 0.0, 10.80, 3.80, 3.1416]  # VIP 1 (world 0.5, 6.0)
+    table_9:   [13.50, 5.10, -1.5708, 13.50, 2.50, 1.5708, 12.20, 3.80, 0.0]                   # VIP 2 (world 4.5, 6.0)
     tables: ["table_1", "table_2", "table_3", "table_4", "table_5", "table_6", "table_7", "table_8", "table_9"]
     load_time_sec: 5.0            # waiting at the serving window while the cook loads the trays
     pickup_depart_yaw: -1.5708    # after loading: back out to the staging pose, turn to face the dining room
