@@ -115,7 +115,7 @@ Open **http://localhost:8080**: order form (with VIP priority), live map with th
 tracked people, battery and energy panel, events, emergency stop. From the CLI:
 ```bash
 ros2 topic pub --once -w 1 /delivery/order std_msgs/String '{data: "{\"table\": \"table_8\", \"items\": \"2 coffees\", \"priority\": \"vip\"}"}'
-ros2 topic pub --once -w 1 /delivery/command std_msgs/String '{data: dock}'      # dock | cancel | clear | estop | resume
+ros2 topic pub --once -w 1 /delivery/command std_msgs/String '{data: dock}'      # dock | cancel | clear | estop | resume | restart_nav
 curl -X POST localhost:8080/api/battery -H 'Content-Type: application/json' -d '{"soc": 20}'   # test hook
 ```
 

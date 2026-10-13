@@ -6,7 +6,7 @@
   GET  /api/people       -> last /people JSON (tracked people around the robot)
   GET  /api/map          -> static map (PGM pixels, base64) + resolution/origin for the live map view
   POST /api/orders       {"table": "table_2", "items": "1 tea", "priority": "vip"}  -> /delivery/order
-  POST /api/command      {"command": "dock" | "cancel" | "clear" | "estop" | "resume"} -> /delivery/command
+  POST /api/command      {"command": "dock" | "cancel" | "clear" | "estop" | "resume" | "restart_nav"} -> /delivery/command
   POST /api/battery      {"soc": 20} and/or {"charger": false}   (test hooks for the low-battery scenarios)
 """
 import base64
@@ -20,7 +20,7 @@ from ament_index_python.packages import get_package_share_directory
 from rclpy.node import Node
 from std_msgs.msg import Bool, Float32, String
 
-COMMANDS = {'dock', 'cancel', 'clear', 'estop', 'resume'}
+COMMANDS = {'dock', 'cancel', 'clear', 'estop', 'resume', 'restart_nav'}
 
 
 class WebApi(Node):

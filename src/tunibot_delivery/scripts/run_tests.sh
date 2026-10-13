@@ -14,7 +14,7 @@ RESULTS="${RESULTS:-$HOME/tunibot_test_results}"
 GUI="${GUI:-false}"
 CONTROLLER="${CONTROLLER:-mppi}"
 SCENARIOS=("$@")
-[ ${#SCENARIOS[@]} -eq 0 ] && SCENARIOS=(tc01 tc02 tc03 tc04 tc05 tc06 tc07 tc08 tc09 tc10 tc11 tc12 tc13 tc14 tc15 tc16 tc17 tc18 tc19 tc20 tc21 tc22 tc23)
+[ ${#SCENARIOS[@]} -eq 0 ] && SCENARIOS=(tc01 tc02 tc03 tc04 tc05 tc06 tc07 tc08 tc09 tc10 tc11 tc12 tc13 tc14 tc15 tc16 tc17 tc18 tc19 tc20 tc21 tc22 tc23 tc24)
 mkdir -p "$RESULTS/logs"
 
 source /opt/ros/humble/setup.bash

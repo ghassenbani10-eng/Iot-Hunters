@@ -731,8 +731,24 @@ def tc23(r):
             'clearance_threshold': 0.05}
 
 
+def tc24(r):
+    """The Nav2 servers are restarted in the middle of a delivery (recovery from a frozen robot pose)."""
+    r.order('table_5', 'TC24: Nav2 restart on the way')
+    r.wait_state('TO_TABLE', 300)
+    r.wait_moving_away_from('pickup', 1.5, 120)
+    r.command('restart_nav')            # same restart the watchdog does when Nav2's pose freezes
+    restarted = r.wait_until(lambda: any(e['kind'] == 'recovery' and e['text'] == 'Navigation servers restarted'
+                                         for e in r.events), 90)
+    done = r.wait_orders_done(1, 600) and r.wait_state('DOCKED', 400)
+    ok = restarted and done and delivered(r, 1)
+    return {'title': 'Nav2 restarted during a delivery (frozen-pose recovery)', 'passed': ok,
+            'criteria': 'controller and planner killed and respawned while the robot drives to table_5 (AMCL keeps '
+                        'running), the mission retries its goal, order delivered, robot back on the dock',
+            'measured': {'restarted': restarted, 'delivered': done and delivered(r, 1)}, 'clearance_threshold': 0.05}
+
+
 SCENARIOS = {f.__name__: f for f in (tc01, tc02, tc03, tc04, tc05, tc06, tc07, tc08, tc09, tc10, tc11, tc12,
-                                          tc13, tc14, tc15, tc16, tc17, tc18, tc19, tc20, tc21, tc22, tc23)}
+                                          tc13, tc14, tc15, tc16, tc17, tc18, tc19, tc20, tc21, tc22, tc23, tc24)}
 
 
 ROBOT_R = 0.37    # circumscribed radius of the 0.54 x 0.50 m footprint

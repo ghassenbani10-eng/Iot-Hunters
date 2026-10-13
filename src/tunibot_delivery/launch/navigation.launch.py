@@ -37,10 +37,11 @@ def generate_launch_description():
         convert_types=True)
     tf_remap = [('/tf', 'tf'), ('/tf_static', 'tf_static')]
 
-    def nav_node(package, executable, name=None, remaps=(), extra=()):
+    def nav_node(package, executable, name=None, remaps=(), extra=(), respawn=False):
         return Node(package=package, executable=executable, name=name or executable, output='screen',
                     parameters=[params, *extra], remappings=tf_remap + list(remaps),
-                    arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')])
+                    arguments=['--ros-args', '--log-level', LaunchConfiguration('log_level')],
+                    respawn=respawn, respawn_delay=2.0)
 
     # controller:=mppi -> MPPI overlay (config/nav2_mppi.yaml) on top of nav2_params.yaml
     mppi = PythonExpression(["'", os.path.join(pkg, 'config', 'nav2_mppi.yaml'), "' if '",
@@ -57,9 +58,12 @@ def generate_launch_description():
                                          'costmap_filter_info_server']}]),
     ]
     navigation = [
-        nav_node('nav2_controller', 'controller_server', remaps=[('cmd_vel', 'cmd_vel_nav')], extra=[mppi]),
+        # the two servers that host a costmap are restarted when the delivery manager's Nav2
+        # watchdog kills them (a costmap thread that locks up cannot be cleaned up)
+        nav_node('nav2_controller', 'controller_server', remaps=[('cmd_vel', 'cmd_vel_nav')], extra=[mppi],
+                 respawn=True),
         nav_node('nav2_smoother', 'smoother_server'),
-        nav_node('nav2_planner', 'planner_server'),
+        nav_node('nav2_planner', 'planner_server', respawn=True),
         nav_node('nav2_behaviors', 'behavior_server', remaps=[('cmd_vel', 'cmd_vel_raw')]),
         nav_node('nav2_bt_navigator', 'bt_navigator'),
         nav_node('nav2_waypoint_follower', 'waypoint_follower'),
@@ -68,7 +72,9 @@ def generate_launch_description():
         nav_node('nav2_collision_monitor', 'collision_monitor'),
         Node(package='nav2_lifecycle_manager', executable='lifecycle_manager',
              name='lifecycle_manager_navigation', output='screen',
-             parameters=[{'use_sim_time': use_sim_time, 'autostart': True, 'node_names': LIFECYCLE_NAV}]),
+             parameters=[{'use_sim_time': use_sim_time, 'autostart': True, 'node_names': LIFECYCLE_NAV,
+                          # a respawned server is configured and activated again automatically
+                          'attempt_respawn_reconnection': True, 'bond_respawn_max_duration': 30.0}]),
     ]
     filters = [
         Node(package='nav2_map_server', executable='map_server', name='filter_mask_server',

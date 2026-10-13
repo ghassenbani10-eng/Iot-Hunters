@@ -23,7 +23,7 @@ with Nav2. Phase 2 additions:
 
 Interfaces
   sub  /delivery/order    std_msgs/String  '{"table": "table_3", "items": "2 coffees", "priority": "vip"}' or 'table_3'
-  sub  /delivery/command  std_msgs/String  dock | cancel | clear | estop | resume
+  sub  /delivery/command  std_msgs/String  dock | cancel | clear | estop | resume | restart_nav
   sub  /battery_state     sensor_msgs/BatteryState  (from battery_simulator)
   sub  /battery/info      std_msgs/String  JSON (learned Wh/m, idle power, ...)
   sub  /people            std_msgs/String  JSON (people_tracker, optional)
@@ -34,26 +34,109 @@ Interfaces
 import itertools
 import json
 import math
+import os
+import signal
 import threading
 import time
 from collections import deque
 
 import rclpy
-from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
+from action_msgs.msg import GoalStatus
+from builtin_interfaces.msg import Duration
+from geometry_msgs.msg import Point, PolygonStamped, PoseStamped, PoseWithCovarianceStamped, Twist
+from nav2_msgs.action import BackUp, ComputePathToPose, NavigateToPose
+from nav2_msgs.srv import ClearEntireCostmap
 from nav2_simple_commander.robot_navigator import BasicNavigator, TaskResult
 from nav_msgs.msg import OccupancyGrid, Odometry
+from rcl_interfaces.msg import Log
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.node import Node
 from rclpy.time import Time
 from sensor_msgs.msg import BatteryState, LaserScan
 from std_msgs.msg import String
+from std_srvs.srv import Trigger
 from tf2_ros import Buffer, TransformException, TransformListener
 
 DOCKED, UNDOCKING, IDLE, TO_PICKUP, LOADING, TO_TABLE, SERVING = (
     'DOCKED', 'UNDOCKING', 'IDLE', 'TO_PICKUP', 'LOADING', 'TO_TABLE', 'SERVING')
 TO_DOCK, DOCKING, CHARGING, ESTOP, ERROR, STARTING = (
     'RETURNING_TO_DOCK', 'DOCKING', 'CHARGING', 'EMERGENCY_STOP', 'ERROR', 'STARTING')
+
+
+class SafeNavigator(BasicNavigator):
+    """BasicNavigator whose calls cannot block forever.
+
+    Humble's BasicNavigator waits for action / service replies without a timeout: a Nav2
+    server restarted in the middle of a request (see nav_supervisor) left the mission
+    thread waiting for good. Here every wait is bounded; a failed call is a failed
+    attempt that the mission retries."""
+
+    TIMEOUT = 5.0
+
+    def _wait(self, future, timeout=None):
+        rclpy.spin_until_future_complete(self, future, timeout_sec=timeout or self.TIMEOUT)
+        return future.done() and future.result() is not None
+
+    def goToPose(self, pose, behavior_tree=''):
+        self.result_future = None
+        self.status = GoalStatus.STATUS_UNKNOWN
+        if not self.nav_to_pose_client.wait_for_server(timeout_sec=self.TIMEOUT):
+            return False
+        goal = NavigateToPose.Goal()
+        goal.pose, goal.behavior_tree = pose, behavior_tree
+        fut = self.nav_to_pose_client.send_goal_async(goal, self._feedbackCallback)
+        if not self._wait(fut) or not fut.result().accepted:
+            return False
+        self.goal_handle = fut.result()
+        self.result_future = self.goal_handle.get_result_async()
+        return True
+
+    def cancelTask(self):
+        if self.result_future and self.goal_handle is not None:
+            self._wait(self.goal_handle.cancel_goal_async(), 2.0)
+
+    def getPath(self, start, goal, planner_id='', use_start=False):
+        if not self.compute_path_to_pose_client.wait_for_server(timeout_sec=self.TIMEOUT):
+            return None
+        req = ComputePathToPose.Goal()
+        req.start, req.goal, req.planner_id, req.use_start = start, goal, planner_id, use_start
+        fut = self.compute_path_to_pose_client.send_goal_async(req)
+        if not self._wait(fut) or not fut.result().accepted:
+            return None
+        handle = fut.result()
+        res = handle.get_result_async()
+        if not self._wait(res):
+            handle.cancel_goal_async()
+            return None
+        if res.result().status != GoalStatus.STATUS_SUCCEEDED:
+            return None
+        return res.result().result.path
+
+    def backup(self, backup_dist=0.15, backup_speed=0.025, time_allowance=10):
+        self.result_future = None
+        self.status = GoalStatus.STATUS_UNKNOWN
+        if not self.backup_client.wait_for_server(timeout_sec=self.TIMEOUT):
+            return False
+        goal = BackUp.Goal()
+        goal.target, goal.speed = Point(x=float(backup_dist)), float(backup_speed)
+        goal.time_allowance = Duration(sec=int(time_allowance))
+        fut = self.backup_client.send_goal_async(goal, self._feedbackCallback)
+        if not self._wait(fut) or not fut.result().accepted:
+            return False
+        self.goal_handle = fut.result()
+        self.result_future = self.goal_handle.get_result_async()
+        return True
+
+    def _clear(self, client):
+        if client.wait_for_service(timeout_sec=self.TIMEOUT):
+            self._wait(client.call_async(ClearEntireCostmap.Request()))
+
+    def clearLocalCostmap(self):
+        self._clear(self.clear_costmap_local_srv)
+
+    def clearGlobalCostmap(self):
+        self._clear(self.clear_costmap_global_srv)
 
 
 class Abort(Exception):
@@ -124,7 +207,7 @@ class DeliveryManager(Node):
             flat = [float(v) for v in self.get_parameter(name).value]
             self.places[name] = [flat[i:i + 3] for i in range(0, len(flat) - 2, 3)]
         defaults = {
-            'load_time_sec': 5.0, 'serve_time_sec': 8.0, 'idle_dock_timeout_sec': 20.0,
+            'load_time_sec': 5.0, 'serve_time_sec': 8.0, 'idle_dock_timeout_sec': 0.0,
             'battery_critical': 10.0,      # % : abort everything and go to the dock
             'battery_low': 25.0,           # % : no new order below this
             'battery_resume': 60.0,        # % : charging target when no order waits
@@ -195,6 +278,17 @@ class DeliveryManager(Node):
         self.initialpose_pub = self.create_publisher(PoseWithCovarianceStamped, '/initialpose', 10)
         self.last_reseed = 0.0
         self.create_timer(1.0, self.localization_supervisor)
+        # Nav2 watchdog: the robot footprint as the controller sees it vs the odometry
+        self.footprint, self.footprint_t = None, None
+        self.nav_frozen_since, self.last_nav_restart, self.nav_restarting = None, -1e9, False
+        self.create_subscription(PolygonStamped, '/local_costmap/published_footprint', self.on_footprint, 10)
+        self.global_footprint, self.global_footprint_t = None, None
+        self.create_subscription(PolygonStamped, '/global_costmap/published_footprint',
+                                 self.on_global_footprint, 10)
+        self.nav_errors = deque(maxlen=50)      # times of controller 'plan has 0 poses' / stale-TF errors
+        self.create_subscription(Log, '/rosout', self.on_rosout, 100)
+        self.nav_active = self.create_client(Trigger, '/lifecycle_manager_navigation/is_active')
+        self.create_timer(1.0, self.nav_supervisor)
         self.get_logger().info('Delivery manager ready. Tables: %s' % ', '.join(self.tables))
 
     # ------------------------------------------------------------------ utils
@@ -351,6 +445,9 @@ class DeliveryManager(Node):
                     o['status'] = 'cancelled'
                     self.history.appendleft(o)
                 self.queue.clear()
+            elif cmd == 'restart_nav':
+                self.last_nav_restart = self.now()
+                threading.Thread(target=self.restart_nav, daemon=True).start()
             elif cmd == 'estop':
                 self.estop = True
             elif cmd == 'resume':
@@ -364,6 +461,130 @@ class DeliveryManager(Node):
 
     def on_odom(self, msg):
         self.odom = msg
+
+    def on_footprint(self, msg):
+        pts = msg.polygon.points
+        if pts:
+            self.footprint = (sum(p.x for p in pts) / len(pts), sum(p.y for p in pts) / len(pts))
+            self.footprint_t = self.now()
+
+    def on_global_footprint(self, msg):
+        pts = msg.polygon.points
+        if pts:
+            self.global_footprint = (sum(p.x for p in pts) / len(pts), sum(p.y for p in pts) / len(pts))
+            self.global_footprint_t = self.now()
+
+    def on_rosout(self, msg):
+        if msg.name == 'controller_server' and ('0 poses' in msg.msg or 'too old' in msg.msg):
+            self.nav_errors.append(self.now())
+
+    def nav_supervisor(self):
+        """Nav2 watchdog (1 Hz, independent of the mission).
+
+        Rarely (2 runs out of ~100) the transform listener of a Nav2 server stops
+        receiving /tf for good while the rest of the process keeps running: the
+        controller then steers with a frozen robot pose - the robot drives past its goal,
+        then sits 'blocked' (map->odom frozen for 20 min in one run). Symptom seen from
+        outside: the footprint the local costmap publishes (odom frame) stops or no longer
+        follows the odometry. Then the Nav2 servers are reset and started again through
+        their lifecycle manager (~3 s, AMCL keeps running): fresh listeners, and the
+        mission simply retries its current goal."""
+        if self.state not in (TO_PICKUP, TO_TABLE, TO_DOCK) or self.odom is None:
+            self.nav_frozen_since = None
+            return
+        now = self.now()
+        o = self.odom.pose.pose.position
+        reason = None
+        if self.footprint_t is None or now - self.footprint_t > 3.0:
+            reason = 'controller: no footprint for 3 s'
+        elif math.hypot(self.footprint[0] - o.x, self.footprint[1] - o.y) > 0.3:
+            reason = 'controller footprint %.1f m off the odometry' % math.hypot(
+                self.footprint[0] - o.x, self.footprint[1] - o.y)
+        pose = self.robot_pose()
+        if reason is None and pose is not None and self.global_footprint is not None and \
+                math.hypot(self.global_footprint[0] - pose[0], self.global_footprint[1] - pose[1]) > 0.8:
+            # (global costmap updates at 2 Hz: up to ~0.2 m behind a moving robot)
+            reason = 'planner footprint %.1f m off the localization' % math.hypot(
+                self.global_footprint[0] - pose[0], self.global_footprint[1] - pose[1])
+        errors = sum(1 for t in self.nav_errors if now - t < 20.0)
+        if reason is None and errors >= 5:
+            reason = '%d controller errors "plan has 0 poses" in 20 s' % errors
+        if reason is None:
+            self.nav_frozen_since = None
+            return
+        self.nav_frozen_since = self.nav_frozen_since or now
+        if (now - self.nav_frozen_since < 3.0 and errors < 5) or now - self.last_nav_restart < 120.0 or \
+                self.nav_restarting:
+            return
+        self.last_nav_restart = now
+        self.nav_frozen_since = None
+        self.nav_errors.clear()
+        self.event('recovery', 'Nav2 lost the robot position (%s) - restarting the navigation servers' % reason)
+        threading.Thread(target=self.restart_nav, daemon=True).start()
+
+    def restart_nav(self):
+        if self.nav_restarting:
+            return
+        self.nav_restarting = True
+        threading.Thread(target=self.brake_while_restarting, daemon=True).start()
+        try:
+            self.kill_and_respawn_nav()
+        finally:
+            self.nav_restarting = False
+
+    def brake_while_restarting(self):
+        """Zero velocity at 10 Hz while Nav2 is down: a behavior stopped in the middle of
+        a command (e.g. backing up) leaves its last velocity in the wheel driver, which
+        would keep the robot moving (measured: 5 m backwards into a wall)."""
+        while self.nav_restarting and rclpy.ok():
+            self.cmd_pub.publish(Twist())
+            time.sleep(0.1)
+        self.cmd_pub.publish(Twist())
+
+    def kill_and_respawn_nav(self):
+        """Kill the two Nav2 servers that host a costmap (controller, planner): the launch
+        file respawns them and the lifecycle manager configures and activates them again
+        (a costmap thread that has locked up cannot be cleaned up through its lifecycle).
+        AMCL runs under the other lifecycle manager and keeps the localization."""
+        pids = []
+        for pid in os.listdir('/proc'):
+            if not pid.isdigit():
+                continue
+            try:
+                with open('/proc/%s/cmdline' % pid, 'rb') as f:
+                    exe = f.read().split(b'\0')[0].decode(errors='ignore')
+            except OSError:
+                continue
+            if exe.endswith(('/nav2_controller/controller_server', '/nav2_planner/planner_server')):
+                pids.append(int(pid))
+        if not pids:
+            self.event('error', 'Nav2 restart: controller/planner processes not found')
+            return
+        for pid in pids:
+            try:
+                os.kill(pid, signal.SIGKILL)
+            except OSError:
+                pass
+        # the lifecycle manager notices the broken bonds (~4 s), then brings Nav2 up again
+        if self.wait_nav_active(False, 20.0) and self.wait_nav_active(True, 120.0):
+            self.event('recovery', 'Navigation servers restarted')
+        else:
+            self.event('error', 'Nav2 restart: navigation not active again after 2 min')
+
+    def wait_nav_active(self, active, timeout):
+        end = time.monotonic() + timeout
+        while time.monotonic() < end:
+            if self.nav_active.wait_for_service(timeout_sec=1.0):
+                fut = self.nav_active.call_async(Trigger.Request())
+                t = time.monotonic() + 3.0
+                while not fut.done() and time.monotonic() < t:
+                    time.sleep(0.05)
+                if fut.done() and bool(fut.result().success) == active:
+                    return True
+            elif not active:
+                return True
+            time.sleep(1.0)
+        return False
 
     def on_battery_state(self, msg):
         with self.lock:
@@ -422,8 +643,8 @@ class Mission:
 
     def __init__(self, mgr: DeliveryManager):
         self.mgr = mgr
-        self.nav = BasicNavigator('delivery_navigator')
-        self.planner = BasicNavigator('delivery_energy_planner')   # separate node: path queries
+        self.nav = SafeNavigator('delivery_navigator')
+        self.planner = SafeNavigator('delivery_energy_planner')   # separate node: path queries
         self.planner.get_logger().set_level(rclpy.logging.LoggingSeverity.WARN)  # one query every few s
         self.last_energy_check = 0.0
 
@@ -531,7 +752,9 @@ class Mission:
 
     def navigate(self, x, y, yaw, label, away=True):
         """One Nav2 NavigateToPose with monitoring. Returns True on success."""
-        self.nav.goToPose(self.pose_msg(x, y, yaw))
+        if not self.nav.goToPose(self.pose_msg(x, y, yaw)):
+            self.hold(1.0)                 # Nav2 not reachable right now (e.g. restarting)
+            return False
         # give up on this goal if it takes far longer than the planned path justifies
         deadline = self.mgr.now() + 60.0 + 4.0 * getattr(self, 'last_path_length', 20.0)
         blocked, recoveries = False, 0
@@ -616,17 +839,20 @@ class Mission:
             else:
                 m.sleep(2.0)
 
-    def go(self, name, away=True, label=None):
-        """Navigate to a named place, trying each approach pose. Returns False if impossible."""
+    def go(self, name, away=True, label=None, poses=None):
+        """Navigate to a named place, trying each approach pose (or `poses`, already
+        ranked by the caller). Returns False if impossible."""
         label = label or name
-        poses = self.mgr.places[name]
-        if name in self.mgr.tables:
-            poses = self.nearest_first(poses, label)
+        if poses is None:
+            poses = self.mgr.places[name]
+            if name in self.mgr.tables:
+                poses = self.nearest_first(poses, label)
         # Serving windows are 0.5 m from the partition wall: Nav2 stops at a staging
         # pose in open floor, then the robot faces the window and creeps in straight.
         # (Humble's rotation shim turns in place without collision checking: a turn
         # close to a wall would sweep the robot's corner into it.)
         staging = self.mgr.cfg['pickup_staging_dist'] if name == 'pickup' else 0.0
+        self.wait_exit_clear(away)
         for i, (x, y, yaw) in enumerate(poses):
             sx, sy = x - staging * math.cos(yaw), y - staging * math.sin(yaw)
             for attempt in range(int(self.mgr.cfg['nav_attempts_per_pose'])):
@@ -646,6 +872,7 @@ class Mission:
                 # the approach pose - is exactly what the next reachability check needs;
                 # a short pause lets people walking around move on)
                 self.hold(3.0)
+                self.back_off(away)
         return False
 
     def nearest_first(self, poses, label):
@@ -671,8 +898,36 @@ class Mission:
                               ranked, key=lambda r: (r[0], r[4]))[2] else ''))
         return [r[3] for r in ranked]
 
+    def wait_exit_clear(self, away=True, near=1.2, approach=2.5, timeout=8.0):
+        """Do not start moving while a person is right next to the robot (< 1.2 m) or
+        walking towards it (< 2.5 m, closing faster than 0.2 m/s): e.g. a guest who stands
+        up from the table just served. Waits at most `timeout` s, then Nav2 takes over."""
+        m = self.mgr
+        end = m.now() + timeout
+        waited = False
+        while m.now() < end:
+            pose = m.robot_pose()
+            if pose is None:
+                return
+            busy = False
+            for t in m.people.get('tracks', []):
+                dx, dy = t['x'] - pose[0], t['y'] - pose[1]
+                d = math.hypot(dx, dy)
+                closing = -(dx * t.get('vx', 0.0) + dy * t.get('vy', 0.0)) / max(d, 1e-3)
+                if d < near or (d < approach and closing > 0.2):
+                    busy = True
+                    break
+            if not busy:
+                break
+            if not waited:
+                waited = True
+                m.event('nav', 'Person next to the robot - waiting before moving off')
+            self.check_interrupts(away)
+            self.hold(0.5)
+
     def face_route(self, goal, lookahead=0.8, min_turn=1.0):
         """Before leaving a place, turn in place towards the first metre of the planned route.
+        True when the robot now faces the route (False: skipped, no room or no plan).
 
         After serving, the robot faces the table; the way out is often behind it. MPPI
         sometimes does not settle into a 180 deg turn next to a table and oscillates on the
@@ -685,13 +940,13 @@ class Mission:
         near = m.people.get('nearest')
         if pose is None or (near is not None and near < 1.5) or \
                 m.pose_occupied(pose[0], pose[1], radius=0.55):
-            return
+            return False
         try:
             path = self.planner.getPath(self.pose_msg(*goal), self.pose_msg(*goal), use_start=False)
         except Exception:  # noqa: BLE001 - planner unavailable: let Nav2 handle the turn
-            return
+            return False
         if path is None or len(path.poses) < 2:
-            return
+            return False
         x0, y0 = path.poses[0].pose.position.x, path.poses[0].pose.position.y
         target = None
         for p in path.poses:
@@ -699,10 +954,11 @@ class Mission:
                 target = (p.pose.position.x, p.pose.position.y)
                 break
         if target is None:
-            return
+            return False
         yaw = math.atan2(target[1] - pose[1], target[0] - pose[0])
         if abs(math.remainder(yaw - pose[2], 2 * math.pi)) > min_turn:
             self.rotate_to(yaw, tol=0.15)
+        return True
 
     def drive(self, distance, speed, until=None, timeout=None):
         """Odometry closed-loop straight motion (negative = reverse). Stops early if until()."""
@@ -946,12 +1202,16 @@ class Mission:
             m.set_state(LOADING)
             self.wait_checked(m.cfg['load_time_sec'])
             m.set_state(TO_TABLE)
-            # deliberate departure: back out of the window to the staging pose, then
-            # turn towards the dining room before handing over to Nav2
+            # deliberate departure: back out of the window to the staging pose, choose the
+            # closest side of the table and turn once, straight towards that route (not to
+            # a fixed heading first and back again); with a person close by, the fixed
+            # turn towards the dining room is kept (it is the one known to be clear)
             self.wait_rear_clear(m.cfg['pickup_staging_dist'] + 0.5)
             self.drive(-m.cfg['pickup_staging_dist'], 0.1)
-            self.rotate_to(m.cfg['pickup_depart_yaw'], tol=0.1)
-            if not self.go(order['table']):
+            poses = self.nearest_first(m.places[order['table']], order['table'])
+            if not self.face_route(poses[0], min_turn=0.3):
+                self.rotate_to(m.cfg['pickup_depart_yaw'], tol=0.1)
+            if not self.go(order['table'], poses=poses):
                 raise Abort('%s unreachable' % order['table'])
             m.set_state(SERVING)
             m.say('Hello! Your order has arrived%s. Please take it from the tray.'
@@ -988,6 +1248,26 @@ class Mission:
                 m.current = None
                 m.cancel_requested = False
 
+    def back_off(self, away=True, dist=0.3):
+        """After a failed attempt the robot is often jammed at the same angle against a
+        door jamb or a chair (e.g. half into the 0.9 m door D3: 7 minutes 'blocked', every
+        retry starting from the same spot). Back out 30 cm with Nav2's BackUp - checked
+        against the costmap - so the next attempt has room to line up. Skipped with a
+        person behind the robot (blind sector of the lidar)."""
+        m = self.mgr
+        if not self.wait_rear_clear(dist + 0.6, timeout=5.0):
+            return
+        if not self.nav.backup(dist, 0.08, 8):
+            return
+        end = m.now() + 12.0
+        while not self.nav.isTaskComplete():
+            if m.now() > end:
+                self.nav.cancelTask()
+                break
+            self.check_interrupts(away)
+            time.sleep(0.1)
+        self.stop()
+
     def wait_rear_clear(self, dist, timeout=20.0):
         """The lidar does not see behind the robot (290 deg): before backing out, wait
         until no tracked person is within `dist` behind it."""
@@ -1003,12 +1283,13 @@ class Mission:
                 if along < 0.0 and math.hypot(dx, dy) < dist:
                     behind.append(t)
             if not behind:
-                return
+                return True
             if not announced:
                 m.event('nav', 'Person behind the robot - waiting before backing out')
                 announced = True
             self.check_interrupts()
             time.sleep(0.2)
+        return False
 
     def wait_checked(self, seconds):
         """Wait (loading / serving) holding the robot still, with interrupt checks."""
@@ -1182,7 +1463,8 @@ class Mission:
             self.dock('battery low (%.0f%%)' % m.soc)
             return m.now()
         if m.now() - idle_since > m.cfg['idle_dock_timeout_sec']:
-            self.dock('idle for %.0fs' % m.cfg['idle_dock_timeout_sec'])
+            t = m.cfg['idle_dock_timeout_sec']
+            self.dock('idle for %.0fs' % t if t >= 1.0 else 'all orders delivered')
             return m.now()
         return idle_since
 

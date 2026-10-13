@@ -216,7 +216,9 @@ RPP remains available (`controller:=rpp`).
 * **Serving-window approach**: the window pose is 0.5 m from the partition. Nav2 stops at a
   *staging* pose 0.6 m back in open floor, the robot faces the window and creeps in straight under
   closed-loop control; after loading it backs out (only when no tracked person is behind it — the
-  lidar does not see the rear 70°) and turns towards the dining room. Reason: Humble's rotation shim
+  lidar does not see the rear 70°) and turns once, straight towards the first metre of the planned
+  route to the chosen side of the table (with a person within 1.5 m: a fixed turn towards the
+  dining room instead, then Nav2 takes over). Reason: Humble's rotation shim
   turns in place without collision checking, and a turn close to a wall swept the robot's corner
   into it.
 * **Final heading**: Nav2 only checks the position (in Humble, RPP prunes the whole path once inside
@@ -289,7 +291,7 @@ larger of the two learned consumptions (driving / effective):
   `energy left − E_return < reserve`, the mission is interrupted, the order is **re-queued at the
   front** (not lost), the robot docks, charges and resumes.
 * **Hard safety net**: SoC ≤ 10 % → abort everything and dock.
-* **Idle**: below 25 % or after 20 s without orders → dock.
+* **Idle**: below 25 % or as soon as there is no order left → dock (`idle_dock_timeout_sec`, 0 s).
 * While parked on the charger, loading or serving, the robot actively brakes (zero velocity).
 * **Battery health**: equivalent full cycles (charge throughput / 2 × capacity) and a state-of-health estimate (linear cycle ageing, 80 % after 1000 cycles, typical NMC rating) are reported to the UI. Charging to 60 % when no order waits (instead of 100 %) also limits ageing: Li-ion cells age faster when held at high charge.
 * **Charger fault detection**: on the pad (contacts OK) but no charging current for 10 s → the state shows "CHARGER FAULT", an error event alerts the staff, and orders wait (the robot never leaves without the energy for the whole order); when current flows again, charging resumes automatically (TC15).
@@ -348,6 +350,21 @@ Results, plots and pass criteria: [TEST_CASES.md](TEST_CASES.md).
 
 ## 6. Known limitations (honest list)
 
+* **Nav2 server that locks up (watchdog + restart).** In long test sessions a Nav2 server
+  occasionally stops following the robot for good (4 runs out of ~90): the controller's transform
+  listener stopped receiving /tf (map->odom frozen for 20 min, the robot drove past its goal, then sat
+  "blocked"), or the planner's global costmap thread locked up (its footprint stayed 1.6 m behind the
+  robot, plans no longer started at the robot - "plan has 0 poses" - and even its lifecycle clean-up
+  hung). The root cause is inside Nav2 / DDS and was not found. The delivery manager's **Nav2
+  watchdog** (1 Hz, while navigating) detects it from outside: the local costmap's footprint stops or
+  is > 0.3 m off the odometry, the global costmap's footprint is > 0.8 m off the localization, or the
+  controller logs "plan has 0 poses" 5 times in 20 s. It then kills the two servers that host a
+  costmap (controller, planner); the launch file respawns them and the lifecycle manager
+  (`attempt_respawn_reconnection`) brings Nav2 up again in ~10 s while AMCL keeps the localization.
+  During the restart the robot is braked (a back-up recovery cut off mid-command otherwise leaves
+  its last velocity in the wheel driver: 5 m backwards into a wall, measured), and every navigator
+  call has a timeout (Humble's BasicNavigator waits for replies forever: the mission thread hung
+  when the planner died during a path query). Operator command / test hook: `restart_nav` (TC24).
 * **(Solved) Intermittent stale TF / "plan has 0 poses".** Root causes found with a live GUI run (CPU
   load makes them frequent): (1) the controller's own TF buffer intermittently held a map→odom
   correction several minutes old while AMCL kept publishing (verified: a separate node received fresh

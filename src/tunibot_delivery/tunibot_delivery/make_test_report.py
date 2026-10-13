@@ -20,7 +20,7 @@ CASES = {
              'Full world: 4 people walking (waiter crossing the dining room, guest between the table rows, '
              'cook, VIP guest). Battery 100 %.',
              'Order table_6. The robot undocks, goes to serving window 1, waits for loading, goes to table_6, '
-             'serves, returns to the dock after 20 s idle.',
+             'serves, returns to the dock right away (no other order).',
              'Normal delivery among the crowd: the robot slows down near people (social speed limit), the '
              'planner routes behind walking people, no contact.'),
     'tc02': ('Dynamic obstacles',
@@ -151,6 +151,13 @@ CASES.update({
              'Orders table_1, table_4, table_7 (each table has a north and a south approach pose).',
              'Before driving to a table the robot plans a route to every approach pose and serves from the '
              'shortest one: the north side, facing the kitchen, instead of a detour around the table.'),
+    'tc24': ('State management / recovery',
+             'Full world, battery 100 %.',
+             'Order table_5; once the robot has left the serving window, the controller and planner processes are '
+             'killed (operator command "restart_nav" - what the Nav2 watchdog does when a costmap freezes); the '
+             'launch file respawns them and the lifecycle manager activates Nav2 again.',
+             'Navigation stops for a few seconds while AMCL keeps the localization; the mission retries its goal and the '
+             'order is delivered; the robot returns to the dock.'),
 })
 
 
