@@ -19,6 +19,7 @@ mkdir -p "$RESULTS/logs"
 
 source /opt/ros/humble/setup.bash
 source "$WS/install/setup.bash"
+source "$WS/src/tunibot_delivery/scripts/nvidia_gl.sh"   # GPU rendering in distrobox (NVIDIA host)
 export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-77}"   # isolate the tests from other ROS graphs
 [ -f /opt/ros/humble/lib/librmw_cyclonedds_cpp.so ] && export RMW_IMPLEMENTATION="${RMW_IMPLEMENTATION:-rmw_cyclonedds_cpp}"
 

@@ -99,6 +99,12 @@ Two packages: `tunibot_delivery` (Python: nodes, launch, config, world, map, web
 
 ## Run
 
+**GPU (NVIDIA host, distrobox)**: the container has no NVIDIA OpenGL driver, so Gazebo and RViz
+fall back to CPU rendering. Before launching, in each terminal:
+```bash
+source src/tunibot_delivery/scripts/nvidia_gl.sh   # uses the host's NVIDIA driver (nothing installed)
+```
+
 **One command (demo)** — Gazebo + RViz + Nav2 + delivery stack, started in the right order:
 ```bash
 ros2 launch tunibot_delivery demo.launch.py                 # then open http://localhost:8080
